@@ -45,13 +45,11 @@ class PrometheusExporterTest < Minitest::Test
     server = PrometheusExporter::Server::WebServer.new port: port, collector: collector
     server.start
 
-    client = PrometheusExporter::Client.new host: "localhost", port: port, manual_mode: true
+    client = PrometheusExporter::Client.new host: "localhost", port: port, thread_sleep: 0.001
     client.send "type" => "mem metric", "value" => 150
     client.send "type" => "mem metric", "value" => 199
 
-    client.process_queue
-
-    TestHelper.wait_for(1) do
+    TestHelper.wait_for(2) do
       collector.prometheus_metrics_text =~ /199/
     end
 
@@ -60,8 +58,19 @@ class PrometheusExporterTest < Minitest::Test
     body = Net::HTTP.get(URI("http://localhost:#{port}/metrics"))
     assert_match(/199/, body)
 
+    one_minute = Time.now + 60
+    Time.stub(:now, one_minute) do
+      client.send "type" => "mem metric", "value" => 200.1
+
+      TestHelper.wait_for(2) do
+        collector.prometheus_metrics_text =~ /200.1/
+      end
+
+      assert_match(/200.1/, collector.prometheus_metrics_text)
+    end
+
   ensure
-    client.stop
-    server.stop
+    client.stop rescue nil
+    server.stop rescue nil
   end
 end
