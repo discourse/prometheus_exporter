@@ -11,6 +11,33 @@ module PrometheusExporter::Metric
       Base.default_prefix = ''
     end
 
+    it "can serialize and deserialize correctly" do
+      gauge.observe(2, test: "a")
+      gauge.observe(2, a: "b", c: "d")
+      gauge.observe(1)
+
+      old_text = gauge.to_prometheus_text
+
+      copy = Base.from_json(gauge.to_json)
+
+      new_text = copy.to_prometheus_text
+
+      assert_equal(new_text, old_text)
+
+      copy.observe(3, test: "a")
+
+      expected = <<~TEXT
+        # HELP a_gauge my amazing gauge
+        # TYPE a_gauge gauge
+        a_gauge{test="a"} 3
+        a_gauge{a="b",c="d"} 2
+        a_gauge 1
+      TEXT
+
+      assert_equal(copy.to_prometheus_text, expected)
+
+    end
+
     it "supports a dynamic prefix" do
       Base.default_prefix = 'web_'
       gauge.observe(400.11)

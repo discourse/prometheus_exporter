@@ -19,7 +19,7 @@ module PrometheusExporter::Metric
       end.join("\n")
     end
 
-    def observe(labels = {}, increment = 1)
+    def observe(increment = 1, labels = {})
       @data[labels] ||= 0
       @data[labels] += increment
     end
