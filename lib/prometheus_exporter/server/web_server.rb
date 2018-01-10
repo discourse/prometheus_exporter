@@ -2,6 +2,8 @@
 
 require 'webrick'
 require 'timeout'
+require 'zlib'
+require 'stringio'
 
 module PrometheusExporter::Server
   class WebServer
@@ -22,7 +24,16 @@ module PrometheusExporter::Server
         res['ContentType'] = 'text/plain; charset=utf-8'
         if req.path == '/metrics'
           res.status = 200
-          res.body = metrics
+          if req.header["accept-encoding"].to_s.include?("gzip")
+            sio = StringIO.new
+            writer = Zlib::GzipWriter.new(sio)
+            writer.write(metrics)
+            writer.close
+            res.body = sio.string
+            res.header["content-encoding"] = "gzip"
+          else
+            res.body = metrics
+          end
         elsif req.path == '/send-metrics'
           handle_metrics(req, res)
         else

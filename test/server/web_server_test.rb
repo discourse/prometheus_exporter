@@ -90,7 +90,16 @@ class PrometheusExporterTest < Minitest::Test
 
     assert_match(/199/, collector.prometheus_metrics_text)
 
-    body = Net::HTTP.get(URI("http://localhost:#{port}/metrics"))
+    body = nil
+
+    Net::HTTP.new("localhost", port).start do |http|
+      request = Net::HTTP::Get.new "/metrics"
+
+      http.request(request) do |response|
+        assert_equal(["gzip"], response.to_hash["content-encoding"])
+        body = response.body
+      end
+    end
     assert_match(/199/, body)
 
     one_minute = Time.now + 60
