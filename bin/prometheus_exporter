@@ -7,14 +7,36 @@ def usage
   puts "Usage: prometheus_exporter PORT [--collector filename]"
 end
 
-port = ARGV[0].to_i
+def run
+  port = ARGV[0].to_i
+  if port == 0
+    usage
+    exit 1
+  end
 
-if port > 0
+  collector = nil
+
+  if ARGV[1] == "--collector"
+    eval File.read(ARGV[2])
+
+    ObjectSpace.each_object(Class) do |klass|
+      if klass < PrometheusExporter::Server::Collector
+        collector = klass
+      end
+    end
+
+    if !collector
+      STDERR.puts "Can not find a class inheriting off PrometheusExporter::Server::Collector"
+      usage
+      exit 1
+    end
+  end
+
   puts "#{Time.now} Starting prometheus exporter on port #{port}"
-  server = PrometheusExporter::Server::WebServer.new port: port
+  server = PrometheusExporter::Server::WebServer.new port: port, collector: collector&.new
   server.start
   sleep
-else
-  usage
-  exit 1
+
 end
+
+run

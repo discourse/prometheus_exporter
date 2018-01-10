@@ -97,6 +97,11 @@ awesome 10
 
 ```
 
+## Transport concerns
+
+Prometheus Exporter handles transport using a simple HTTP protocol. In multi process mode we avoid needing a large number of HTTP request by using chunked encoding to send metrics. This means that a single HTTP channel can deliver 100s or even 1000s of metrics over a single HTTP session to the `/send-metrics` endpoint.
+
+When sending data to `send-metrics` we always serialize the data for the chunk to a JSON string, and deserialize it back into an Object before handing the data to the collector.
 
 ## Contributing
 
