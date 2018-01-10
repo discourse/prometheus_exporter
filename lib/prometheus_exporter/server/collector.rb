@@ -11,20 +11,30 @@ module PrometheusExporter::Server
     end
 
     def process(obj)
-      metric = @metrics[obj["name"]]
-      if !metric
-        metric = register_metric(obj)
+      @mutex.synchronize do
+        metric = @metrics[obj["name"]]
+        if !metric
+          metric = register_metric_unsafe(obj)
+        end
+        metric.observe(obj["value"], obj["keys"])
       end
-      metric.observe(obj["value"], obj["keys"])
     end
 
     def prometheus_metrics_text
-      @metrics.values.map(&:to_prometheus_text).join("\n")
+      @mutex.synchronize do
+        @metrics.values.map(&:to_prometheus_text).join("\n")
+      end
+    end
+
+    def register_metric(metric)
+      @mutex.synchronize do
+        @metrics << metric
+      end
     end
 
     protected
 
-    def register_metric(obj)
+    def register_metric_unsafe(obj)
       name = obj["name"]
       help = obj["help"]
 
