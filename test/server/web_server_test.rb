@@ -1,6 +1,5 @@
 require 'test_helper'
 require 'prometheus_exporter/server'
-require 'prometheus_exporter/metric'
 require 'prometheus_exporter/client'
 require 'net/http'
 
@@ -49,10 +48,10 @@ class PrometheusExporterTest < Minitest::Test
     gauge = client.register(:gauge, "my_gauge", "some gauge")
     counter = client.register(:counter, "my_counter", "some counter")
 
-    gauge.observe({ abcd: 1 }, 2)
-    counter.observe(nil, 1)
-    counter.observe(nil, 3)
-    gauge.observe({ abcd: 1 }, 92)
+    gauge.observe(2, abcd: 1)
+    counter.observe(1)
+    counter.observe(3)
+    gauge.observe(92, abcd: 1)
 
     TestHelper.wait_for(2) do
       server.collector.prometheus_metrics_text =~ /92/

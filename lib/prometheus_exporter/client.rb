@@ -14,7 +14,7 @@ class PrometheusExporter::Client
       @type = type
     end
 
-    def observe(keys, value = 1)
+    def observe(value = 1, keys = nil)
       @client.send(
         type: @type,
         help: @help,

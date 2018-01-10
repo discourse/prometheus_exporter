@@ -1,8 +1,20 @@
-#!/usr/bin/env bash
-set -euo pipefail
-IFS=$'\n\t'
-set -vx
+#!/usr/bin/env ruby
 
-bundle install
+require_relative "./../lib/prometheus_exporter"
+require_relative "./../lib/prometheus_exporter/server"
 
-# Do any other automated setup that you need to do here
+def usage
+  puts "Usage: prometheus_exporter PORT [--collector filename]"
+end
+
+port = ARGV[0].to_i
+
+if port > 0
+  puts "#{Time.now} Starting prometheus exporter on port #{port}"
+  server = PrometheusExporter::Server::WebServer.new port: port
+  server.start
+  sleep
+else
+  usage
+  exit 1
+end

@@ -1,4 +1,4 @@
-require "prometheus_exporter/version"
+require_relative "prometheus_exporter/version"
 require "json"
 require "thread"
 
