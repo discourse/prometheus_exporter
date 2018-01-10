@@ -97,6 +97,78 @@ awesome 10
 
 ```
 
+### Multi process mode with custom collector
+
+You can opt for custom collector logic in a multi process environment.
+
+This allows you better control over the amount of data transported over HTTP and also allow you to introduce custom logic into your centralized collector.
+
+The standard collector ships "help", "type" and "name" for every metric, in some cases you may want to avoid sending all that data.
+
+First, define a custom collector, it is critical you inherit off `PrometheusExporter::Server::Collector`, also it is critical you have custom implementations for #process and #prometheus_metrics_text
+
+```ruby
+class MyCustomCollector < PrometheusExporter::Server::Collector
+  def initialize
+    @gauge1 = PrometheusExporter::Metric::Gauge.new("thing1", "I am thing 1")
+    @gauge2 = PrometheusExporter::Metric::Gauge.new("thing2", "I am thing 2")
+    @mutex = Mutex.new
+  end
+
+  def process(obj)
+    @mutex.synchronize do
+      if thing1 = obj["thing1"]
+        @gauge1.observe(thing1)
+      end
+
+      if thing2 = obj["thing2"]
+        @gauge2.observe(thing2)
+      end
+    end
+  end
+
+  def prometheus_metrics_text
+    @mutex.synchronize do
+      "#{@gauge1.to_prometheus_text}\n#{@gauge2.to_prometheus_text}"
+    end
+  end
+end
+```
+
+Next, launch the exporter process:
+
+```bash
+% bin/prometheus_exporter 12345 --collector examples/custom_collector.rb
+```
+
+In your application ship it the metrics you want:
+
+```ruby
+require 'prometheus_exporter/client'
+
+client = PrometheusExporter::Client.new(host: 'localhost', port: 12345)
+client.send(thing1: 122)
+client.send(thing2: 12)
+```
+
+Now your exporter will echo the metrics:
+
+```
+% curl localhost:12345/metrics
+# HELP collector_working Is the master process collector able to collect metrics
+# TYPE collector_working gauge
+collector_working 1
+
+# HELP thing1 I am thing 1
+# TYPE thing1 gauge
+thing1 122
+
+# HELP thing2 I am thing 2
+# TYPE thing2 gauge
+thing2 12
+```
+
+
 ## Transport concerns
 
 Prometheus Exporter handles transport using a simple HTTP protocol. In multi process mode we avoid needing a large number of HTTP request by using chunked encoding to send metrics. This means that a single HTTP channel can deliver 100s or even 1000s of metrics over a single HTTP session to the `/send-metrics` endpoint.
