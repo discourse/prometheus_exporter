@@ -22,7 +22,6 @@ class DemoCollector
 
 end
 
-
 class PrometheusExporterTest < Minitest::Test
 
   def find_free_port
@@ -38,7 +37,44 @@ class PrometheusExporterTest < Minitest::Test
     port
   end
 
-  def test_it_can_collect_metrics
+  def test_it_can_collect_metrics_from_standard
+    port = find_free_port
+
+    server = PrometheusExporter::Server::WebServer.new port: port
+    collector = server.collector
+    server.start
+
+    client = PrometheusExporter::Client.new host: "localhost", port: port, thread_sleep: 0.001
+
+    gauge = client.register(:gauge, "my_gauge", "some gauge")
+    counter = client.register(:counter, "my_counter", "some counter")
+
+    gauge.observe({ abcd: 1 }, 2)
+    counter.observe(nil, 1)
+    counter.observe(nil, 3)
+    gauge.observe({ abcd: 1 }, 92)
+
+    TestHelper.wait_for(2) do
+      server.collector.prometheus_metrics_text =~ /92/
+    end
+
+    expected = <<~TEXT
+      # HELP my_gauge some gauge
+      # TYPE my_gauge gauge
+      my_gauge{abcd="1"} 92
+
+      # HELP my_counter some counter
+      # TYPE my_counter counter
+      my_counter 4
+    TEXT
+    assert_equal(expected, collector.prometheus_metrics_text)
+
+  ensure
+    client.stop rescue nil
+    server.stop rescue nil
+  end
+
+  def test_it_can_collect_metrics_from_custom
     collector = DemoCollector.new
     port = find_free_port
 

@@ -6,10 +6,31 @@ require 'thread'
 
 class PrometheusExporter::Client
 
+  class RemoteMetric
+    def initialize(name:, help:, type:, client:)
+      @name = name
+      @help = help
+      @client = client
+      @type = type
+    end
+
+    def observe(keys, value = 1)
+      @client.send(
+        type: @type,
+        help: @help,
+        name: @name,
+        keys: keys,
+        value: value
+      )
+    end
+  end
+
   MAX_SOCKET_AGE = 25
   MAX_QUEUE_SIZE = 10_000
 
   def initialize(host:, port:, max_queue_size: nil, thread_sleep: 0.5)
+    @metrics = []
+
     @queue = Queue.new
     @socket = nil
     @socket_started = nil
@@ -27,7 +48,12 @@ class PrometheusExporter::Client
     @worker_thread = nil
     @mutex = Mutex.new
     @thread_sleep = thread_sleep
+  end
 
+  def register(type, name, help)
+    metric = RemoteMetric.new(type: type, name: name, help: help, client: self)
+    @metrics << metric
+    metric
   end
 
   def send(obj)
@@ -50,8 +76,8 @@ class PrometheusExporter::Client
         @socket.write("\r\n")
         @socket.write(message)
         @socket.write("\r\n")
-      rescue
-        STDERR.puts "Prometheus Exporter is dropping a message cause queue is full"
+      rescue => e
+        STDERR.puts "Prometheus Exporter is dropping a message: #{e}"
         @socket = nil
         raise
       end
@@ -95,14 +121,18 @@ class PrometheusExporter::Client
   end
 
   def close_socket!
-    if @socket
-      @socket.write("0\r\n")
-      @socket.write("\r\n")
-      @socket.flush
-      @socket.close
-      @socket = nil
-      @socket_started = nil
+    begin
+      if @socket
+        @socket.write("0\r\n")
+        @socket.write("\r\n")
+        @socket.flush
+        @socket.close
+      end
+    rescue Errno::EPIPE
     end
+
+    @socket = nil
+    @socket_started = nil
   end
 
   def close_socket_if_old!

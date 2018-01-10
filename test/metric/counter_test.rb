@@ -11,34 +11,6 @@ module PrometheusExporter::Metric
       Base.default_prefix = ''
     end
 
-    it "can serialize and deserialize correctly" do
-      counter.observe(2, test: "a")
-      counter.observe(2, test2: "b")
-      counter.observe(1, test: "a")
-      counter.observe(3)
-
-      old_text = counter.to_prometheus_text
-
-      copy = Base.from_json(counter.to_json)
-
-      new_text = copy.to_prometheus_text
-
-      assert_equal(new_text, old_text)
-
-      copy.observe(1, test: "a")
-
-      expected = <<~TEXT
-        # HELP a_counter my amazing counter
-        # TYPE a_counter counter
-        a_counter{test="a"} 4
-        a_counter{test2="b"} 2
-        a_counter 3
-      TEXT
-
-      assert_equal(copy.to_prometheus_text, expected)
-
-    end
-
     it "supports a dynamic prefix" do
       Base.default_prefix = 'web_'
       counter.observe

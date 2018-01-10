@@ -2,11 +2,12 @@
 
 require 'webrick'
 require 'timeout'
-require 'json'
 
 module PrometheusExporter::Server
   class WebServer
-    def initialize(port: , collector:)
+    attr_reader :collector
+
+    def initialize(port: , collector: nil)
 
       @server = WEBrick::HTTPServer.new(
         Port: port,
@@ -14,7 +15,7 @@ module PrometheusExporter::Server
         Logger: WEBrick::Log.new("/dev/null")
       )
 
-      @collector = collector
+      @collector = collector || Collector.new
       @port = port
 
       @server.mount_proc '/' do |req, res|
@@ -37,7 +38,7 @@ module PrometheusExporter::Server
           @collector.process(JSON.parse(block))
         rescue => e
           res.body = "Bad Metrics #{e}"
-          res.status = 500
+          res.status = e.respond_to?(:status_code) ? e.status_code : 500
           return
         end
       end

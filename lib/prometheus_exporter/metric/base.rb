@@ -54,40 +54,6 @@ module PrometheusExporter::Metric
       end
     end
 
-    def to_h
-      {
-        name: name,
-        help: help,
-        data: data,
-        type: type
-      }
-    end
-
-    def self.from_json(json)
-      parsed = JSON.parse(json)
-
-      case parsed["type"]
-      when "counter"
-        counter = Counter.new("", "")
-        counter.from_json(json)
-        counter
-      when "gauge"
-        counter = Gauge.new("", "")
-        counter.from_json(json)
-        counter
-      end
-    end
-
-    def to_json
-      hash = to_h
-
-      if Hash === hash[:data]
-        hash[:data] = Hash[hash[:data].map { |k, v| [k.to_json, v] }]
-      end
-
-      hash.to_json
-    end
-
     def to_prometheus_text
       <<~TEXT
         # HELP #{prefix(name)} #{help}
