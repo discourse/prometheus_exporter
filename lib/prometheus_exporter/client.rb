@@ -101,7 +101,6 @@ class PrometheusExporter::Client
   def worker_loop
     close_socket_if_old!
     process_queue
-    sleep @thread_sleep
   rescue => e
     STDERR.puts "Prometheus Exporter, failed to send message #{e}"
   end
@@ -114,6 +113,7 @@ class PrometheusExporter::Client
         @worker_thread = Thread.new do
           while true
             worker_loop
+            sleep @thread_sleep
           end
         end
       end
