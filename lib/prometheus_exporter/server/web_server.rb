@@ -11,6 +11,12 @@ module PrometheusExporter::Server
 
     def initialize(port: , collector: nil)
 
+      @total_metrics = PrometheusExporter::Metric::Counter.new("total_collector_metrics", "total metrics processed by exporter web")
+
+      @total_sessions = PrometheusExporter::Metric::Counter.new("total_collector_sessions", "total send_metric sessions processed by exporter web")
+
+      @total_bad_metrics = PrometheusExporter::Metric::Counter.new("total_collector_bad_metrics", "total mis-handled metrics by collector")
+
       @server = WEBrick::HTTPServer.new(
         Port: port,
         AccessLog: [],
@@ -48,10 +54,13 @@ module PrometheusExporter::Server
     end
 
     def handle_metrics(req, res)
+      @total_sessions.observe
       req.body do |block|
         begin
-          @collector.process(JSON.parse(block))
+          @total_metrics.observe
+          @collector.process(block)
         rescue => e
+          @total_bad_metrics.observe
           res.body = "Bad Metrics #{e}"
           res.status = e.respond_to?(:status_code) ? e.status_code : 500
           return
@@ -87,22 +96,26 @@ module PrometheusExporter::Server
         STDERR.puts "Generating Prometheus metrics text timed out"
       end
 
-      @metrics = []
+      metrics = []
 
-      add_gauge(
+      metrics << add_gauge(
         "collector_working",
         "Is the master process collector able to collect metrics",
         metric_text && metric_text.length > 0 ? 1 : 0
       )
 
-      add_gauge(
+      metrics << add_gauge(
         "collector_rss",
         "total memory used by collector process",
         get_rss
       )
 
+      metrics << @total_metrics
+      metrics << @total_sessions
+      metrics << @total_bad_metrics
+
       <<~TEXT
-      #{@metrics.map(&:to_prometheus_text).join("\n\n")}
+      #{metrics.map(&:to_prometheus_text).join("\n\n")}
       #{metric_text}
       TEXT
     end
@@ -116,7 +129,7 @@ module PrometheusExporter::Server
     def add_gauge(name, help, value)
       gauge = PrometheusExporter::Metric::Gauge.new(name, help)
       gauge.observe(value)
-      @metrics << gauge
+      gauge
     end
 
   end

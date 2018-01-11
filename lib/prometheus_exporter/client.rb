@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'json'
 require 'socket'
 require 'thread'
 
@@ -15,7 +14,7 @@ class PrometheusExporter::Client
     end
 
     def observe(value = 1, keys = nil)
-      @client.send(
+      @client.send_json(
         type: @type,
         help: @help,
         name: @name,
@@ -56,8 +55,12 @@ class PrometheusExporter::Client
     metric
   end
 
-  def send(obj)
-    @queue << obj.to_json
+  def send_json(obj)
+    send(obj.to_json)
+  end
+
+  def send(str)
+    @queue << str
     if @queue.length > @max_queue_size
       STDERR.puts "Prometheus Exporter client is dropping message cause queue is full"
       @queue.pop

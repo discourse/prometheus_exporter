@@ -10,7 +10,8 @@ module PrometheusExporter::Server
       @mutex = Mutex.new
     end
 
-    def process(obj)
+    def process(str)
+      obj = JSON.parse(str)
       @mutex.synchronize do
         metric = @metrics[obj["name"]]
         if !metric
