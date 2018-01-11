@@ -95,10 +95,21 @@ module PrometheusExporter::Server
         metric_text && metric_text.length > 0 ? 1 : 0
       )
 
+      add_gauge(
+        "collector_rss",
+        "total memory used by collector process",
+        get_rss
+      )
+
       <<~TEXT
       #{@metrics.map(&:to_prometheus_text).join("\n\n")}
       #{metric_text}
       TEXT
+    end
+
+    def get_rss
+      @pagesize ||= `getconf PAGESIZE`.to_i rescue 4096
+      File.read("/proc/#{pid}/statm").split(' ')[1].to_i * @pagesize rescue 0
     end
 
     def add_gauge(name, help, value)
