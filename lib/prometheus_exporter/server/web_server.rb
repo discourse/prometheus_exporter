@@ -26,9 +26,13 @@ module PrometheusExporter::Server
           res.status = 200
           if req.header["accept-encoding"].to_s.include?("gzip")
             sio = StringIO.new
-            writer = Zlib::GzipWriter.new(sio)
-            writer.write(metrics)
-            writer.close
+            collected_metrics = metrics
+            begin
+              writer = Zlib::GzipWriter.new(sio)
+              writer.write(collected_metrics)
+            ensure
+              writer.close
+            end
             res.body = sio.string
             res.header["content-encoding"] = "gzip"
           else
