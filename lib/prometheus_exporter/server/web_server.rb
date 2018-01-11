@@ -109,7 +109,8 @@ module PrometheusExporter::Server
 
     def get_rss
       @pagesize ||= `getconf PAGESIZE`.to_i rescue 4096
-      File.read("/proc/#{pid}/statm").split(' ')[1].to_i * @pagesize rescue 0
+      @pid ||= Process.pid
+      File.read("/proc/#{@pid}/statm").split(' ')[1].to_i * @pagesize rescue 0
     end
 
     def add_gauge(name, help, value)
