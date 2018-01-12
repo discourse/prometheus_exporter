@@ -27,7 +27,7 @@ class PrometheusExporter::Client
   MAX_SOCKET_AGE = 25
   MAX_QUEUE_SIZE = 10_000
 
-  def initialize(host:, port:, max_queue_size: nil, thread_sleep: 0.5)
+  def initialize(host: 'localhost', port:, max_queue_size: nil, thread_sleep: 0.5)
     @metrics = []
 
     @queue = Queue.new
@@ -139,23 +139,23 @@ class PrometheusExporter::Client
   end
 
   def close_socket_if_old!
-    if @socket && ((@socket_started + MAX_SOCKET_AGE) > Time.now.to_f)
+    if @socket && ((@socket_started + MAX_SOCKET_AGE) < Time.now.to_f)
+      p "CLOSE OLD"
       close_socket!
     end
   end
 
   def ensure_socket!
     close_socket_if_old!
-
-    @socket = TCPSocket.new @host, @port
-
-    @socket.write("POST /send-metrics HTTP/1.1\r\n")
-    @socket.write("Transfer-Encoding: chunked\r\n")
-    @socket.write("Connection: Close\r\n")
-    @socket.write("Content-Type: application/octet-stream\r\n")
-    @socket.write("\r\n")
-
-    @socket_started = Time.now.to_f
+    if !@socket
+      @socket = TCPSocket.new @host, @port
+      @socket.write("POST /send-metrics HTTP/1.1\r\n")
+      @socket.write("Transfer-Encoding: chunked\r\n")
+      @socket.write("Connection: Close\r\n")
+      @socket.write("Content-Type: application/octet-stream\r\n")
+      @socket.write("\r\n")
+      @socket_started = Time.now.to_f
+    end
 
     nil
   rescue
