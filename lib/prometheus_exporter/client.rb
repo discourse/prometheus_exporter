@@ -140,7 +140,6 @@ class PrometheusExporter::Client
 
   def close_socket_if_old!
     if @socket && ((@socket_started + MAX_SOCKET_AGE) < Time.now.to_f)
-      p "CLOSE OLD"
       close_socket!
     end
   end

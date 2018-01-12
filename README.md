@@ -115,7 +115,8 @@ class MyCustomCollector < PrometheusExporter::Server::Collector
     @mutex = Mutex.new
   end
 
-  def process(obj)
+  def process(str)
+    obj = JSON.parse(str)
     @mutex.synchronize do
       if thing1 = obj["thing1"]
         @gauge1.observe(thing1)
@@ -147,8 +148,8 @@ In your application ship it the metrics you want:
 require 'prometheus_exporter/client'
 
 client = PrometheusExporter::Client.new(host: 'localhost', port: 12345)
-client.send(thing1: 122)
-client.send(thing2: 12)
+client.send_json(thing1: 122)
+client.send_json(thing2: 12)
 ```
 
 Now your exporter will echo the metrics:
@@ -173,7 +174,8 @@ thing2 12
 
 Prometheus Exporter handles transport using a simple HTTP protocol. In multi process mode we avoid needing a large number of HTTP request by using chunked encoding to send metrics. This means that a single HTTP channel can deliver 100s or even 1000s of metrics over a single HTTP session to the `/send-metrics` endpoint.
 
-When sending data to `send-metrics` we always serialize the data for the chunk to a JSON string, and deserialize it back into an Object before handing the data to the collector.
+The `/bench` directory has simple benchmark it is able to send through 10k messages in 500ms.
+
 
 ## Contributing
 
