@@ -17,6 +17,10 @@ module PrometheusExporter::Server
 
       @total_bad_metrics = PrometheusExporter::Metric::Counter.new("total_collector_bad_metrics", "total mis-handled metrics by collector")
 
+      @total_metrics.observe(0)
+      @total_sessions.observe(0)
+      @total_bad_metrics.observe(0)
+
       @server = WEBrick::HTTPServer.new(
         Port: port,
         AccessLog: [],
