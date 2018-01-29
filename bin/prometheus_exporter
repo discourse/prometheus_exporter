@@ -20,7 +20,7 @@ def run
     eval File.read(ARGV[2])
 
     ObjectSpace.each_object(Class) do |klass|
-      if klass < PrometheusExporter::Server::Collector
+      if klass < PrometheusExporter::Server::CollectorBase
         collector = klass
       end
     end

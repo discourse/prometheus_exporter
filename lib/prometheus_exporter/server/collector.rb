@@ -2,7 +2,7 @@
 
 module PrometheusExporter::Server
 
-  class Collector
+  class Collector < CollectorBase
 
     def initialize
       @metrics = {}
@@ -22,6 +22,20 @@ module PrometheusExporter::Server
           end
           metric.observe(obj["value"], obj["keys"])
         end
+      end
+    end
+
+    def prometheus_metrics_text
+      @mutex.synchronize do
+        @metrics.values.map(&:to_prometheus_text).join("\n")
+      end
+    end
+
+    protected
+
+    def register_metric(metric)
+      @mutex.synchronize do
+        @metrics << metric
       end
     end
 
@@ -69,20 +83,6 @@ module PrometheusExporter::Server
         end
       end
     end
-
-    def prometheus_metrics_text
-      @mutex.synchronize do
-        @metrics.values.map(&:to_prometheus_text).join("\n")
-      end
-    end
-
-    def register_metric(metric)
-      @mutex.synchronize do
-        @metrics << metric
-      end
-    end
-
-    protected
 
     def register_metric_unsafe(obj)
       name = obj["name"]
