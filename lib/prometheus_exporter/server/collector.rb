@@ -3,7 +3,7 @@
 module PrometheusExporter::Server
 
   class Collector < CollectorBase
-
+    MAX_PROCESS_METRIC_AGE = 60
     PROCESS_GAUGES = {
       heap_free_slots: "Free ruby heap slots",
       heap_live_slots: "Used ruby heap slots",
@@ -48,28 +48,33 @@ module PrometheusExporter::Server
       @mutex.synchronize do
         val = @metrics.values.map(&:to_prometheus_text).join("\n")
 
-        if @process_metrics
+        metrics = {}
+
+        if @process_metrics.length > 0
           val << "\n"
 
-          val << @process_metrics.map do |m|
+          @process_metrics.map do |m|
             metric_key = { pid: m["pid"], type: m["process_type"] }
+
             PROCESS_GAUGES.map do |k, help|
               k = k.to_s
               if v = m[k]
-                g = PrometheusExporter::Metric::Gauge.new(k, help)
+                g = metrics[k] ||= PrometheusExporter::Metric::Gauge.new(k, help)
                 g.observe(v, metric_key)
-                g
               end
-            end.compact +
+            end
+
             PROCESS_COUNTERS.map do |k, help|
               k = k.to_s
               if v = m[k]
-                g = PrometheusExporter::Metric::Counter.new(k, help)
-                g.observe(v, metric_key)
-                g
+                c = metrics[k] ||= PrometheusExporter::Metric::Counter.new(k, help)
+                c.observe(v, metric_key)
               end
-            end.compact
-          end.flatten.compact.map(&:to_prometheus_text).join("\n")
+            end
+
+          end
+
+          val << metrics.values.map(&:to_prometheus_text).join("\n")
         end
 
         val
@@ -135,7 +140,7 @@ module PrometheusExporter::Server
       obj["created_at"] = now
 
       @process_metrics.delete_if do |current|
-        metric["pid"] == current["pid"] || (current["created_at"] + MAX_PROCESS_METRIC_AGE < now)
+        obj["pid"] == current["pid"] || (current["created_at"] + MAX_PROCESS_METRIC_AGE < now)
       end
       @process_metrics << obj
     end

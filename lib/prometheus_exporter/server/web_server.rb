@@ -9,7 +9,9 @@ module PrometheusExporter::Server
   class WebServer
     attr_reader :collector
 
-    def initialize(port: , collector: nil)
+    def initialize(port: , collector: nil, verbose: false)
+
+      @verbose = verbose
 
       @total_metrics = PrometheusExporter::Metric::Counter.new("total_collector_metrics", "total metrics processed by exporter web")
 
@@ -21,10 +23,19 @@ module PrometheusExporter::Server
       @total_sessions.observe(0)
       @total_bad_metrics.observe(0)
 
+      access_log = []
+      if verbose
+        access_log = [
+          [$stderr, WEBrick::AccessLog::COMMON_LOG_FORMAT],
+          [$stderr, WEBrick::AccessLog::REFERER_LOG_FORMAT],
+        ]
+        logger = WEBrick::Log.new($stderr)
+      end
+
       @server = WEBrick::HTTPServer.new(
         Port: port,
-        AccessLog: [],
-        Logger: WEBrick::Log.new("/dev/null")
+        Logger: logger,
+        AccessLog: access_log
       )
 
       @collector = collector || Collector.new
@@ -52,7 +63,7 @@ module PrometheusExporter::Server
           handle_metrics(req, res)
         else
           res.status = 404
-          res.body = "Not Found! The Prometheus Discourse plugin only listens on /metrics and /send-metrics"
+          res.body = "Not Found! The Prometheus Ruby Exporter only listens on /metrics and /send-metrics"
         end
       end
     end
@@ -64,6 +75,12 @@ module PrometheusExporter::Server
           @total_metrics.observe
           @collector.process(block)
         rescue => e
+          if @verbose
+            STDERR.puts
+            STDERR.puts e.inspect
+            STDERR.puts e.backtrace
+            STDERR.puts
+          end
           @total_bad_metrics.observe
           res.body = "Bad Metrics #{e}"
           res.status = e.respond_to?(:status_code) ? e.status_code : 500

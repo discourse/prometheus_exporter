@@ -5,14 +5,11 @@ require 'optparse'
 require_relative "./../lib/prometheus_exporter"
 require_relative "./../lib/prometheus_exporter/server"
 
-def usage
-  puts "Usage: prometheus_exporter [--port port] [--collector filename] [--prefix]"
-end
-
 def run
   port = PrometheusExporter::DEFAULT_PORT
   prefix = "ruby_"
   collector = nil
+  verbose = false
 
   OptionParser.new do |opt|
     opt.on('-p',
@@ -27,6 +24,10 @@ def run
     opt.on('-c', '--collector CUSTOM_COLLECTOR', String, "(optional) Custom collector to run") do |o|
       collector = o.to_s
     end
+    opt.on('-v', '--verbose') do |o|
+      verbose = true
+    end
+
   end.parse!
 
   PrometheusExporter::Metric::Base.default_prefix = prefix
@@ -48,7 +49,7 @@ def run
   end
 
   puts "#{Time.now} Starting prometheus exporter on port #{port}"
-  server = PrometheusExporter::Server::WebServer.new port: port, collector: collector&.new
+  server = PrometheusExporter::Server::WebServer.new port: port, collector: collector&.new, verbose: verbose
   server.start
   sleep
 
