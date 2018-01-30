@@ -4,7 +4,24 @@ module PrometheusExporter::Server
 
   class Collector < CollectorBase
 
+    PROCESS_GAUGES = {
+      heap_free_slots: "Free ruby heap slots",
+      heap_live_slots: "Used ruby heap slots",
+      v8_heap_size: "Total JavaScript V8 heap size (bytes)",
+      v8_used_heap_size: "Total used JavaScript V8 heap size (bytes)",
+      v8_physical_size: "Physical size consumed by V8 heaps",
+      v8_heap_count: "Number of V8 contexts running",
+      rss: "Total RSS used by process",
+    }
+
+    PROCESS_COUNTERS = {
+      major_gc_count: "Major GC operations by process",
+      minor_gc_count: "Minor GC operations by process",
+      total_allocated_objects: "Total number of allocateds objects by process",
+    }
+
     def initialize
+      @process_metrics = []
       @metrics = {}
       @buffer = []
       @mutex = Mutex.new
@@ -15,6 +32,8 @@ module PrometheusExporter::Server
       @mutex.synchronize do
         if obj["type"] == "web"
           observe_web(obj)
+        elsif obj["type"] == "process"
+          observe_process(obj)
         else
           metric = @metrics[obj["name"]]
           if !metric
@@ -27,7 +46,33 @@ module PrometheusExporter::Server
 
     def prometheus_metrics_text
       @mutex.synchronize do
-        @metrics.values.map(&:to_prometheus_text).join("\n")
+        val = @metrics.values.map(&:to_prometheus_text).join("\n")
+
+        if @process_metrics
+          val << "\n"
+
+          val << @process_metrics.map do |m|
+            metric_key = { pid: m["pid"], type: m["process_type"] }
+            PROCESS_GAUGES.map do |k, help|
+              k = k.to_s
+              if v = m[k]
+                g = PrometheusExporter::Metric::Gauge.new(k, help)
+                g.observe(v, metric_key)
+                g
+              end
+            end.compact +
+            PROCESS_COUNTERS.map do |k, help|
+              k = k.to_s
+              if v = m[k]
+                g = PrometheusExporter::Metric::Counter.new(k, help)
+                g.observe(v, metric_key)
+                g
+              end
+            end.compact
+          end.flatten.compact.map(&:to_prometheus_text).join("\n")
+        end
+
+        val
       end
     end
 
@@ -82,6 +127,17 @@ module PrometheusExporter::Server
           @http_sql_duration_seconds.observe(sql["duration"], labels)
         end
       end
+    end
+
+    def observe_process(obj)
+      now = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
+
+      obj["created_at"] = now
+
+      @process_metrics.delete_if do |current|
+        metric["pid"] == current["pid"] || (current["created_at"] + MAX_PROCESS_METRIC_AGE < now)
+      end
+      @process_metrics << obj
     end
 
     def register_metric_unsafe(obj)

@@ -97,6 +97,54 @@ awesome 10
 
 ```
 
+### Easy integration into Rails
+
+You can easily integrate into any Rack application:
+
+In your Gemfile:
+
+```
+gem 'prometheus_exporter'
+```
+
+
+```
+# in an initializer
+
+# expects exporter is running on port 9412
+$prom_client = PrometheusExporter::Client.new(port: 9412)
+
+unless Rails.env == "test"
+  require 'prometheus_exporter/middleware'
+  # insert in position 1
+  # instrument means method profiler will be injected in Redis and PG
+  Rails.application.middleware.unshift PrometheusExporter::Middleware,
+    instrument: true, client: $prom_client
+end
+```
+
+You may also be interested in per-process stats:
+
+```
+# in an initializer
+unless Rails.env == "test"
+  require 'prometheus_exporter/instrumentation'
+  PrometheusExporter::Instrumentation::Process.start($prom_client, "master")
+end
+
+after_fork do
+  $prom_client = PrometheusExporter::Client.new(port: 9412)
+  PrometheusExporter::Instrumentation::Process.start($prom_client, "web")
+end
+
+```
+
+Ensure you run the exporter via
+
+```
+% bundle exec prometheus_exporter 9412
+```
+
 ### Multi process mode with custom collector
 
 You can opt for custom collector logic in a multi process environment.
@@ -108,7 +156,7 @@ The standard collector ships "help", "type" and "name" for every metric, in some
 First, define a custom collector, it is critical you inherit off `PrometheusExporter::Server::Collector`, also it is critical you have custom implementations for #process and #prometheus_metrics_text
 
 ```ruby
-class MyCustomCollector < PrometheusExporter::Server::Collector
+class MyCustomCollector < PrometheusExporter::Server::CollectorBase
   def initialize
     @gauge1 = PrometheusExporter::Metric::Gauge.new("thing1", "I am thing 1")
     @gauge2 = PrometheusExporter::Metric::Gauge.new("thing2", "I am thing 2")
