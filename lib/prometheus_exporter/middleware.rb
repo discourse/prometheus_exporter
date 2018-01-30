@@ -8,7 +8,7 @@ class PrometheusExporter::Middleware
 
   def initialize(app, config = { instrument: true, client: nil })
     @app = app
-    @client = config[:client] || PrometheusExporter::Client.new(port: 9412)
+    @client = config[:client] || PrometheusExporter::Client.default
 
     if config[:instrument]
       if defined? Redis::Client

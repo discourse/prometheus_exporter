@@ -61,20 +61,20 @@ In some cases, for example unicorn or puma clusters you may want to aggregate me
 
 Simplest way to acheive this is use the built-in collector.
 
-First, run an exporter on your desired port:
+First, run an exporter on your desired port, we use the default port of 9394:
 
 ```
-# prometheus_exporter 12345
+# prometheus_exporter
 ```
 
-At this point an exporter is running on port 12345
+At this point an exporter is running on port 9394
 
 In your application:
 
 ```ruby
 require 'prometheus_exporter/client'
 
-client = PrometheusExporter::Client.new(host: 'localhost', port: 12345)
+client = PrometheusExporter::Client.default
 gauge = client.register(:gauge, "awesome", "amount of awesome")
 
 gauge.observe(10)
@@ -85,7 +85,7 @@ gauge.observe(99, day: "friday")
 Then you will get the metrics:
 
 ```bash
-% curl localhost:12345/metrics
+% curl localhost:9394/metrics
 # HELP collector_working Is the master process collector able to collect metrics
 # TYPE collector_working gauge
 collector_working 1
@@ -111,30 +111,26 @@ gem 'prometheus_exporter'
 ```
 # in an initializer
 
-# expects exporter is running on port 9412
-$prom_client = PrometheusExporter::Client.new(port: 9412)
-
 unless Rails.env == "test"
   require 'prometheus_exporter/middleware'
   # insert in position 1
   # instrument means method profiler will be injected in Redis and PG
-  Rails.application.middleware.unshift PrometheusExporter::Middleware,
-    instrument: true, client: $prom_client
+  Rails.application.middleware.unshift PrometheusExporter::Middleware
 end
 ```
 
-You may also be interested in per-process stats:
+You may also be interested in per-process stats, this collects memory and GC stats
 
 ```
 # in an initializer
 unless Rails.env == "test"
   require 'prometheus_exporter/instrumentation'
-  PrometheusExporter::Instrumentation::Process.start($prom_client, "master")
+  PrometheusExporter::Instrumentation::Process.start(type: "master")
 end
 
 after_fork do
-  $prom_client = PrometheusExporter::Client.new(port: 9412)
-  PrometheusExporter::Instrumentation::Process.start($prom_client, "web")
+  require 'prometheus_exporter/instrumentation'
+  PrometheusExporter::Instrumentation::Process.start(type:"web")
 end
 
 ```
@@ -142,7 +138,7 @@ end
 Ensure you run the exporter via
 
 ```
-% bundle exec prometheus_exporter 9412
+% bundle exec prometheus_exporter
 ```
 
 ### Multi process mode with custom collector

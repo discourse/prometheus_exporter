@@ -24,10 +24,18 @@ class PrometheusExporter::Client
     end
   end
 
+  def self.default
+    @default ||= new
+  end
+
+  def self.default=(client)
+    @default = client
+  end
+
   MAX_SOCKET_AGE = 25
   MAX_QUEUE_SIZE = 10_000
 
-  def initialize(host: 'localhost', port:, max_queue_size: nil, thread_sleep: 0.5)
+  def initialize(host: 'localhost', port: PrometheusExporter::DEFAULT_PORT, max_queue_size: nil, thread_sleep: 0.5)
     @metrics = []
 
     @queue = Queue.new

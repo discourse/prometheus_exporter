@@ -1,23 +1,38 @@
 #!/usr/bin/env ruby
 
+require 'optparse'
+
 require_relative "./../lib/prometheus_exporter"
 require_relative "./../lib/prometheus_exporter/server"
 
 def usage
-  puts "Usage: prometheus_exporter PORT [--collector filename]"
+  puts "Usage: prometheus_exporter [--port port] [--collector filename] [--prefix]"
 end
 
 def run
-  port = ARGV[0].to_i
-  if port == 0
-    usage
-    exit 1
-  end
-
+  port = PrometheusExporter::DEFAULT_PORT
+  prefix = "ruby_"
   collector = nil
 
-  if ARGV[1] == "--collector"
-    eval File.read(ARGV[2])
+  OptionParser.new do |opt|
+    opt.on('-p',
+           '--port INTEGER',
+           Integer,
+           "Port exporter should listen on (default: #{port})") do |o|
+      port = o.to_i
+    end
+    opt.on('--prefix METRIC_PREFIX', String, "Prefix to apply to all metrics (default: #{prefix})") do |o|
+      prefix = o.to_s
+    end
+    opt.on('-c', '--collector CUSTOM_COLLECTOR', String, "(optional) Custom collector to run") do |o|
+      collector = o.to_s
+    end
+  end.parse!
+
+  PrometheusExporter::Metric::Base.default_prefix = prefix
+
+  if collector
+    eval File.read(collector)
 
     ObjectSpace.each_object(Class) do |klass|
       if klass < PrometheusExporter::Server::CollectorBase

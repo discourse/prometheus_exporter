@@ -1,8 +1,9 @@
 # collects stats from currently running process
 module PrometheusExporter::Instrumentation
   class Process
-    def self.start(client, type, frequency = 30)
+    def self.start(client: nil, type: "ruby", frequency: 30)
       process_collector = new(type)
+      client ||= PrometheusExporter::Client.default
       Thread.new do
         while true
           begin
