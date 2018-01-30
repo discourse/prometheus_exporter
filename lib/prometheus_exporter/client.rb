@@ -158,6 +158,7 @@ class PrometheusExporter::Client
       @socket = TCPSocket.new @host, @port
       @socket.write("POST /send-metrics HTTP/1.1\r\n")
       @socket.write("Transfer-Encoding: chunked\r\n")
+      @socket.write("Host: #{@host}\r\n")
       @socket.write("Connection: Close\r\n")
       @socket.write("Content-Type: application/octet-stream\r\n")
       @socket.write("\r\n")

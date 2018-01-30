@@ -23,19 +23,23 @@ module PrometheusExporter::Server
       @total_sessions.observe(0)
       @total_bad_metrics.observe(0)
 
-      access_log = []
+      access_log, logger = nil
+
       if verbose
         access_log = [
           [$stderr, WEBrick::AccessLog::COMMON_LOG_FORMAT],
           [$stderr, WEBrick::AccessLog::REFERER_LOG_FORMAT],
         ]
         logger = WEBrick::Log.new($stderr)
+      else
+        access_log = []
+        logger = WEBrick::Log.new("/dev/null")
       end
 
       @server = WEBrick::HTTPServer.new(
         Port: port,
         Logger: logger,
-        AccessLog: access_log
+        AccessLog: access_log,
       )
 
       @collector = collector || Collector.new

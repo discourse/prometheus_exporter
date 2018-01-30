@@ -37,6 +37,32 @@ class PrometheusExporterTest < Minitest::Test
     port
   end
 
+  def test_it_can_collect_over_ipv6
+    port = find_free_port
+
+    server = PrometheusExporter::Server::WebServer.new port: port
+    collector = server.collector
+    server.start
+
+    client = PrometheusExporter::Client.new host: "::1", port: port, thread_sleep: 0.001
+    gauge = client.register(:gauge, "my_gauge", "some gauge")
+    gauge.observe(99)
+
+    TestHelper.wait_for(2) do
+      server.collector.prometheus_metrics_text =~ /99/
+    end
+
+    expected = <<~TEXT
+      # HELP my_gauge some gauge
+      # TYPE my_gauge gauge
+      my_gauge 99
+    TEXT
+    assert_equal(expected, collector.prometheus_metrics_text)
+  ensure
+    client.stop rescue nil
+    server.stop rescue nil
+  end
+
   def test_it_can_collect_metrics_from_standard
     port = find_free_port
 
