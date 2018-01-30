@@ -113,8 +113,8 @@ gem 'prometheus_exporter'
 
 unless Rails.env == "test"
   require 'prometheus_exporter/middleware'
-  # insert in position 1
-  # instrument means method profiler will be injected in Redis and PG
+
+  # This reports stats per request like HTTP status and timings
   Rails.application.middleware.unshift PrometheusExporter::Middleware
 end
 ```
@@ -125,9 +125,12 @@ You may also be interested in per-process stats, this collects memory and GC sta
 # in an initializer
 unless Rails.env == "test"
   require 'prometheus_exporter/instrumentation'
+
+  # this reports basic process stats like RSS and GC info
   PrometheusExporter::Instrumentation::Process.start(type: "master")
 end
 
+# in unicorn/puma/passenger be sure to run a new process instrumenter after fork
 after_fork do
   require 'prometheus_exporter/instrumentation'
   PrometheusExporter::Instrumentation::Process.start(type:"web")
