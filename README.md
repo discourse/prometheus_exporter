@@ -138,7 +138,7 @@ end
 
 ```
 
-Ensure you run the exporter via
+Ensure you run the exporter in a monitored background process via
 
 ```
 % bundle exec prometheus_exporter
