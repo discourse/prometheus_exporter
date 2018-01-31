@@ -23,19 +23,22 @@ module PrometheusExporter::Server
     def initialize
       @process_metrics = []
       @metrics = {}
-      @buffer = []
       @mutex = Mutex.new
+      @collectors = {}
+      register_collector("web", WebCollector.new)
+      register_collector("process", ProcessCollector.new)
+      register_collector("sidekiq", SidekiqCollector.new)
+    end
+
+    def register_collector(type, collector)
+      @collectors[type] = collector
     end
 
     def process(str)
       obj = JSON.parse(str)
       @mutex.synchronize do
-        if obj["type"] == "web"
-          observe_web(obj)
-        elsif obj["type"] == "process"
-          observe_process(obj)
-        elsif obj["type"] == "sidekiq"
-          observe_sidekiq(obj)
+        if collector = @collectors[obj["type"]]
+          collector.observe(obj)
         else
           metric = @metrics[obj["name"]]
           if !metric
@@ -48,131 +51,12 @@ module PrometheusExporter::Server
 
     def prometheus_metrics_text
       @mutex.synchronize do
-        val = @metrics.values.map(&:to_prometheus_text).join("\n")
-
-        metrics = {}
-
-        if @process_metrics.length > 0
-          val << "\n"
-
-          @process_metrics.map do |m|
-            metric_key = { pid: m["pid"], type: m["process_type"] }
-
-            PROCESS_GAUGES.map do |k, help|
-              k = k.to_s
-              if v = m[k]
-                g = metrics[k] ||= PrometheusExporter::Metric::Gauge.new(k, help)
-                g.observe(v, metric_key)
-              end
-            end
-
-            PROCESS_COUNTERS.map do |k, help|
-              k = k.to_s
-              if v = m[k]
-                c = metrics[k] ||= PrometheusExporter::Metric::Counter.new(k, help)
-                c.observe(v, metric_key)
-              end
-            end
-
-          end
-
-          val << metrics.values.map(&:to_prometheus_text).join("\n")
-        end
-
-        val
+        (@metrics.values + @collectors.values.map(&:metrics).flatten)
+          .map(&:to_prometheus_text).join("\n")
       end
     end
 
     protected
-
-    def register_metric(metric)
-      @mutex.synchronize do
-        @metrics << metric
-      end
-    end
-
-    def ensure_web_metrics
-      unless @http_requests
-        @metrics["http_requests"] = @http_requests = PrometheusExporter::Metric::Counter.new(
-          "http_requests",
-          "Total HTTP requests from web app"
-        )
-
-        @metrics["http_duration_seconds"] = @http_duration_seconds = PrometheusExporter::Metric::Summary.new(
-          "http_duration_seconds",
-          "Time spent in HTTP reqs in seconds"
-        )
-
-        @metrics["http_redis_duration_seconds"] = @http_redis_duration_seconds = PrometheusExporter::Metric::Summary.new(
-          "http_redis_duration_seconds",
-          "Time spent in HTTP reqs in redis seconds"
-        )
-
-        @metrics["http_sql_duration_seconds"] = @http_sql_duration_seconds = PrometheusExporter::Metric::Summary.new(
-          "http_sql_duration_seconds",
-          "Time spent in HTTP reqs in SQL in seconds"
-        )
-      end
-    end
-
-    def observe_web(obj)
-      ensure_web_metrics
-
-      labels = {
-        controller: obj["controller"] || "other",
-        action: obj["action"] || "other"
-      }
-
-      @http_requests.observe(1, labels.merge(status: obj["status"]))
-
-      if timings = obj["timings"]
-        @http_duration_seconds.observe(timings["total_duration"], labels)
-        if redis = timings["redis"]
-          @http_redis_duration_seconds.observe(redis["duration"], labels)
-        end
-        if sql = timings["sql"]
-          @http_sql_duration_seconds.observe(sql["duration"], labels)
-        end
-      end
-    end
-
-    def observe_process(obj)
-      now = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
-
-      obj["created_at"] = now
-
-      @process_metrics.delete_if do |current|
-        obj["pid"] == current["pid"] || (current["created_at"] + MAX_PROCESS_METRIC_AGE < now)
-      end
-      @process_metrics << obj
-    end
-
-    def observe_sidekiq(obj)
-      ensure_sidekiq_metrics
-      @sidekiq_job_duration_seconds.observe(obj["duration"], job_name: obj["name"])
-      @sidekiq_job_count.observe(1, job_name: obj["name"])
-      @sidekiq_failed_job_count.observe(1, job_name: obj["name"]) if !obj["success"]
-    end
-
-    def ensure_sidekiq_metrics
-      if !@sidekiq_job_count
-
-        @metrics["sidekiq_job_duration_seconds"] =
-          @sidekiq_job_duration_seconds =
-          PrometheusExporter::Metric::Counter.new(
-            "sidekiq_job_duration_seconds", "Total time spent in sidekiq jobs")
-
-        @metrics["sidekiq_job_count"] =
-          @sidekiq_job_count =
-          PrometheusExporter::Metric::Counter.new(
-            "sidekiq_job_count", "Total number of sidekiq jobs executed")
-
-        @metrics["sidekiq_failed_job_count"] =
-          @sidekiq_failed_job_count =
-          PrometheusExporter::Metric::Counter.new(
-            "sidekiq_failed_job_count", "Total number failed sidekiq jobs executed")
-      end
-    end
 
     def register_metric_unsafe(obj)
       name = obj["name"]
