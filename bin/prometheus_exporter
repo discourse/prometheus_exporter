@@ -38,7 +38,7 @@ def run
   PrometheusExporter::Metric::Base.default_prefix = prefix
 
   if collector_filename
-    eval File.read(collector_filename)
+    eval File.read(collector_filename), nil, File.expand_path(collector_filename)
 
     found = false
 
@@ -60,7 +60,7 @@ def run
 
   if type_collectors.length > 0
     type_collectors.each do |t|
-      eval File.read(t)
+      eval File.read(t), nil, File.expand_path(t)
     end
 
     ObjectSpace.each_object(Class) do |klass|
