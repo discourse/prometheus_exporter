@@ -155,6 +155,50 @@ Ensure you run the exporter in a monitored background process via
 % bundle exec prometheus_exporter
 ```
 
+### Custom type collectors
+
+In some cases you may have custom metrics you want to ship the collector in a batch, in this case you may still be interested in the base collector behavior but would like to add your own special messages.
+
+```ruby
+# person_collector.rb
+class PersonCollector < PrometheusExporter::Server::TypeCollector
+  def initialize
+    @oldies = PrometheusExporter::Metric::Counter.new("oldies", "old people")
+    @youngies = PrometheusExporter::Metric::Counter.new("youngies", "young people")
+  end
+
+  def type
+    "person"
+  end
+
+  def collect(obj)
+    if obj["age"] > 21
+      @oldies.observe(1)
+    else
+      @youngies.observe(1)
+    end
+  end
+
+  def metrics
+    [@oldies, @youngies]
+  end
+end
+```
+
+Shipping metrics then is done via:
+
+```
+PrometheusExporter::Client.default.send_json(type: "person", age: 40)
+```
+
+To load the custom collector run:
+
+
+```
+bundle exec prometheus_exporter -a person_collector.rb
+
+```
+
 ### Multi process mode with custom collector
 
 You can opt for custom collector logic in a multi process environment.
