@@ -5,6 +5,45 @@ require 'prometheus_exporter/instrumentation'
 
 class PrometheusCollectorTest < Minitest::Test
 
+  def before
+    Base.default_prefix = ''
+  end
+
+  class PipedClient
+    def initialize(collector)
+      @collector = collector
+    end
+
+    def send_json(obj)
+      @collector.process(obj.to_json)
+    end
+  end
+
+  def test_it_can_collect_sidekiq_metrics
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector)
+
+    instrument = PrometheusExporter::Instrumentation::Sidekiq.new(client: client)
+
+    instrument.call("hello", nil, "default") do
+      # nothing
+    end
+
+    begin
+      instrument.call(1, nil, "default") do
+        boom
+      end
+    rescue
+    end
+
+    result = collector.prometheus_metrics_text
+
+    assert(result.include?("sidekiq_failed_job_count{job_name=\"Integer\"} 1"), "has failed job")
+
+    assert(result.include?("sidekiq_job_count{job_name=\"String\"} 1"), "has working job")
+    assert(result.include?("sidekiq_job_duration_seconds"), "has duration")
+  end
+
   def test_it_can_collect_process_metrics
     # make some mini racer data
     ctx = MiniRacer::Context.new

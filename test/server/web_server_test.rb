@@ -24,6 +24,10 @@ end
 
 class PrometheusExporterTest < Minitest::Test
 
+  def before
+    Base.default_prefix = ''
+  end
+
   def find_free_port
     port = 12437
     while port < 13_000

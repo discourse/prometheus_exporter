@@ -34,6 +34,8 @@ module PrometheusExporter::Server
           observe_web(obj)
         elsif obj["type"] == "process"
           observe_process(obj)
+        elsif obj["type"] == "sidekiq"
+          observe_sidekiq(obj)
         else
           metric = @metrics[obj["name"]]
           if !metric
@@ -143,6 +145,33 @@ module PrometheusExporter::Server
         obj["pid"] == current["pid"] || (current["created_at"] + MAX_PROCESS_METRIC_AGE < now)
       end
       @process_metrics << obj
+    end
+
+    def observe_sidekiq(obj)
+      ensure_sidekiq_metrics
+      @sidekiq_job_duration_seconds.observe(obj["duration"], job_name: obj["name"])
+      @sidekiq_job_count.observe(1, job_name: obj["name"])
+      @sidekiq_failed_job_count.observe(1, job_name: obj["name"]) if !obj["success"]
+    end
+
+    def ensure_sidekiq_metrics
+      if !@sidekiq_job_count
+
+        @metrics["sidekiq_job_duration_seconds"] =
+          @sidekiq_job_duration_seconds =
+          PrometheusExporter::Metric::Counter.new(
+            "sidekiq_job_duration_seconds", "Total time spent in sidekiq jobs")
+
+        @metrics["sidekiq_job_count"] =
+          @sidekiq_job_count =
+          PrometheusExporter::Metric::Counter.new(
+            "sidekiq_job_count", "Total number of sidekiq jobs executed")
+
+        @metrics["sidekiq_failed_job_count"] =
+          @sidekiq_failed_job_count =
+          PrometheusExporter::Metric::Counter.new(
+            "sidekiq_failed_job_count", "Total number failed sidekiq jobs executed")
+      end
     end
 
     def register_metric_unsafe(obj)

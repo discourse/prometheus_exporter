@@ -138,6 +138,17 @@ end
 
 ```
 
+Including Sidekiq metrics (how many jobs ran? how many failed? how long did they take?)
+
+```
+Sidekiq.configure_server do |config|
+   config.server_middleware do |chain|
+      require 'prometheus_exporter/instrumentation'
+      chain.add PrometheusExporter::Instrumentation::Sidekiq
+   end
+end
+```
+
 Ensure you run the exporter in a monitored background process via
 
 ```
