@@ -25,13 +25,13 @@ module PrometheusExporter::Server
       @metrics = {}
       @mutex = Mutex.new
       @collectors = {}
-      register_collector("web", WebCollector.new)
-      register_collector("process", ProcessCollector.new)
-      register_collector("sidekiq", SidekiqCollector.new)
+      register_collector(WebCollector.new)
+      register_collector(ProcessCollector.new)
+      register_collector(SidekiqCollector.new)
     end
 
-    def register_collector(type, collector)
-      @collectors[type] = collector
+    def register_collector(collector)
+      @collectors[collector.type] = collector
     end
 
     def process(str)

@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module PrometheusExporter::Server
 
-  class ProcessCollector
+  class ProcessCollector < TypeCollector
     MAX_PROCESS_METRIC_AGE = 60
     PROCESS_GAUGES = {
       heap_free_slots: "Free ruby heap slots",
@@ -20,6 +22,10 @@ module PrometheusExporter::Server
 
     def initialize
       @process_metrics = []
+    end
+
+    def type
+      "process"
     end
 
     def metrics

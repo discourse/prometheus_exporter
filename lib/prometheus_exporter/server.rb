@@ -1,3 +1,4 @@
+require_relative "server/type_collector"
 require_relative "server/web_collector"
 require_relative "server/process_collector"
 require_relative "server/sidekiq_collector"

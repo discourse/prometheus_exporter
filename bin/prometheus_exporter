@@ -8,8 +8,10 @@ require_relative "./../lib/prometheus_exporter/server"
 def run
   port = PrometheusExporter::DEFAULT_PORT
   prefix = "ruby_"
-  collector = nil
+  collector_filename = nil
   verbose = false
+  type_collectors = []
+  collector_class = PrometheusExporter::Server::Collector
 
   OptionParser.new do |opt|
     opt.on('-p',
@@ -21,8 +23,11 @@ def run
     opt.on('--prefix METRIC_PREFIX', String, "Prefix to apply to all metrics (default: #{prefix})") do |o|
       prefix = o.to_s
     end
-    opt.on('-c', '--collector CUSTOM_COLLECTOR', String, "(optional) Custom collector to run") do |o|
-      collector = o.to_s
+    opt.on('-c', '--collector FILE', String, "(optional) Custom collector to run") do |o|
+      collector_filename = o.to_s
+    end
+    opt.on('-a', '--type-collector FILE', String, "(optional) Custom type collectors to run in main collector") do |o|
+      type_collectors << o
     end
     opt.on('-v', '--verbose') do |o|
       verbose = true
@@ -32,24 +37,42 @@ def run
 
   PrometheusExporter::Metric::Base.default_prefix = prefix
 
-  if collector
-    eval File.read(collector)
+  if collector_filename
+    eval File.read(collector_filename)
+
+    found = false
 
     ObjectSpace.each_object(Class) do |klass|
       if klass < PrometheusExporter::Server::CollectorBase
-        collector = klass
+        collector_class = klass
+        found = true
       end
     end
 
-    if !collector
-      STDERR.puts "Can not find a class inheriting off PrometheusExporter::Server::Collector"
+    if !found
+      STDERR.puts "Can not find a class inheriting off PrometheusExporter::Server::CollectorBase"
       usage
       exit 1
     end
   end
 
+  collector = collector_class.new
+
+  if type_collectors.length > 0
+    type_collectors.each do |t|
+      eval File.read(t)
+    end
+
+    ObjectSpace.each_object(Class) do |klass|
+      if klass < PrometheusExporter::Server::TypeCollector
+        collector.register_collector klass.new
+        STDERR.puts "Registered TypeCollector: #{klass}" if verbose
+      end
+    end
+  end
+
   puts "#{Time.now} Starting prometheus exporter on port #{port}"
-  server = PrometheusExporter::Server::WebServer.new port: port, collector: collector&.new, verbose: verbose
+  server = PrometheusExporter::Server::WebServer.new port: port, collector: collector, verbose: verbose
   server.start
   sleep
 

@@ -1,7 +1,13 @@
+# frozen_string_literal: true
+
 module PrometheusExporter::Server
-  class WebCollector
+  class WebCollector < TypeCollector
     def initialize
       @metrics = {}
+    end
+
+    def type
+      "web"
     end
 
     def collect(obj)

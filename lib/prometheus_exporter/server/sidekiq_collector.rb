@@ -1,5 +1,9 @@
 module PrometheusExporter::Server
-  class SidekiqCollector
+  class SidekiqCollector < TypeCollector
+
+    def type
+      "sidekiq"
+    end
 
     def observe(obj)
       ensure_sidekiq_metrics
