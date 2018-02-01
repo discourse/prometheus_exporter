@@ -38,7 +38,7 @@ module PrometheusExporter::Server
       obj = JSON.parse(str)
       @mutex.synchronize do
         if collector = @collectors[obj["type"]]
-          collector.observe(obj)
+          collector.collect(obj)
         else
           metric = @metrics[obj["name"]]
           if !metric

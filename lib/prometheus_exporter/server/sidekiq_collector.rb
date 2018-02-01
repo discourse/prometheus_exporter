@@ -5,7 +5,7 @@ module PrometheusExporter::Server
       "sidekiq"
     end
 
-    def observe(obj)
+    def collect(obj)
       ensure_sidekiq_metrics
       @sidekiq_job_duration_seconds.observe(obj["duration"], job_name: obj["name"])
       @sidekiq_job_count.observe(1, job_name: obj["name"])

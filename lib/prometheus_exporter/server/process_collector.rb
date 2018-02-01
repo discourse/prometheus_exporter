@@ -56,7 +56,7 @@ module PrometheusExporter::Server
       metrics.values
     end
 
-    def observe(obj)
+    def collect(obj)
       now = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
 
       obj["created_at"] = now
