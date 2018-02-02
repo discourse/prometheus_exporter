@@ -20,6 +20,10 @@ Or install it yourself as:
 
     $ gem install prometheus_exporter
 
+## Can I have some pretty pictures please? 
+
+Sure, check out: [Instrumenting Rails with Prometheus](https://samsaffron.com/archive/2018/02/02/instrumenting-rails-with-prometheus)
+
 ## Usage
 
 ### Single process mode
