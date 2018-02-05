@@ -207,9 +207,7 @@ bundle exec prometheus_exporter -a person_collector.rb
 
 You can opt for custom collector logic in a multi process environment.
 
-This allows you better control over the amount of data transported over HTTP and also allow you to introduce custom logic into your centralized collector.
-
-The standard collector ships "help", "type" and "name" for every metric, in some cases you may want to avoid sending all that data.
+This allows you to completely replace the collector logic.
 
 First, define a custom collector, it is critical you inherit off `PrometheusExporter::Server::Collector`, also it is critical you have custom implementations for #process and #prometheus_metrics_text
 
@@ -245,7 +243,7 @@ end
 Next, launch the exporter process:
 
 ```bash
-% bin/prometheus_exporter 12345 --collector examples/custom_collector.rb
+% bin/prometheus_exporter --collector examples/custom_collector.rb
 ```
 
 In your application ship it the metrics you want:
@@ -278,7 +276,7 @@ thing2 12
 
 ## Transport concerns
 
-Prometheus Exporter handles transport using a simple HTTP protocol. In multi process mode we avoid needing a large number of HTTP request by using chunked encoding to send metrics. This means that a single HTTP channel can deliver 100s or even 1000s of metrics over a single HTTP session to the `/send-metrics` endpoint.
+Prometheus Exporter handles transport using a simple HTTP protocol. In multi process mode we avoid needing a large number of HTTP request by using chunked encoding to send metrics. This means that a single HTTP channel can deliver 100s or even 1000s of metrics over a single HTTP session to the `/send-metrics` endpoint. All calls to `send` and `send_json` on the PrometheusExporter::Client class are **non-blocking** and batched. 
 
 The `/bench` directory has simple benchmark it is able to send through 10k messages in 500ms.
 
