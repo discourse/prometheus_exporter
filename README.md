@@ -203,6 +203,31 @@ bundle exec prometheus_exporter -a person_collector.rb
 
 ```
 
+#### Global metrics in a custom type collector
+
+Custom type collectors are the ideal place to collect global metrics, such as user/article counts and connection counts. The custom type collector runs in the collector which usually runs in the prometheus exporter process. 
+
+Out-of-the-box we try to keep the prometheus exporter as lean as possible, we do not load all the Rails dependencies so you will not have access to your models. You can always ensure it is loaded in your custom type collector with:
+
+```
+unless defined? Rails
+  require File.expand_path("../../config/environment", __FILE__)
+end
+```
+
+Then you can collect the metrics you need on demand:
+
+```
+def metrics 
+  user_count_gague = PrometheusExporter::Metric::Gauge.new('user_count', 'number of users in the app')
+  user_count_gague.observe User.count
+  [user_count_gauge]
+end
+```
+
+The metrics endpoint is called whenever prometheus calls the `/metrics` HTTP endpoint, it may make sense to introduce some caching so database calls are only performed once every N seconds. [lru_redux](https://github.com/SamSaffron/lru_redux) is the perfect gem for that kind of job as you can `LruRedux::TTL::Cache` which will automatically expire after N seconds. 
+
+
 ### Multi process mode with custom collector
 
 You can opt for custom collector logic in a multi process environment.
