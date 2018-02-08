@@ -19,6 +19,22 @@ class PrometheusCollectorTest < Minitest::Test
     end
   end
 
+  def test_register_metric
+    collector = PrometheusExporter::Server::Collector.new
+    metric = PrometheusExporter::Metric::Gauge.new("amazing", "amount of amazing")
+    collector.register_metric(metric)
+    metric.observe(77)
+    metric.observe(2, red: "alert")
+    text = <<~TXT
+      # HELP amazing amount of amazing
+      # TYPE amazing gauge
+      amazing 77
+      amazing{red="alert"} 2
+    TXT
+
+    assert_equal(text, collector.prometheus_metrics_text)
+  end
+
   def test_it_can_collect_sidekiq_metrics
     collector = PrometheusExporter::Server::Collector.new
     client = PipedClient.new(collector)

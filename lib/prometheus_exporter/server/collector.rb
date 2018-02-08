@@ -56,6 +56,12 @@ module PrometheusExporter::Server
       end
     end
 
+    def register_metric(metric)
+      @mutex.synchronize do
+        @metrics[metric.name] = metric
+      end
+    end
+
     protected
 
     def register_metric_unsafe(obj)
