@@ -6,76 +6,69 @@ require_relative "./../lib/prometheus_exporter"
 require_relative "./../lib/prometheus_exporter/server"
 
 def run
-  port = PrometheusExporter::DEFAULT_PORT
-  prefix = "ruby_"
-  collector_filename = nil
-  verbose = false
-  type_collectors = []
-  collector_class = PrometheusExporter::Server::Collector
+  options = {}
+  custom_collector_filename = nil
+  custom_type_collectors_filenames = []
 
   OptionParser.new do |opt|
+    opt.banner = "Usage: prometheus_exporter [options]"
     opt.on('-p',
            '--port INTEGER',
            Integer,
-           "Port exporter should listen on (default: #{port})") do |o|
-      port = o.to_i
+           "Port exporter should listen on (default: #{PrometheusExporter::DEFAULT_PORT})") do |o|
+      options[:port] = o.to_i
     end
-    opt.on('--prefix METRIC_PREFIX', String, "Prefix to apply to all metrics (default: #{prefix})") do |o|
-      prefix = o.to_s
+    opt.on('--prefix METRIC_PREFIX', String, "Prefix to apply to all metrics (default: #{PrometheusExporter::DEFAULT_PREFIX})") do |o|
+      options[:prefix] = o.to_s
     end
     opt.on('-c', '--collector FILE', String, "(optional) Custom collector to run") do |o|
-      collector_filename = o.to_s
+      custom_collector_filename = o.to_s
     end
     opt.on('-a', '--type-collector FILE', String, "(optional) Custom type collectors to run in main collector") do |o|
-      type_collectors << o
+      custom_type_collectors_filenames << o
     end
     opt.on('-v', '--verbose') do |o|
-      verbose = true
+      options[:verbose] = true
     end
 
   end.parse!
 
-  PrometheusExporter::Metric::Base.default_prefix = prefix
-
-  if collector_filename
-    eval File.read(collector_filename), nil, File.expand_path(collector_filename)
-
+  if custom_collector_filename
+    eval File.read(custom_collector_filename), nil, File.expand_path(custom_collector_filename)
     found = false
 
+    base_klass = PrometheusExporter::Server::CollectorBase
+
     ObjectSpace.each_object(Class) do |klass|
-      if klass < PrometheusExporter::Server::CollectorBase
-        collector_class = klass
-        found = true
+      if klass < base_klass && klass != base_klass
+        options[:collector_class] = klass
       end
     end
 
     if !found
-      STDERR.puts "Can not find a class inheriting off PrometheusExporter::Server::CollectorBase"
-      usage
+      STDERR.puts "[Error] Can not find a class inheriting off PrometheusExporter::Server::CollectorBase"
       exit 1
     end
   end
 
-  collector = collector_class.new
-
-  if type_collectors.length > 0
-    type_collectors.each do |t|
+  if custom_type_collectors_filenames.length > 0
+    custom_type_collectors_filenames.each do |t|
       eval File.read(t), nil, File.expand_path(t)
     end
 
     ObjectSpace.each_object(Class) do |klass|
       if klass < PrometheusExporter::Server::TypeCollector
-        collector.register_collector klass.new
-        STDERR.puts "Registered TypeCollector: #{klass}" if verbose
+        options[:type_collectors] ||= []
+        options[:type_collectors] << klass
       end
     end
   end
 
-  puts "#{Time.now} Starting prometheus exporter on port #{port}"
-  server = PrometheusExporter::Server::WebServer.new port: port, collector: collector, verbose: verbose
-  server.start
-  sleep
+  runner = PrometheusExporter::Server::Runner.new(options)
 
+  puts "#{Time.now} Starting prometheus exporter on port #{runner.port}"
+  runner.start
+  sleep
 end
 
 run
