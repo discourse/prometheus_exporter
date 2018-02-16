@@ -1,0 +1,4 @@
+0.1.14 - 2018-0217
+
+- Fix: error when shipping summary metric with no labels
+- Feature: runner was extracted so it can be reused @304
