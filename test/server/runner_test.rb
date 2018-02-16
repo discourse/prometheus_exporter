@@ -1,5 +1,5 @@
 require 'test_helper'
-require 'prometheus_exporter/server/runner'
+require 'prometheus_exporter/server'
 
 class PrometheusRunnerTest < Minitest::Test
   class MockerWebServer < OpenStruct
@@ -38,7 +38,6 @@ class PrometheusRunnerTest < Minitest::Test
       []
     end
   end
-
 
   def test_runner_defaults
     runner = PrometheusExporter::Server::Runner.new

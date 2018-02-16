@@ -24,8 +24,8 @@ end
 
 class PrometheusExporterTest < Minitest::Test
 
-  def before
-    Base.default_prefix = ''
+  def setup
+    PrometheusExporter::Metric::Base.default_prefix = ''
   end
 
   def find_free_port
