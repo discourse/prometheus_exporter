@@ -5,4 +5,5 @@ require "thread"
 module PrometheusExporter
   # per: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
   DEFAULT_PORT = 9394
+  DEFAULT_PREFIX = 'ruby_'
 end
