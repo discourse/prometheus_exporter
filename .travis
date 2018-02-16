@@ -1,3 +1,6 @@
+sudo: true
+before_script:
+  - echo 0 | sudo tee /proc/sys/net/ipv6/conf/all/disable_ipv6
 language: ruby
 rvm:
  - 2.2
