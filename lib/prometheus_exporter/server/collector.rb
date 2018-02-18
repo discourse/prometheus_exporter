@@ -20,11 +20,12 @@ module PrometheusExporter::Server
       total_allocated_objects: "Total number of allocateds objects by process",
     }
 
-    def initialize
+    def initialize(json_serializer: nil)
       @process_metrics = []
       @metrics = {}
       @mutex = Mutex.new
       @collectors = {}
+      @json_serializer = PrometheusExporter.detect_json_serializer(json_serializer)
       register_collector(WebCollector.new)
       register_collector(ProcessCollector.new)
       register_collector(SidekiqCollector.new)
@@ -35,7 +36,7 @@ module PrometheusExporter::Server
     end
 
     def process(str)
-      obj = JSON.parse(str)
+      obj = @json_serializer.parse(str)
       @mutex.synchronize do
         if collector = @collectors[obj["type"]]
           collector.collect(obj)

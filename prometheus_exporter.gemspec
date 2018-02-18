@@ -27,4 +27,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "guard", "~> 2.0"
   spec.add_development_dependency "mini_racer", "~> 0.1"
   spec.add_development_dependency "guard-minitest", "~> 2.0"
+  spec.add_development_dependency "oj", "~> 3.0"
 end
