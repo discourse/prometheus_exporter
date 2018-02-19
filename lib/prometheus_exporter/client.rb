@@ -56,7 +56,7 @@ class PrometheusExporter::Client
     @mutex = Mutex.new
     @thread_sleep = thread_sleep
 
-    @json_serializer = PrometheusExporter.detect_json_serializer(@json_serializer)
+    @json_serializer = json_serializer == :oj ? PrometheusExporter::OjCompat : JSON
   end
 
   def register(type, name, help)

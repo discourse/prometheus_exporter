@@ -305,6 +305,11 @@ Prometheus Exporter handles transport using a simple HTTP protocol. In multi pro
 
 The `/bench` directory has simple benchmark it is able to send through 10k messages in 500ms.
 
+## JSON generation and parsing
+
+The `PrometheusExporter::Client` class has the method `#send-json`. This method, by default, will call `JSON.dump` on the Object it recieves. You may opt in for `oj` mode where it can use the faster `Oj.dump(obj, mode: :compat)` for JSON serialization. But be warned that if you have custom objects that implement own `to_json` methods this may not work as expected. You can opt for oj serialization with `json_serializer: :oj`
+
+The `PrometheusExporter::Server::Collector` parses your JSON, by default it will use the faster Oj deserializer if availabe. This happens cause it only expects a simple Hash out of the box. You can opt in for the default JSON deserializer with `json_serializer: :json`
 
 ## Contributing
 
