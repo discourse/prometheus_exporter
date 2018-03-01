@@ -1,5 +1,6 @@
 module PrometheusExporter::Instrumentation
   class DelayedJob
+    JOB_CLASS_REGEXP = %r{job_class: (\w+:{0,2})+}.freeze
 
     class << self
       def register_plugin(client: nil)
@@ -33,7 +34,7 @@ module PrometheusExporter::Instrumentation
 
       @client.send_json(
         type: "delayed_job",
-        name: YAML.load(job.handler).job_data["job_class"].to_s,
+        name: job.handler.to_s.match(JOB_CLASS_REGEXP).to_a[1].to_s,
         success: success,
         duration: duration
       )
