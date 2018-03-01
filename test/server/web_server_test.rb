@@ -24,8 +24,8 @@ end
 
 class PrometheusExporterTest < Minitest::Test
 
-  def before
-    Base.default_prefix = ''
+  def setup
+    PrometheusExporter::Metric::Base.default_prefix = ''
   end
 
   def find_free_port
@@ -39,6 +39,38 @@ class PrometheusExporterTest < Minitest::Test
       end
     end
     port
+  end
+
+  def test_it_can_collect_with_and_without_oj
+    port = find_free_port
+
+    server = PrometheusExporter::Server::WebServer.new port: port
+    collector = server.collector
+    server.start
+
+    client1 = PrometheusExporter::Client.new port: port, thread_sleep: 0.001, json_serializer: :oj
+    client2 = PrometheusExporter::Client.new port: port, thread_sleep: 0.001, json_serializer: :json
+    client3 = PrometheusExporter::Client.new port: port, thread_sleep: 0.001
+
+    gauge1 = client1.register(:gauge, "my_gauge1", "some gauge")
+    gauge2 = client2.register(:gauge, "my_gauge2", "some gauge")
+    gauge3 = client3.register(:gauge, "my_gauge3", "some gauge")
+
+    gauge1.observe(7)
+    gauge2.observe(8)
+    gauge3.observe(9)
+
+    text = nil
+
+    TestHelper.wait_for(2) do
+      text = collector.prometheus_metrics_text
+      text =~ /7/ && text =~ /8/ && text =~ /9/
+    end
+
+    assert(text =~ /7/)
+    assert(text =~ /8/)
+    assert(text =~ /9/)
+
   end
 
   def test_it_can_collect_over_ipv6

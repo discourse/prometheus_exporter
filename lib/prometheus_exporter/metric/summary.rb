@@ -83,7 +83,8 @@ module PrometheusExporter::Metric
       nil
     end
 
-    def observe(value, labels = {})
+    def observe(value, labels = nil)
+      labels ||= {}
       ensure_summary(labels)
       rotate_if_needed
 

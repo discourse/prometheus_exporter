@@ -35,7 +35,7 @@ class PrometheusExporter::Client
   MAX_SOCKET_AGE = 25
   MAX_QUEUE_SIZE = 10_000
 
-  def initialize(host: 'localhost', port: PrometheusExporter::DEFAULT_PORT, max_queue_size: nil, thread_sleep: 0.5)
+  def initialize(host: 'localhost', port: PrometheusExporter::DEFAULT_PORT, max_queue_size: nil, thread_sleep: 0.5, json_serializer: nil)
     @metrics = []
 
     @queue = Queue.new
@@ -55,6 +55,8 @@ class PrometheusExporter::Client
     @worker_thread = nil
     @mutex = Mutex.new
     @thread_sleep = thread_sleep
+
+    @json_serializer = json_serializer == :oj ? PrometheusExporter::OjCompat : JSON
   end
 
   def register(type, name, help)
@@ -64,7 +66,7 @@ class PrometheusExporter::Client
   end
 
   def send_json(obj)
-    send(obj.to_json)
+    send(@json_serializer.dump(obj))
   end
 
   def send(str)

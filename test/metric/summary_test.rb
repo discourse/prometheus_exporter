@@ -13,7 +13,7 @@ module PrometheusExporter::Metric
 
     it "can correctly gather a summary over multiple labels" do
 
-      summary.observe(0.1)
+      summary.observe(0.1, nil)
       summary.observe(0.2)
       summary.observe(0.610001)
       summary.observe(0.610001)

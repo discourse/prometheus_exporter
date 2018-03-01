@@ -1,0 +1,8 @@
+0.1.15 - 2018-02-19
+
+- Feature: Prefer to use oj if it is loadable
+
+0.1.14 - 2018-02-17
+
+- Fix: error when shipping summary metric with no labels
+- Feature: runner was extracted so it can be reused @304

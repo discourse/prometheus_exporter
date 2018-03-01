@@ -5,8 +5,8 @@ require 'prometheus_exporter/instrumentation'
 
 class PrometheusCollectorTest < Minitest::Test
 
-  def before
-    Base.default_prefix = ''
+  def setup
+    PrometheusExporter::Metric::Base.default_prefix = ''
   end
 
   class PipedClient
@@ -46,7 +46,7 @@ class PrometheusCollectorTest < Minitest::Test
     end
 
     begin
-      instrument.call(1, nil, "default") do
+      instrument.call(false, nil, "default") do
         boom
       end
     rescue
@@ -54,7 +54,7 @@ class PrometheusCollectorTest < Minitest::Test
 
     result = collector.prometheus_metrics_text
 
-    assert(result.include?("sidekiq_failed_job_count{job_name=\"Integer\"} 1"), "has failed job")
+    assert(result.include?("sidekiq_failed_job_count{job_name=\"FalseClass\"} 1"), "has failed job")
 
     assert(result.include?("sidekiq_job_count{job_name=\"String\"} 1"), "has working job")
     assert(result.include?("sidekiq_job_duration_seconds"), "has duration")
