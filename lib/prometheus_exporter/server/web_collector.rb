@@ -42,6 +42,11 @@ module PrometheusExporter::Server
           "http_sql_duration_seconds",
           "Time spent in HTTP reqs in SQL in seconds"
         )
+
+        @metrics["http_queue_duration_seconds"] = @http_queue_duration_seconds = PrometheusExporter::Metric::Summary.new(
+          "http_queue_duration_seconds",
+          "Time spent queueing the request in load balancer in seconds"
+        )
       end
     end
 
@@ -62,6 +67,9 @@ module PrometheusExporter::Server
         if sql = timings["sql"]
           @http_sql_duration_seconds.observe(sql["duration"], labels)
         end
+      end
+      if queue_time = obj["queue_time"]
+        @http_queue_duration_seconds.observe(queue_time, labels)
       end
     end
   end

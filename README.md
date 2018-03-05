@@ -20,7 +20,7 @@ Or install it yourself as:
 
     $ gem install prometheus_exporter
 
-## Can I have some pretty pictures please? 
+## Can I have some pretty pictures please?
 
 Sure, check out: [Instrumenting Rails with Prometheus](https://samsaffron.com/archive/2018/02/02/instrumenting-rails-with-prometheus)
 
@@ -159,6 +159,16 @@ Ensure you run the exporter in a monitored background process via
 % bundle exec prometheus_exporter
 ```
 
+#### Instrumenting Request Queueing Time
+
+Request Queueing is defined as the time it takes for a request to reach your application (instrumented by this `prometheus_exporter`) from farther upstream (as your load balancer). A high queueing time usually means that your backend cannot handle all the incoming requests in time, so they queue up (= you should see if you need to add more capacity)
+
+As this metric starts before `prometheus_exporter` can handle the request, you must add a specific HTTP header as early in your infrastructure as possible (we recommend your load balancer or reverse proxy).
+
+Configure your HTTP server / load balancer to add a header `X-Request-Start: t=<MSEC>` when passing the request upstream. For more information, please consult your software manual.
+
+Hint: we aim to be API-compatible with the big APM solutions, so if you've got requests queueing time configured for them, it should be expected to also work with `prometheus_exporter`.
+
 ### Custom type collectors
 
 In some cases you may have custom metrics you want to ship the collector in a batch, in this case you may still be interested in the base collector behavior but would like to add your own special messages.
@@ -205,7 +215,7 @@ bundle exec prometheus_exporter -a person_collector.rb
 
 #### Global metrics in a custom type collector
 
-Custom type collectors are the ideal place to collect global metrics, such as user/article counts and connection counts. The custom type collector runs in the collector which usually runs in the prometheus exporter process. 
+Custom type collectors are the ideal place to collect global metrics, such as user/article counts and connection counts. The custom type collector runs in the collector which usually runs in the prometheus exporter process.
 
 Out-of-the-box we try to keep the prometheus exporter as lean as possible, we do not load all the Rails dependencies so you will not have access to your models. You can always ensure it is loaded in your custom type collector with:
 
@@ -218,14 +228,14 @@ end
 Then you can collect the metrics you need on demand:
 
 ```
-def metrics 
+def metrics
   user_count_gague = PrometheusExporter::Metric::Gauge.new('user_count', 'number of users in the app')
   user_count_gague.observe User.count
   [user_count_gauge]
 end
 ```
 
-The metrics endpoint is called whenever prometheus calls the `/metrics` HTTP endpoint, it may make sense to introduce some caching so database calls are only performed once every N seconds. [lru_redux](https://github.com/SamSaffron/lru_redux) is the perfect gem for that kind of job as you can `LruRedux::TTL::Cache` which will automatically expire after N seconds. 
+The metrics endpoint is called whenever prometheus calls the `/metrics` HTTP endpoint, it may make sense to introduce some caching so database calls are only performed once every N seconds. [lru_redux](https://github.com/SamSaffron/lru_redux) is the perfect gem for that kind of job as you can `LruRedux::TTL::Cache` which will automatically expire after N seconds.
 
 
 ### Multi process mode with custom collector
@@ -301,7 +311,7 @@ thing2 12
 
 ## Transport concerns
 
-Prometheus Exporter handles transport using a simple HTTP protocol. In multi process mode we avoid needing a large number of HTTP request by using chunked encoding to send metrics. This means that a single HTTP channel can deliver 100s or even 1000s of metrics over a single HTTP session to the `/send-metrics` endpoint. All calls to `send` and `send_json` on the PrometheusExporter::Client class are **non-blocking** and batched. 
+Prometheus Exporter handles transport using a simple HTTP protocol. In multi process mode we avoid needing a large number of HTTP request by using chunked encoding to send metrics. This means that a single HTTP channel can deliver 100s or even 1000s of metrics over a single HTTP session to the `/send-metrics` endpoint. All calls to `send` and `send_json` on the PrometheusExporter::Client class are **non-blocking** and batched.
 
 The `/bench` directory has simple benchmark it is able to send through 10k messages in 500ms.
 
