@@ -153,6 +153,16 @@ Sidekiq.configure_server do |config|
 end
 ```
 
+It also comes with a DelayedJob plugin.
+
+```
+# in an initializer
+unless Rails.env == "test"
+  require 'prometheus_exporter/instrumentation'
+  PrometheusExporter::Instrumentation::DelayedJob.register_plugin
+end
+```
+
 Ensure you run the exporter in a monitored background process via
 
 ```
