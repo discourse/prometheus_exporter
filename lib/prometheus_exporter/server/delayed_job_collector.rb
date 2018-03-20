@@ -27,15 +27,15 @@ module PrometheusExporter::Server
 
         @delayed_job_duration_seconds =
         PrometheusExporter::Metric::Counter.new(
-          "delayed_job_duration_seconds", "Total time spent in delayed jobs")
+          "delayed_job_duration_seconds", "Total time spent in delayed jobs.")
 
         @delayed_job_count =
         PrometheusExporter::Metric::Counter.new(
-          "delayed_jobs_total", "Total number of delayed jobs executed")
+          "delayed_jobs_total", "Total number of delayed jobs executed.")
 
         @delayed_failed_job_count =
         PrometheusExporter::Metric::Counter.new(
-          "delayed_failed_jobs_total", "Total number failed delayed jobs executed")
+          "delayed_failed_jobs_total", "Total number failed delayed jobs executed.")
       end
     end
   end
