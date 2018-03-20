@@ -24,28 +24,28 @@ module PrometheusExporter::Server
     def ensure_metrics
       unless @http_requests
         @metrics["http_requests"] = @http_requests = PrometheusExporter::Metric::Counter.new(
-          "http_requests",
-          "Total HTTP requests from web app"
+          "http_requests_total",
+          "Total HTTP requests from web app."
         )
 
         @metrics["http_duration_seconds"] = @http_duration_seconds = PrometheusExporter::Metric::Summary.new(
           "http_duration_seconds",
-          "Time spent in HTTP reqs in seconds"
+          "Time spent in HTTP reqs in seconds."
         )
 
         @metrics["http_redis_duration_seconds"] = @http_redis_duration_seconds = PrometheusExporter::Metric::Summary.new(
           "http_redis_duration_seconds",
-          "Time spent in HTTP reqs in redis seconds"
+          "Time spent in HTTP reqs in Redis, in seconds."
         )
 
         @metrics["http_sql_duration_seconds"] = @http_sql_duration_seconds = PrometheusExporter::Metric::Summary.new(
           "http_sql_duration_seconds",
-          "Time spent in HTTP reqs in SQL in seconds"
+          "Time spent in HTTP reqs in SQL in seconds."
         )
 
         @metrics["http_queue_duration_seconds"] = @http_queue_duration_seconds = PrometheusExporter::Metric::Summary.new(
           "http_queue_duration_seconds",
-          "Time spent queueing the request in load balancer in seconds"
+          "Time spent queueing the request in load balancer in seconds."
         )
       end
     end
