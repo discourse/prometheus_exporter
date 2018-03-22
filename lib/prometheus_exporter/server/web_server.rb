@@ -13,11 +13,11 @@ module PrometheusExporter::Server
 
       @verbose = verbose
 
-      @total_metrics = PrometheusExporter::Metric::Counter.new("total_collector_metrics", "total metrics processed by exporter web")
+      @total_metrics = PrometheusExporter::Metric::Counter.new("collector_metrics_total", "Total metrics processed by exporter web.")
 
-      @total_sessions = PrometheusExporter::Metric::Counter.new("total_collector_sessions", "total send_metric sessions processed by exporter web")
+      @total_sessions = PrometheusExporter::Metric::Counter.new("collector_sessions_total", "Total send_metric sessions processed by exporter web.")
 
-      @total_bad_metrics = PrometheusExporter::Metric::Counter.new("total_collector_bad_metrics", "total mis-handled metrics by collector")
+      @total_bad_metrics = PrometheusExporter::Metric::Counter.new("collector_bad_metrics_total", "Total mis-handled metrics by collector.")
 
       @total_metrics.observe(0)
       @total_sessions.observe(0)

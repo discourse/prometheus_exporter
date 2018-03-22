@@ -27,15 +27,15 @@ module PrometheusExporter::Server
 
         @sidekiq_job_duration_seconds =
         PrometheusExporter::Metric::Counter.new(
-          "sidekiq_job_duration_seconds", "Total time spent in sidekiq jobs")
+          "sidekiq_job_duration_seconds", "Total time spent in sidekiq jobs.")
 
         @sidekiq_job_count =
         PrometheusExporter::Metric::Counter.new(
-          "sidekiq_job_count", "Total number of sidekiq jobs executed")
+          "sidekiq_jobs_total", "Total number of sidekiq jobs executed.")
 
         @sidekiq_failed_job_count =
         PrometheusExporter::Metric::Counter.new(
-          "sidekiq_failed_job_count", "Total number failed sidekiq jobs executed")
+          "sidekiq_failed_jobs_total", "Total number failed sidekiq jobs executed.")
       end
     end
   end
