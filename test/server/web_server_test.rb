@@ -88,10 +88,10 @@ class PrometheusExporterTest < Minitest::Test
       server.collector.prometheus_metrics_text =~ /99/
     end
 
-    expected = <<~TEXT
-      # HELP my_gauge some gauge
-      # TYPE my_gauge gauge
-      my_gauge 99
+    expected = <<-TEXT
+# HELP my_gauge some gauge
+# TYPE my_gauge gauge
+my_gauge 99
     TEXT
     assert_equal(expected, collector.prometheus_metrics_text)
   ensure
@@ -120,14 +120,14 @@ class PrometheusExporterTest < Minitest::Test
       server.collector.prometheus_metrics_text =~ /92/
     end
 
-    expected = <<~TEXT
-      # HELP my_gauge some gauge
-      # TYPE my_gauge gauge
-      my_gauge{abcd="1"} 92
+    expected = <<-TEXT
+# HELP my_gauge some gauge
+# TYPE my_gauge gauge
+my_gauge{abcd="1"} 92
 
-      # HELP my_counter some counter
-      # TYPE my_counter counter
-      my_counter 4
+# HELP my_counter some counter
+# TYPE my_counter counter
+my_counter 4
     TEXT
     assert_equal(expected, collector.prometheus_metrics_text)
 
