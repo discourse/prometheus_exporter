@@ -4,23 +4,23 @@ module PrometheusExporter::Instrumentation; end
 class PrometheusExporter::Instrumentation::MethodProfiler
   def self.patch(klass, methods, name)
     patches = methods.map do |method_name|
-      <<~RUBY
-      unless defined?(#{method_name}__mp_unpatched)
-        alias_method :#{method_name}__mp_unpatched, :#{method_name}
-        def #{method_name}(*args, &blk)
-          unless prof = Thread.current[:_method_profiler]
-            return #{method_name}__mp_unpatched(*args, &blk)
-          end
-          begin
-            start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-            #{method_name}__mp_unpatched(*args, &blk)
-          ensure
-            data = (prof[:#{name}] ||= {duration: 0.0, calls: 0})
-            data[:duration] += Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
-            data[:calls] += 1
-          end
-        end
-      end
+      <<-RUBY
+unless defined?(#{method_name}__mp_unpatched)
+  alias_method :#{method_name}__mp_unpatched, :#{method_name}
+  def #{method_name}(*args, &blk)
+    unless prof = Thread.current[:_method_profiler]
+      return #{method_name}__mp_unpatched(*args, &blk)
+    end
+    begin
+      start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      #{method_name}__mp_unpatched(*args, &blk)
+    ensure
+      data = (prof[:#{name}] ||= {duration: 0.0, calls: 0})
+      data[:duration] += Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+      data[:calls] += 1
+    end
+  end
+end
       RUBY
     end.join("\n")
 
