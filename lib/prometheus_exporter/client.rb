@@ -99,7 +99,7 @@ class PrometheusExporter::Client
 
   def stop
     @mutex.synchronize do
-      @worker_thread&.kill
+      @worker_thread.try!(:kill)
       while @worker_thread.alive?
         sleep 0.001
       end
@@ -119,9 +119,9 @@ class PrometheusExporter::Client
   end
 
   def ensure_worker_thread!
-    unless @worker_thread&.alive?
+    unless @worker_thread.try!(:alive?)
       @mutex.synchronize do
-        return if @worker_thread&.alive?
+        return if @worker_thread.try!(:alive?)
 
         @worker_thread = Thread.new do
           while true
