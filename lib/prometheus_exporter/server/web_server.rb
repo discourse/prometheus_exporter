@@ -13,15 +13,15 @@ module PrometheusExporter::Server
 
       @verbose = verbose
 
-      @total_metrics = PrometheusExporter::Metric::Counter.new("collector_metrics_total", "Total metrics processed by exporter web.")
+      @metrics_total = PrometheusExporter::Metric::Counter.new("collector_metrics_total", "Total metrics processed by exporter web.")
 
-      @total_sessions = PrometheusExporter::Metric::Counter.new("collector_sessions_total", "Total send_metric sessions processed by exporter web.")
+      @sessions_total = PrometheusExporter::Metric::Counter.new("collector_sessions_total", "Total send_metric sessions processed by exporter web.")
 
-      @total_bad_metrics = PrometheusExporter::Metric::Counter.new("collector_bad_metrics_total", "Total mis-handled metrics by collector.")
+      @bad_metrics_total = PrometheusExporter::Metric::Counter.new("collector_bad_metrics_total", "Total mis-handled metrics by collector.")
 
-      @total_metrics.observe(0)
-      @total_sessions.observe(0)
-      @total_bad_metrics.observe(0)
+      @metrics_total.observe(0)
+      @sessions_total.observe(0)
+      @bad_metrics_total.observe(0)
 
       access_log, logger = nil
 
@@ -73,10 +73,10 @@ module PrometheusExporter::Server
     end
 
     def handle_metrics(req, res)
-      @total_sessions.observe
+      @sessions_total.observe
       req.body do |block|
         begin
-          @total_metrics.observe
+          @metrics_total.observe
           @collector.process(block)
         rescue => e
           if @verbose
@@ -85,7 +85,7 @@ module PrometheusExporter::Server
             STDERR.puts e.backtrace
             STDERR.puts
           end
-          @total_bad_metrics.observe
+          @bad_metrics_total.observe
           res.body = "Bad Metrics #{e}"
           res.status = e.respond_to?(:status_code) ? e.status_code : 500
           return
@@ -135,9 +135,9 @@ module PrometheusExporter::Server
         get_rss
       )
 
-      metrics << @total_metrics
-      metrics << @total_sessions
-      metrics << @total_bad_metrics
+      metrics << @metrics_total
+      metrics << @sessions_total
+      metrics << @bad_metrics_total
 
       <<~TEXT
       #{metrics.map(&:to_prometheus_text).join("\n\n")}
