@@ -51,9 +51,9 @@ module PrometheusExporter::Instrumentation
       stat = GC.stat
       metric[:heap_live_slots] = stat[:heap_live_slots]
       metric[:heap_free_slots] = stat[:heap_free_slots]
-      metric[:major_gc_count] = stat[:major_gc_count]
-      metric[:minor_gc_count] = stat[:minor_gc_count]
-      metric[:total_allocated_objects] = stat[:total_allocated_objects]
+      metric[:major_gc_ops_total] = stat[:major_gc_count]
+      metric[:minor_gc_ops_total] = stat[:minor_gc_count]
+      metric[:allocated_objects_total] = stat[:total_allocated_objects]
     end
 
     def collect_v8_stats(metric)

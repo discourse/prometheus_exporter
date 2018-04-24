@@ -23,7 +23,7 @@ module PrometheusExporter::Server
 
     def ensure_metrics
       unless @http_requests
-        @metrics["http_requests"] = @http_requests = PrometheusExporter::Metric::Counter.new(
+        @metrics["http_requests_total"] = @http_requests = PrometheusExporter::Metric::Counter.new(
           "http_requests_total",
           "Total HTTP requests from web app."
         )

@@ -54,9 +54,9 @@ class PrometheusCollectorTest < Minitest::Test
 
     result = collector.prometheus_metrics_text
 
-    assert(result.include?("sidekiq_failed_job_count{job_name=\"FalseClass\"} 1"), "has failed job")
+    assert(result.include?("sidekiq_failed_jobs_total{job_name=\"FalseClass\"} 1"), "has failed job")
 
-    assert(result.include?("sidekiq_job_count{job_name=\"String\"} 1"), "has working job")
+    assert(result.include?("sidekiq_jobs_total{job_name=\"String\"} 1"), "has working job")
     assert(result.include?("sidekiq_job_duration_seconds"), "has duration")
   end
 
@@ -76,7 +76,7 @@ class PrometheusCollectorTest < Minitest::Test
 
     v8_str = "v8_heap_count{pid=\"#{collected[:pid]}\",type=\"web\"} #{collected[:v8_heap_count]}"
     assert(text.include?(v8_str), "must include v8 metric")
-    assert(text.include?("minor_gc_count"), "must include counters")
+    assert(text.include?("minor_gc_ops_total"), "must include counters")
   end
 
   def test_it_can_collect_delayed_job_metrics
@@ -104,8 +104,8 @@ class PrometheusCollectorTest < Minitest::Test
 
     result = collector.prometheus_metrics_text
 
-    assert(result.include?("delayed_failed_job_count{job_name=\"Object\"} 1"), "has failed job")
-    assert(result.include?("delayed_job_count{job_name=\"Class\"} 1"), "has working job")
+    assert(result.include?("delayed_failed_jobs_total{job_name=\"Object\"} 1"), "has failed job")
+    assert(result.include?("delayed_jobs_total{job_name=\"Class\"} 1"), "has working job")
     assert(result.include?("delayed_job_duration_seconds"), "has duration")
     job.verify
     failed_job.verify

@@ -15,9 +15,9 @@ module PrometheusExporter::Server
     }
 
     PROCESS_COUNTERS = {
-      major_gc_count: "Major GC operations by process",
-      minor_gc_count: "Minor GC operations by process",
-      total_allocated_objects: "Total number of allocateds objects by process",
+      major_gc_ops_total: "Major GC operations by process.",
+      minor_gc_ops_total: "Minor GC operations by process.",
+      allocated_objects_total: "Total number of allocated objects by process.",
     }
 
     def initialize(json_serializer: nil)
