@@ -1,3 +1,7 @@
+Unreleased
+
+- Follow Prometheus metric [naming conventions](https://prometheus.io/docs/practices/naming/#metric-names)
+
 0.1.15 - 2018-02-19
 
 - Feature: Prefer to use oj if it is loadable
