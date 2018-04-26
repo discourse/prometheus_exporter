@@ -17,7 +17,7 @@ module PrometheusExporter::Server
     PROCESS_COUNTERS = {
       major_gc_ops_total: "Major GC operations by process.",
       minor_gc_ops_total: "Minor GC operations by process.",
-      allocated_objects_total: "Total number of allocateds objects by process.",
+      allocated_objects_total: "Total number of allocated objects by process.",
     }
 
     def initialize

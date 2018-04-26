@@ -22,8 +22,8 @@ module PrometheusExporter::Server
     protected
 
     def ensure_metrics
-      unless @http_requests
-        @metrics["http_requests"] = @http_requests = PrometheusExporter::Metric::Counter.new(
+      unless @http_requests_total
+        @metrics["http_requests_total"] = @http_requests_total = PrometheusExporter::Metric::Counter.new(
           "http_requests_total",
           "Total HTTP requests from web app."
         )
@@ -57,7 +57,7 @@ module PrometheusExporter::Server
         action: obj["action"] || "other"
       }
 
-      @http_requests.observe(1, labels.merge(status: obj["status"]))
+      @http_requests_total.observe(1, labels.merge(status: obj["status"]))
 
       if timings = obj["timings"]
         @http_duration_seconds.observe(timings["total_duration"], labels)

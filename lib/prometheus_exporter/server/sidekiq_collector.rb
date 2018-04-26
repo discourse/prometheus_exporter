@@ -8,13 +8,13 @@ module PrometheusExporter::Server
     def collect(obj)
       ensure_sidekiq_metrics
       @sidekiq_job_duration_seconds.observe(obj["duration"], job_name: obj["name"])
-      @sidekiq_job_count.observe(1, job_name: obj["name"])
-      @sidekiq_failed_job_count.observe(1, job_name: obj["name"]) if !obj["success"]
+      @sidekiq_jobs_total.observe(1, job_name: obj["name"])
+      @sidekiq_failed_jobs_total.observe(1, job_name: obj["name"]) if !obj["success"]
     end
 
     def metrics
-      if @sidekiq_job_count
-        [@sidekiq_job_duration_seconds, @sidekiq_job_count, @sidekiq_failed_job_count]
+      if @sidekiq_jobs_total
+        [@sidekiq_job_duration_seconds, @sidekiq_jobs_total, @sidekiq_failed_jobs_total]
       else
         []
       end
@@ -23,17 +23,17 @@ module PrometheusExporter::Server
     protected
 
     def ensure_sidekiq_metrics
-      if !@sidekiq_job_count
+      if !@sidekiq_jobs_total
 
         @sidekiq_job_duration_seconds =
         PrometheusExporter::Metric::Counter.new(
           "sidekiq_job_duration_seconds", "Total time spent in sidekiq jobs.")
 
-        @sidekiq_job_count =
+        @sidekiq_jobs_total =
         PrometheusExporter::Metric::Counter.new(
           "sidekiq_jobs_total", "Total number of sidekiq jobs executed.")
 
-        @sidekiq_failed_job_count =
+        @sidekiq_failed_jobs_total =
         PrometheusExporter::Metric::Counter.new(
           "sidekiq_failed_jobs_total", "Total number failed sidekiq jobs executed.")
       end
