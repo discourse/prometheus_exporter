@@ -20,6 +20,10 @@ Or install it yourself as:
 
     $ gem install prometheus_exporter
 
+## Ruby Version
+
+Minimum Ruby of version 2.3.0 is required, Ruby 2.2.0 is EOL as of 2018-03-31
+
 ## Can I have some pretty pictures please?
 
 Sure, check out: [Instrumenting Rails with Prometheus](https://samsaffron.com/archive/2018/02/02/instrumenting-rails-with-prometheus)
