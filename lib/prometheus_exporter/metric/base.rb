@@ -11,6 +11,14 @@ module PrometheusExporter::Metric
       @default_prefix.to_s
     end
 
+    def self.default_labels=(labels)
+      @default_labels = labels
+    end
+
+    def self.default_labels
+      @default_labels || {}
+    end
+
     attr_accessor :help, :name, :data
 
     def initialize(name, help)
@@ -46,6 +54,7 @@ module PrometheusExporter::Metric
     end
 
     def labels_text(labels)
+      labels = (labels || {}).merge(Base.default_labels)
       if labels && labels.length > 0
         s = labels.map do |key, value|
           "#{key}=\"#{value}\""

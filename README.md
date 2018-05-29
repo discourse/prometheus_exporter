@@ -116,7 +116,7 @@ gem 'prometheus_exporter'
 ```
 
 
-```
+```ruby
 # in an initializer
 
 unless Rails.env == "test"
@@ -129,7 +129,7 @@ end
 
 You may also be interested in per-process stats, this collects memory and GC stats
 
-```
+```ruby
 # in an initializer
 unless Rails.env == "test"
   require 'prometheus_exporter/instrumentation'
@@ -148,7 +148,7 @@ end
 
 Including Sidekiq metrics (how many jobs ran? how many failed? how long did they take?)
 
-```
+```ruby
 Sidekiq.configure_server do |config|
    config.server_middleware do |chain|
       require 'prometheus_exporter/instrumentation'
@@ -159,7 +159,7 @@ end
 
 It also comes with a DelayedJob plugin.
 
-```
+```ruby
 # in an initializer
 unless Rails.env == "test"
   require 'prometheus_exporter/instrumentation'
@@ -233,7 +233,7 @@ Custom type collectors are the ideal place to collect global metrics, such as us
 
 Out-of-the-box we try to keep the prometheus exporter as lean as possible, we do not load all the Rails dependencies so you will not have access to your models. You can always ensure it is loaded in your custom type collector with:
 
-```
+```ruby
 unless defined? Rails
   require File.expand_path("../../config/environment", __FILE__)
 end
@@ -241,7 +241,7 @@ end
 
 Then you can collect the metrics you need on demand:
 
-```
+```ruby
 def metrics
   user_count_gague = PrometheusExporter::Metric::Gauge.new('user_count', 'number of users in the app')
   user_count_gague.observe User.count
@@ -322,6 +322,31 @@ thing1 122
 thing2 12
 ```
 
+### Metrics default prefix / labels
+
+You can specify default prefix or labels for metrics, for example:
+
+```ruby
+# Specify prefix for metric names
+PrometheusExporter::Metric.base.default_prefix = "ruby"
+
+# Specify default labels for metrics
+PrometheusExporter::Metric.base.default_labels = { "hostname" => "app-server-01" }
+
+counter = PrometheusExporter::Metric::Counter.new("web_requests", "number of web requests")
+
+counter.observe(1, route: 'test/route')
+counter.observe
+```
+
+Will result in:
+
+```
+# HELP web_requests number of web requests
+# TYPE web_requests counter
+ruby_web_requests{hostname="app-server-01",route="test/route"} 1
+ruby_web_requests{hostname="app-server-01"} 1
+```
 
 ## Transport concerns
 
