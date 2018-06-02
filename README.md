@@ -324,14 +324,16 @@ thing2 12
 
 ### Metrics default prefix / labels
 
+_This only works in single process mode_
+
 You can specify default prefix or labels for metrics, for example:
 
 ```ruby
 # Specify prefix for metric names
-PrometheusExporter::Metric.base.default_prefix = "ruby"
+PrometheusExporter::Metric::Base.default_prefix = "ruby"
 
 # Specify default labels for metrics
-PrometheusExporter::Metric.base.default_labels = { "hostname" => "app-server-01" }
+PrometheusExporter::Metric::Base.default_labels = { "hostname" => "app-server-01" }
 
 counter = PrometheusExporter::Metric::Counter.new("web_requests", "number of web requests")
 
