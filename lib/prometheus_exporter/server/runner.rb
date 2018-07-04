@@ -20,7 +20,7 @@ module PrometheusExporter::Server
         raise WrongInheritance, 'Collector class must be inherited from PrometheusExporter::Server::CollectorBase'
       end
 
-      server = server_class.new port: port, collector: collector, verbose: verbose
+      server = server_class.new port: port, collector: collector, timeout: timeout, verbose: verbose
       server.start
     end
 
@@ -54,6 +54,14 @@ module PrometheusExporter::Server
 
     def type_collectors
       @type_collectors || []
+    end
+
+    def timeout=(timeout)
+      @timeout = timeout
+    end
+
+    def timeout
+      @timeout || PrometheusExporter::DEFAULT_TIMEOUT
     end
 
     def verbose=(verbose)
