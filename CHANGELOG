@@ -1,6 +1,11 @@
-Unreleased
+0.3.1
 
-- Follow Prometheus metric [naming conventions](https://prometheus.io/docs/practices/naming/#metric-names)
+- Allow runner to accept a --timeout var
+- Allow runner to accept a blank prefix
+
+0.3.0
+
+- Breaking change: Follow Prometheus metric [naming conventions](https://prometheus.io/docs/practices/naming/#metric-names)
 
 0.1.15 - 2018-02-19
 
