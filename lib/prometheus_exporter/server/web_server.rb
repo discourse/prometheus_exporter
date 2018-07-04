@@ -9,7 +9,7 @@ module PrometheusExporter::Server
   class WebServer
     attr_reader :collector
 
-    def initialize(port: , collector: nil, verbose: false)
+    def initialize(port: , collector: nil, timeout: PrometheusExporter::DEFAULT_TIMEOUT, verbose: false)
 
       @verbose = verbose
 
@@ -44,6 +44,7 @@ module PrometheusExporter::Server
 
       @collector = collector || Collector.new
       @port = port
+      @timeout = timeout
 
       @server.mount_proc '/' do |req, res|
         res['ContentType'] = 'text/plain; charset=utf-8'
@@ -113,7 +114,7 @@ module PrometheusExporter::Server
     def metrics
       metric_text = nil
       begin
-        Timeout::timeout(2) do
+        Timeout::timeout(@timeout) do
           metric_text = @collector.prometheus_metrics_text
         end
       rescue Timeout::Error

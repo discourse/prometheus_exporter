@@ -44,6 +44,7 @@ class PrometheusRunnerTest < Minitest::Test
 
     assert_equal(runner.prefix, 'ruby_')
     assert_equal(runner.port, 9394)
+    assert_equal(runner.timeout, 2)
     assert_equal(runner.collector_class, PrometheusExporter::Server::Collector)
     assert_equal(runner.type_collectors, [])
     assert_equal(runner.verbose, false)
@@ -53,6 +54,7 @@ class PrometheusRunnerTest < Minitest::Test
     runner = PrometheusExporter::Server::Runner.new(
       prefix: 'new_',
       port: 1234,
+      timeout: 1,
       collector_class: CollectorMock,
       type_collectors: [TypeCollectorMock],
       verbose: true
@@ -60,6 +62,7 @@ class PrometheusRunnerTest < Minitest::Test
 
     assert_equal(runner.prefix, 'new_')
     assert_equal(runner.port, 1234)
+    assert_equal(runner.timeout, 1)
     assert_equal(runner.collector_class, CollectorMock)
     assert_equal(runner.type_collectors, [TypeCollectorMock])
     assert_equal(runner.verbose, true)
@@ -72,6 +75,7 @@ class PrometheusRunnerTest < Minitest::Test
     assert_equal(result, true)
     assert_equal(PrometheusExporter::Metric::Base.default_prefix, 'ruby_')
     assert_equal(runner.port, 9394)
+    assert_equal(runner.timeout, 2)
     assert_equal(runner.verbose, false)
     assert_instance_of(PrometheusExporter::Server::Collector, runner.collector)
   end
