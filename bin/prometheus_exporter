@@ -24,7 +24,7 @@ def run
            "Timeout in seconds for metrics endpoint (default: #{PrometheusExporter::DEFAULT_TIMEOUT})") do |o|
       options[:timeout] = o.to_i
     end
-    opt.on('--prefix METRIC_PREFIX', String, "Prefix to apply to all metrics (default: #{PrometheusExporter::DEFAULT_PREFIX})") do |o|
+    opt.on('--prefix METRIC_PREFIX', "Prefix to apply to all metrics (default: #{PrometheusExporter::DEFAULT_PREFIX})") do |o|
       options[:prefix] = o.to_s
     end
     opt.on('-c', '--collector FILE', String, "(optional) Custom collector to run") do |o|
