@@ -157,6 +157,17 @@ Sidekiq.configure_server do |config|
 end
 ```
 
+To monitor Sidekiq process info
+
+```ruby
+Sidekiq.configure_server do |config|
+  config.on :startup do
+    require 'prometheus_exporter/instrumentation'
+    PrometheusExporter::Instrumentation::Process.start type: 'sidekiq'
+  end
+end
+```
+
 It also comes with a DelayedJob plugin.
 
 ```ruby
