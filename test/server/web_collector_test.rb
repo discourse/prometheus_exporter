@@ -45,4 +45,22 @@ class PrometheusWebCollectorTest < Minitest::Test
     metrics = collector.metrics
     assert_equal 5, metrics.size
   end
+
+  def test_collecting_metrics_with_custom_labels
+    collector.collect({
+      'type' => 'web',
+      'timings' => nil,
+      'action' => 'index',
+      'controller' => 'home',
+      'status' => 200,
+      'custom_labels' => {
+        'service' => 'service1'
+      }
+    })
+
+    metrics = collector.metrics
+
+    assert_equal 5, metrics.size
+    assert(metrics.first.metric_text.include?('http_requests_total{controller="home",action="index",service="service1",status="200"}'))
+  end
 end

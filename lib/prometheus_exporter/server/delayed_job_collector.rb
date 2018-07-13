@@ -6,10 +6,13 @@ module PrometheusExporter::Server
     end
 
     def collect(obj)
+      custom_labels = obj.fetch('custom_labels', {})
+      labels = { job_name: obj['name'] }.merge(custom_labels)
+
       ensure_delayed_job_metrics
-      @delayed_job_duration_seconds.observe(obj["duration"], job_name: obj["name"])
-      @delayed_jobs_total.observe(1, job_name: obj["name"])
-      @delayed_failed_jobs_total.observe(1, job_name: obj["name"]) if !obj["success"]
+      @delayed_job_duration_seconds.observe(obj["duration"], labels)
+      @delayed_jobs_total.observe(1, labels)
+      @delayed_failed_jobs_total.observe(1, labels) if !obj["success"]
     end
 
     def metrics
