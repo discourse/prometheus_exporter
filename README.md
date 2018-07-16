@@ -361,6 +361,26 @@ ruby_web_requests{hostname="app-server-01",route="test/route"} 1
 ruby_web_requests{hostname="app-server-01"} 1
 ```
 
+### Client default labels
+
+You can specify a default label for the instrumentation metrics sent by an specific client, for example:
+
+```ruby
+# Specify on intializing PrometheusExporter::Client
+PrometheusExporter::Client.new(custom_labels: { hostname: 'app-server-01', app_name: 'app-01' })
+
+# Specify on an instance of PrometheusExporter::Client
+client = PrometheusExporter::Client.new
+client.custom_labels = { hostname: 'app-server-01', app_name: 'app-01' }
+```
+
+Will result in:
+
+```
+http_requests_total{controller="home","action"="index",service="app-server-01",app_name="app-01"} 2
+http_requests_total{service="app-server-01",app_name="app-01"} 1
+```
+
 ## Transport concerns
 
 Prometheus Exporter handles transport using a simple HTTP protocol. In multi process mode we avoid needing a large number of HTTP request by using chunked encoding to send metrics. This means that a single HTTP channel can deliver 100s or even 1000s of metrics over a single HTTP session to the `/send-metrics` endpoint. All calls to `send` and `send_json` on the PrometheusExporter::Client class are **non-blocking** and batched.

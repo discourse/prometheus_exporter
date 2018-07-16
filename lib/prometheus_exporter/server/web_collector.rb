@@ -51,11 +51,12 @@ module PrometheusExporter::Server
     end
 
     def observe(obj)
-
-      labels = {
-        controller: obj["controller"] || "other",
-        action: obj["action"] || "other"
+      default_labels = {
+        controller: obj['controller'] || 'other',
+        action: obj['action'] || 'other'
       }
+      custom_labels = obj['custom_labels']
+      labels = custom_labels.nil? ? default_labels : default_labels.merge(custom_labels)
 
       @http_requests_total.observe(1, labels.merge(status: obj["status"]))
 

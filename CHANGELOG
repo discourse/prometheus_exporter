@@ -1,3 +1,7 @@
+0.3.2
+
+- Feature: Add posibility to set custom_labels on multi process mode
+
 0.3.1
 
 - Allow runner to accept a --timeout var

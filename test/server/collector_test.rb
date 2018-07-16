@@ -10,12 +10,14 @@ class PrometheusCollectorTest < Minitest::Test
   end
 
   class PipedClient
-    def initialize(collector)
+    def initialize(collector, custom_labels: nil)
       @collector = collector
+      @custom_labels = custom_labels
     end
 
     def send_json(obj)
-      @collector.process(obj.to_json)
+      payload = obj.merge(custom_labels: @custom_labels).to_json
+      @collector.process(payload)
     end
   end
 
@@ -58,6 +60,30 @@ class PrometheusCollectorTest < Minitest::Test
 
     assert(result.include?("sidekiq_jobs_total{job_name=\"String\"} 1"), "has working job")
     assert(result.include?("sidekiq_job_duration_seconds"), "has duration")
+  end
+
+  def test_it_can_collect_sidekiq_metrics_with_custom_labels
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector, custom_labels: { service: 'service1' })
+
+    instrument = PrometheusExporter::Instrumentation::Sidekiq.new(client: client)
+
+    instrument.call("hello", nil, "default") do
+      # nothing
+    end
+
+    begin
+      instrument.call(false, nil, "default") do
+        boom
+      end
+    rescue
+    end
+
+    result = collector.prometheus_metrics_text
+
+    assert(result.include?('sidekiq_failed_jobs_total{job_name="FalseClass",service="service1"} 1'), "has failed job")
+    assert(result.include?('sidekiq_jobs_total{job_name="String",service="service1"} 1'), "has working job")
+    assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",service="service1"}'), "has duration")
   end
 
   def test_it_can_collect_process_metrics
@@ -110,4 +136,37 @@ class PrometheusCollectorTest < Minitest::Test
     job.verify
     failed_job.verify
   end
+
+  def test_it_can_collect_delayed_job_metrics_with_custom_labels
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector, custom_labels: { service: 'service1' })
+
+    instrument = PrometheusExporter::Instrumentation::DelayedJob.new(client: client)
+
+    job = Minitest::Mock.new
+    job.expect(:handler, "job_class: Class")
+
+    instrument.call(job, nil, "default") do
+      # nothing
+    end
+
+    failed_job = Minitest::Mock.new
+    failed_job.expect(:handler, "job_class: Object")
+
+    begin
+      instrument.call(failed_job, nil, "default") do
+        boom
+      end
+    rescue
+    end
+
+    result = collector.prometheus_metrics_text
+
+    assert(result.include?('delayed_failed_jobs_total{job_name="Object",service="service1"} 1'), "has failed job")
+    assert(result.include?('delayed_jobs_total{job_name="Class",service="service1"} 1'), "has working job")
+    assert(result.include?('delayed_job_duration_seconds{job_name="Class",service="service1"}'), "has duration")
+    job.verify
+    failed_job.verify
+  end
+
 end

@@ -6,10 +6,14 @@ module PrometheusExporter::Server
     end
 
     def collect(obj)
+      default_labels = { job_name: obj['name'] }
+      custom_labels = obj['custom_labels']
+      labels = custom_labels.nil? ? default_labels : default_labels.merge(custom_labels)
+
       ensure_sidekiq_metrics
-      @sidekiq_job_duration_seconds.observe(obj["duration"], job_name: obj["name"])
-      @sidekiq_jobs_total.observe(1, job_name: obj["name"])
-      @sidekiq_failed_jobs_total.observe(1, job_name: obj["name"]) if !obj["success"]
+      @sidekiq_job_duration_seconds.observe(obj["duration"], labels)
+      @sidekiq_jobs_total.observe(1, labels)
+      @sidekiq_failed_jobs_total.observe(1, labels) if !obj["success"]
     end
 
     def metrics
