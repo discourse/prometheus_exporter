@@ -10,7 +10,7 @@ class PrometheusCollectorTest < Minitest::Test
   end
 
   class PipedClient
-    def initialize(collector, custom_labels: {})
+    def initialize(collector, custom_labels: nil)
       @collector = collector
       @custom_labels = custom_labels
     end
