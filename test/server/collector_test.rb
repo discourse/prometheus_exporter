@@ -115,15 +115,16 @@ class PrometheusCollectorTest < Minitest::Test
     job.expect(:handler, "job_class: Class")
     job.expect(:attempts, 0)
 
-    instrument.call(job, nil, "default") do
+    instrument.call(job,20, nil, "default") do
       # nothing
     end
 
     failed_job = Minitest::Mock.new
     failed_job.expect(:handler, "job_class: Object")
+    failed_job.expect(:attempts, 1)
 
     begin
-      instrument.call(failed_job, nil, "default") do
+      instrument.call(failed_job, 25, nil, "default") do
         boom
       end
     rescue
@@ -148,15 +149,17 @@ class PrometheusCollectorTest < Minitest::Test
     job.expect(:handler, "job_class: Class")
     job.expect(:attempts, 0)
 
-    instrument.call(job, nil, "default") do
+    instrument.call(job, 25,nil, "default") do
       # nothing
     end
 
     failed_job = Minitest::Mock.new
     failed_job.expect(:handler, "job_class: Object")
+    failed_job.expect(:attempts, 1)
+
 
     begin
-      instrument.call(failed_job, nil, "default") do
+      instrument.call(failed_job, 25, nil, "default") do
         boom
       end
     rescue

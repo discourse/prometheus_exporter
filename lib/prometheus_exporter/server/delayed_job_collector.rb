@@ -14,7 +14,7 @@ module PrometheusExporter::Server
       @delayed_job_duration_seconds.observe(obj["duration"], labels)
       @delayed_jobs_total.observe(1, labels)
       @delayed_failed_jobs_total.observe(1, labels) if !obj["success"]
-      @delayed_job_max_attempts_reached.observe(1) if obj["attempts"] >= (Delayed::Worker.max_attempts)
+      @delayed_job_max_attempts_reached.observe(1) if obj["attempts"] >= obj["max_attempts"]
       @delayed_job_duration_summary.observe(obj["duration"])
       @delayed_job_duration_summary.observe(obj["duration"], status: "success") if obj["success"]
       @delayed_job_duration_summary.observe(obj["duration"], status: "failed")  if !obj["success"]
