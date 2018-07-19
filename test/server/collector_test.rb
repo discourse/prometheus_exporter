@@ -113,6 +113,7 @@ class PrometheusCollectorTest < Minitest::Test
 
     job = Minitest::Mock.new
     job.expect(:handler, "job_class: Class")
+    job.expect(:attempts, 0)
 
     instrument.call(job, nil, "default") do
       # nothing
@@ -145,6 +146,7 @@ class PrometheusCollectorTest < Minitest::Test
 
     job = Minitest::Mock.new
     job.expect(:handler, "job_class: Class")
+    job.expect(:attempts, 0)
 
     instrument.call(job, nil, "default") do
       # nothing
