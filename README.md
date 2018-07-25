@@ -333,6 +333,12 @@ thing1 122
 thing2 12
 ```
 
+### GraphQL support
+
+GraphQL execution metrics are [supported](https://github.com/rmosolgo/graphql-ruby/blob/master/guides/queries/tracing.md#prometheus) and can be collected via the GraphQL
+collector, included in [graphql-ruby](https://github.com/rmosolgo/graphql-ruby)
+
+
 ### Metrics default prefix / labels
 
 _This only works in single process mode_
