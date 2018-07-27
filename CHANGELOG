@@ -1,3 +1,7 @@
+0.3.3
+
+- Feature: Add more metrics to delayed job collector
+
 0.3.2
 
 - Feature: Add posibility to set custom_labels on multi process mode
