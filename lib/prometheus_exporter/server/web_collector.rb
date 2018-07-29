@@ -53,7 +53,9 @@ module PrometheusExporter::Server
     def observe(obj)
       default_labels = {
         controller: obj['controller'] || 'other',
-        action: obj['action'] || 'other'
+        action: obj['action'] || 'other',
+        grape_module: obj['grape_module'] || 'other',
+        grape_path: obj['grape_path'] || 'other'
       }
       custom_labels = obj['custom_labels']
       labels = custom_labels.nil? ? default_labels : default_labels.merge(custom_labels)

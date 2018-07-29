@@ -34,9 +34,17 @@ class PrometheusExporter::Middleware
     status = (result && result[0]) || -1
     params = env["action_dispatch.request.parameters"]
     action, controller = nil
+    grape = env["api.endpoint"]
+    grape_module, grape_path = nil
+
     if params
       action = params["action"]
       controller = params["controller"]
+    end
+
+    if grape
+      grape_module = grape.options[:for]
+      grape_path = grape.options[:path].try(:first)
     end
 
     @client.send_json(
@@ -45,6 +53,8 @@ class PrometheusExporter::Middleware
       queue_time: queue_time,
       action: action,
       controller: controller,
+      grape_module: grape_module,
+      grape_path: grape_path,
       status: status
     )
   end
