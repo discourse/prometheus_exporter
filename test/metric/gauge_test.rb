@@ -24,7 +24,7 @@ module PrometheusExporter::Metric
       assert_equal(gauge.to_prometheus_text, text)
     end
 
-    it "can correctly increment gauges with labels" do
+    it "can correctly set gauges with labels" do
       gauge.observe(100.5, sam: "ham")
       gauge.observe(5, sam: "ham", fam: "bam")
       gauge.observe(400.11)
@@ -49,6 +49,45 @@ module PrometheusExporter::Metric
         # HELP a_gauge my amazing gauge
         # TYPE a_gauge gauge
         a_gauge 11
+      TEXT
+
+      assert_equal(gauge.to_prometheus_text, text)
+    end
+
+    it "can correctly reset on change with labels" do
+      gauge.observe(1, sam: "ham")
+      gauge.observe(2, sam: "ham")
+
+      text = <<~TEXT
+        # HELP a_gauge my amazing gauge
+        # TYPE a_gauge gauge
+        a_gauge{sam="ham"} 2
+      TEXT
+
+      assert_equal(gauge.to_prometheus_text, text)
+    end
+
+    it "can correctly increment" do
+      gauge.observe(1, sam: "ham")
+      gauge.increment(2, sam: "ham")
+
+      text = <<~TEXT
+        # HELP a_gauge my amazing gauge
+        # TYPE a_gauge gauge
+        a_gauge{sam="ham"} 3
+      TEXT
+
+      assert_equal(gauge.to_prometheus_text, text)
+    end
+
+    it "can correctly decrement" do
+      gauge.observe(5, sam: "ham")
+      gauge.decrement(2, sam: "ham")
+
+      text = <<~TEXT
+        # HELP a_gauge my amazing gauge
+        # TYPE a_gauge gauge
+        a_gauge{sam="ham"} 3
       TEXT
 
       assert_equal(gauge.to_prometheus_text, text)

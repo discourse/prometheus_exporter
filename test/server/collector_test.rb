@@ -37,6 +37,58 @@ class PrometheusCollectorTest < Minitest::Test
     assert_equal(text, collector.prometheus_metrics_text)
   end
 
+  def test_it_can_increment_gauge_when_specified
+    name = 'test_name'
+    help = 'test_help'
+    collector = PrometheusExporter::Server::Collector.new
+    metric = PrometheusExporter::Metric::Gauge.new(name, help)
+    collector.register_metric(metric)
+    json = {
+      type: :gauge,
+      help: help,
+      name: name,
+      keys: {key1: 'test1'},
+      action: :increment,
+      value: 1
+    }.to_json
+
+    collector.process(json)
+    collector.process(json)
+    text = <<~TXT
+      # HELP test_name test_help
+      # TYPE test_name gauge
+      test_name{key1="test1"} 2
+    TXT
+
+    assert_equal(text, collector.prometheus_metrics_text)
+  end
+
+  def test_it_can_decrement_gauge_when_specified
+    name = 'test_name'
+    help = 'test_help'
+    collector = PrometheusExporter::Server::Collector.new
+    metric = PrometheusExporter::Metric::Gauge.new(name, help)
+    collector.register_metric(metric)
+    json = {
+      type: :gauge,
+      help: help,
+      name: name,
+      keys: {key1: 'test1'},
+      action: :decrement,
+      value: 5
+    }.to_json
+
+    collector.process(json)
+    collector.process(json)
+    text = <<~TXT
+      # HELP test_name test_help
+      # TYPE test_name gauge
+      test_name{key1="test1"} -10
+    TXT
+
+    assert_equal(text, collector.prometheus_metrics_text)
+  end
+
   def test_it_can_collect_sidekiq_metrics
     collector = PrometheusExporter::Server::Collector.new
     client = PipedClient.new(collector)
