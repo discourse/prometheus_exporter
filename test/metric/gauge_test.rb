@@ -69,7 +69,7 @@ module PrometheusExporter::Metric
 
     it "can correctly increment" do
       gauge.observe(1, sam: "ham")
-      gauge.increment(2, sam: "ham")
+      gauge.increment({ sam: "ham" }, 2)
 
       text = <<~TEXT
         # HELP a_gauge my amazing gauge
@@ -82,7 +82,7 @@ module PrometheusExporter::Metric
 
     it "can correctly decrement" do
       gauge.observe(5, sam: "ham")
-      gauge.decrement(2, sam: "ham")
+      gauge.decrement({ sam: "ham" }, 2)
 
       text = <<~TEXT
         # HELP a_gauge my amazing gauge
