@@ -46,9 +46,11 @@ module PrometheusExporter::Server
           if !metric
             metric = register_metric_unsafe(obj)
           end
-          action = obj["action"]
-          if action && supported_actions.include?(action) && metric.respond_to?(action)
-            metric.send(action, obj["value"], obj["keys"])
+          case obj["action"]
+          when 'increment'
+            metric.increment(obj["keys"], obj["value"])
+          when 'decrement'
+            metric.decrement(obj["keys"], obj["value"])
           else
             metric.observe(obj["value"], obj["keys"])
           end
@@ -90,10 +92,6 @@ module PrometheusExporter::Server
       else
         STDERR.puts "failed to register metric #{obj}"
       end
-    end
-
-    def supported_actions
-      %w[increment decrement]
     end
   end
 end

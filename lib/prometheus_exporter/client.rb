@@ -13,14 +13,16 @@ class PrometheusExporter::Client
       @type = type
     end
 
-    def standard_values(value, keys)
-      {
+    def standard_values(value, keys, action = nil)
+      values = {
         type: @type,
         help: @help,
         name: @name,
         keys: keys,
         value: value
       }
+      values.merge!(action: action) if action
+      values
     end
 
     def observe(value = 1, keys = nil)
@@ -28,11 +30,11 @@ class PrometheusExporter::Client
     end
 
     def increment(value = 1, keys = nil)
-      @client.send_json(standard_values(value, keys).merge(action: :increment))
+      @client.send_json(standard_values(value, keys, :increment))
     end
 
     def decrement(value = 1, keys = nil)
-      @client.send_json(standard_values(value, keys).merge(action: :decrement))
+      @client.send_json(standard_values(value, keys, :decrement))
     end
 
   end

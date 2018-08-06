@@ -23,12 +23,12 @@ module PrometheusExporter::Metric
       @data[labels] = value
     end
 
-    def increment(value, labels = {})
+    def increment(labels = {}, value = 1)
       @data[labels] ||= 0
       @data[labels] += value
     end
 
-    def decrement(value, labels = {})
+    def decrement(labels = {}, value = 1)
       @data[labels] ||= 0
       @data[labels] -= value
     end
