@@ -29,11 +29,11 @@ class PrometheusExporter::Client
       @client.send_json(standard_values(value, keys))
     end
 
-    def increment(value = 1, keys = nil)
+    def increment(keys = nil, value = 1)
       @client.send_json(standard_values(value, keys, :increment))
     end
 
-    def decrement(value = 1, keys = nil)
+    def decrement(keys = nil, value = 1)
       @client.send_json(standard_values(value, keys, :decrement))
     end
 
