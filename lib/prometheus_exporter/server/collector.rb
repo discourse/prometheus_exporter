@@ -46,7 +46,7 @@ module PrometheusExporter::Server
           if !metric
             metric = register_metric_unsafe(obj)
           end
-          case obj["action"]
+          case obj["prometheus_exporter_action"]
           when 'increment'
             metric.increment(obj["keys"], obj["value"])
           when 'decrement'

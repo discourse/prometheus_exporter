@@ -48,7 +48,7 @@ class PrometheusCollectorTest < Minitest::Test
       help: help,
       name: name,
       keys: {key1: 'test1'},
-      action: :increment,
+      prometheus_exporter_action: :increment,
       value: 1
     }.to_json
 
@@ -74,7 +74,7 @@ class PrometheusCollectorTest < Minitest::Test
       help: help,
       name: name,
       keys: {key1: 'test1'},
-      action: :decrement,
+      prometheus_exporter_action: :decrement,
       value: 5
     }.to_json
 

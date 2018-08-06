@@ -13,7 +13,7 @@ class PrometheusExporter::Client
       @type = type
     end
 
-    def standard_values(value, keys, action = nil)
+    def standard_values(value, keys, prometheus_exporter_action = nil)
       values = {
         type: @type,
         help: @help,
@@ -21,7 +21,7 @@ class PrometheusExporter::Client
         keys: keys,
         value: value
       }
-      values.merge!(action: action) if action
+      values.merge!(prometheus_exporter_action: prometheus_exporter_action) if prometheus_exporter_action
       values
     end
 
