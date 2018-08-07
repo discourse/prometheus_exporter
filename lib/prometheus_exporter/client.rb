@@ -21,7 +21,7 @@ class PrometheusExporter::Client
         keys: keys,
         value: value
       }
-      values.merge!(prometheus_exporter_action: prometheus_exporter_action) if prometheus_exporter_action
+      values[:prometheus_exporter_action] = prometheus_exporter_action if prometheus_exporter_action
       values
     end
 
