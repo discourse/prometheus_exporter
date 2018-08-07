@@ -13,15 +13,30 @@ class PrometheusExporter::Client
       @type = type
     end
 
-    def observe(value = 1, keys = nil)
-      @client.send_json(
+    def standard_values(value, keys, prometheus_exporter_action = nil)
+      values = {
         type: @type,
         help: @help,
         name: @name,
         keys: keys,
         value: value
-      )
+      }
+      values[:prometheus_exporter_action] = prometheus_exporter_action if prometheus_exporter_action
+      values
     end
+
+    def observe(value = 1, keys = nil)
+      @client.send_json(standard_values(value, keys))
+    end
+
+    def increment(keys = nil, value = 1)
+      @client.send_json(standard_values(value, keys, :increment))
+    end
+
+    def decrement(keys = nil, value = 1)
+      @client.send_json(standard_values(value, keys, :decrement))
+    end
+
   end
 
   def self.default
