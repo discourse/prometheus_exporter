@@ -213,7 +213,7 @@ Hint: we aim to be API-compatible with the big APM solutions, so if you've got r
 
 ### Custom type collectors
 
-In some cases you may have custom metrics you want to ship the collector in a batch, in this case you may still be interested in the base collector behavior but would like to add your own special messages.
+In some cases you may have custom metrics you want to ship the collector in a batch. In this case you may still be interested in the base collector behavior, but would like to add your own special messages.
 
 ```ruby
 # person_collector.rb
@@ -321,7 +321,7 @@ Next, launch the exporter process:
 $ bin/prometheus_exporter --collector examples/custom_collector.rb
 ```
 
-In your application ship it the metrics you want:
+In your application send metrics you want:
 
 ```ruby
 require 'prometheus_exporter/client'
