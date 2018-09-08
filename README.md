@@ -16,7 +16,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
   * [Custom type collectors](#custom-type-collectors)
   * [Multi process mode with custom collector](#multi-process-mode-with-custom-collector)
   * [GraphQL support](#graphql-support)
-  * [Metrics default prefix / labels](#metrics-default-prefix-labels)
+  * [Metrics default prefix / labels](#metrics-default-prefix--labels)
   * [Client default labels](#client-default-labels)
 * [Transport concerns](#transport-concerns)
 * [JSON generation and parsing](#json-generation-and-parsing)
