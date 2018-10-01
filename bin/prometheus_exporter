@@ -48,6 +48,7 @@ def run
     ObjectSpace.each_object(Class) do |klass|
       if klass < base_klass && klass != base_klass
         options[:collector_class] = klass
+        found = true
       end
     end
 
