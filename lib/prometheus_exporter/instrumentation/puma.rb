@@ -37,6 +37,7 @@ module PrometheusExporter::Instrumentation
         metric[:old_workers] = stats["old_workers"]
 
         stats["worker_status"].each do |worker|
+          next if worker["last_status"].empty?
           collect_worker_status(metric, worker["last_status"])
         end
       else
