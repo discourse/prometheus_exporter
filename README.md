@@ -13,6 +13,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
     * [Per-process stats](#per-process-stats)
     * [Sidekiq metrics](#sidekiq-metrics)
     * [Delayed Job plugin](#delayed-job-plugin)
+  * [Puma metrics](#puma-metrics)
   * [Custom type collectors](#custom-type-collectors)
   * [Multi process mode with custom collector](#multi-process-mode-with-custom-collector)
   * [GraphQL support](#graphql-support)
@@ -210,6 +211,20 @@ As this metric starts before `prometheus_exporter` can handle the request, you m
 Configure your HTTP server / load balancer to add a header `X-Request-Start: t=<MSEC>` when passing the request upstream. For more information, please consult your software manual.
 
 Hint: we aim to be API-compatible with the big APM solutions, so if you've got requests queueing time configured for them, it should be expected to also work with `prometheus_exporter`.
+
+### Puma metrics
+
+The puma metrics are using the `Puma.stats` method and hence need to be started after the
+workers has been booted and from a Puma thread otherwise the metrics won't be accessible.
+The easiest way to gather this metrics is to put the following in your `puma.rb` config:
+
+```ruby
+# puma.rb config
+after_worker_boot do
+  require 'prometheus_exporter/instrumentation'
+  PrometheusExporter::Instrumentation::Puma.start
+end
+```
 
 ### Custom type collectors
 
