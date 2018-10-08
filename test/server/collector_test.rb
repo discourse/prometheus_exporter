@@ -131,11 +131,19 @@ class PrometheusCollectorTest < Minitest::Test
     rescue
     end
 
+    active_job_worker = {}
+    active_job_worker.stub(:class, "ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper") do
+      instrument.call(active_job_worker, { 'wrapped' => 'WrappedClass' }, "default") do
+        # nothing
+      end
+    end
+
     result = collector.prometheus_metrics_text
 
     assert(result.include?('sidekiq_failed_jobs_total{job_name="FalseClass",service="service1"} 1'), "has failed job")
     assert(result.include?('sidekiq_jobs_total{job_name="String",service="service1"} 1'), "has working job")
     assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",service="service1"}'), "has duration")
+    assert(result.include?('sidekiq_jobs_total{job_name="WrappedClass",service="service1"} 1'), "has sidekiq working job from ActiveJob")
   end
 
   def test_it_can_collect_process_metrics
