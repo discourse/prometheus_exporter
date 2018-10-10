@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module PrometheusExporter::Instrumentation
   class Sidekiq
 
@@ -13,10 +15,15 @@ module PrometheusExporter::Instrumentation
       result
     ensure
       duration = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC) - start
+      class_name = if worker.class.to_s == 'ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper'
+                     msg['wrapped']
+                   else
+                     worker.class.to_s
+                   end
 
       @client.send_json(
         type: "sidekiq",
-        name: worker.class.to_s,
+        name: class_name,
         success: success,
         duration: duration
       )
