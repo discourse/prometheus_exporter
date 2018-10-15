@@ -85,6 +85,8 @@ module PrometheusExporter::Server
           PrometheusExporter::Metric::Counter.new(name, help)
         when "summary"
           PrometheusExporter::Metric::Summary.new(name, help)
+        when "histogram"
+          PrometheusExporter::Metric::Histogram.new(name, help)
         end
 
       if metric
