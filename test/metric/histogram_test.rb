@@ -89,5 +89,32 @@ module PrometheusExporter::Metric
       assert_equal(histogram.to_prometheus_text, expected)
     end
 
+    it "can correctly gather a histogram using custom buckets" do
+      histogram = Histogram.new("a_histogram", "my amazing histogram", [2, 1, 3])
+
+      histogram.observe(0.5)
+      histogram.observe(1.5)
+      histogram.observe(4)
+      histogram.observe(2, name: "gargamel")
+
+      expected = <<~TEXT
+        # HELP a_histogram my amazing histogram
+        # TYPE a_histogram histogram
+        a_histogram_bucket{le="+Inf"} 3
+        a_histogram_bucket{le="3"} 2
+        a_histogram_bucket{le="2"} 2
+        a_histogram_bucket{le="1"} 1
+        a_histogram_count 3
+        a_histogram_sum 6.0
+        a_histogram_bucket{name="gargamel",le="+Inf"} 1
+        a_histogram_bucket{name="gargamel",le="3"} 1
+        a_histogram_bucket{name="gargamel",le="2"} 1
+        a_histogram_bucket{name="gargamel",le="1"} 0
+        a_histogram_count{name="gargamel"} 1
+        a_histogram_sum{name="gargamel"} 2.0
+      TEXT
+
+      assert_equal(histogram.to_prometheus_text, expected)
+    end
   end
 end
