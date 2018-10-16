@@ -48,7 +48,7 @@ module PrometheusExporter::Metric
     end
 
     def metric_text
-      text = String.new
+      text = +""
       first = true
       calculate_all_quantiles.each do |labels, quantiles|
         text << "\n" unless first
