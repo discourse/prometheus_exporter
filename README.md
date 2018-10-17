@@ -61,10 +61,12 @@ server.start
 gauge = PrometheusExporter::Metric::Gauge.new("rss", "used RSS for process")
 counter = PrometheusExporter::Metric::Counter.new("web_requests", "number of web requests")
 summary = PrometheusExporter::Metric::Summary.new("page_load_time", "time it took to load page")
+histogram = PrometheusExporter::Metric::Histogram.new("api_access_time", "time it took to call api")
 
 server.collector.register_metric(gauge)
 server.collector.register_metric(counter)
 server.collector.register_metric(summary)
+server.collector.register_metric(histogram)
 
 gauge.observe(get_rss)
 gauge.observe(get_rss)
@@ -75,6 +77,8 @@ counter.observe(1, route: 'another/route')
 summary.observe(1.1)
 summary.observe(1.12)
 summary.observe(0.12)
+
+histogram.observe(0.2, api: 'twitter')
 
 # http://localhost:12345/metrics now returns all your metrics
 

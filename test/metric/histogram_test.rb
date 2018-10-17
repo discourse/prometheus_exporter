@@ -90,7 +90,7 @@ module PrometheusExporter::Metric
     end
 
     it "can correctly gather a histogram using custom buckets" do
-      histogram = Histogram.new("a_histogram", "my amazing histogram", [2, 1, 3])
+      histogram = Histogram.new("a_histogram", "my amazing histogram", buckets: [2, 1, 3])
 
       histogram.observe(0.5)
       histogram.observe(1.5)
