@@ -8,13 +8,14 @@ module PrometheusExporter::Metric
 
     attr_reader :estimators, :count, :total
 
-    def initialize(name, help)
-      super
+    def initialize(name, help, quantiles = QUANTILES)
+      super(name, help)
       @buffers = [{}, {}]
       @last_rotated = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       @current_buffer = 0
       @counts = {}
       @sums = {}
+      @quantiles = quantiles
     end
 
     def type
@@ -27,7 +28,7 @@ module PrometheusExporter::Metric
       result = {}
 
       if length > 0
-        QUANTILES.each do |quantile|
+        @quantiles.each do |quantile|
           result[quantile] = sorted[(length * quantile).ceil - 1]
         end
       end

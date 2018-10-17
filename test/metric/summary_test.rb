@@ -11,6 +11,25 @@ module PrometheusExporter::Metric
       Base.default_prefix = ''
     end
 
+    it "can correctly gather a summary with custom quantiles" do
+      summary = Summary.new("custom", "custom summary", [0.4, 0.6])
+
+      (1..10).each do |i|
+        summary.observe(i)
+      end
+
+      expected = <<~TEXT
+        # HELP custom custom summary
+        # TYPE custom summary
+        custom{quantile="0.4"} 4.0
+        custom{quantile="0.6"} 6.0
+        custom_sum 55.0
+        custom_count 10
+      TEXT
+
+      assert_equal(summary.to_prometheus_text, expected)
+    end
+
     it "can correctly gather a summary over multiple labels" do
 
       summary.observe(0.1, nil)
