@@ -3,11 +3,11 @@
 module PrometheusExporter::Metric
   class Histogram < Base
 
-    BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5.0, 10.0].freeze
+    DEFAULT_BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5.0, 10.0].freeze
 
     def initialize(name, help, opts = {})
       super(name, help)
-      @buckets = (opts[:buckets] || BUCKETS).sort.reverse
+      @buckets = (opts[:buckets] || DEFAULT_BUCKETS).sort.reverse
       @sums = {}
       @counts = {}
       @observations = {}
