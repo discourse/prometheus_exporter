@@ -84,6 +84,17 @@ histogram.observe(0.2, api: 'twitter')
 
 ```
 
+#### Custom quantiles and buckets
+
+You can also choose custom quantiles for summaries and custom buckets for histograms.
+
+```ruby
+
+summary = PrometheusExporter::Metric::Summary.new("load_time", "time to load page", [0.99, 0.75, 0.5, 0.25])
+histogram = PrometheusExporter::Metric::Summary.new("api_time", "time to call api", buckets: [0.1, 0.5, 1])
+
+```
+
 ### Multi process mode
 
 In some cases (for example, unicorn or puma clusters) you may want to aggregate metrics across multiple processes.
