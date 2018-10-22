@@ -3,19 +3,19 @@
 module PrometheusExporter::Metric
   class Summary < Base
 
-    QUANTILES = [0.99, 0.9, 0.5, 0.1, 0.01]
+    DEFAULT_QUANTILES = [0.99, 0.9, 0.5, 0.1, 0.01]
     ROTATE_AGE = 120
 
     attr_reader :estimators, :count, :total
 
-    def initialize(name, help, quantiles = QUANTILES)
+    def initialize(name, help, opts = {})
       super(name, help)
       @buffers = [{}, {}]
       @last_rotated = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       @current_buffer = 0
       @counts = {}
       @sums = {}
-      @quantiles = quantiles
+      @quantiles = opts[:quantiles] || DEFAULT_QUANTILES
     end
 
     def type

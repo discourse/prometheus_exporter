@@ -8,6 +8,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
 * [Installation](#installation)
 * [Usage](#usage)
   * [Single process mode](#single-process-mode)
+    * [Custom quantiles and buckets](#custom-quantiles-and-buckets)
   * [Multi process mode](#multi-process-mode)
   * [Rails integration](#rails-integration)
     * [Per-process stats](#per-process-stats)
@@ -90,7 +91,7 @@ You can also choose custom quantiles for summaries and custom buckets for histog
 
 ```ruby
 
-summary = PrometheusExporter::Metric::Summary.new("load_time", "time to load page", [0.99, 0.75, 0.5, 0.25])
+summary = PrometheusExporter::Metric::Summary.new("load_time", "time to load page", quantiles: [0.99, 0.75, 0.5, 0.25])
 histogram = PrometheusExporter::Metric::Histogram.new("api_time", "time to call api", buckets: [0.1, 0.5, 1])
 
 ```
