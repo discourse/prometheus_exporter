@@ -1,3 +1,10 @@
+0.4.0 - 23-10-2018
+
+- Feature: histogram support
+- Feature: custom quantile support for summary
+- Feature: Puma metrics
+- Fix: delayed job metrics
+
 0.3.4 - 02-10-2018
 
 - Fix: custom collector via CLI was not working correctly
