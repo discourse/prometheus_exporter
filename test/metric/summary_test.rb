@@ -12,7 +12,7 @@ module PrometheusExporter::Metric
     end
 
     it "can correctly gather a summary with custom quantiles" do
-      summary = Summary.new("custom", "custom summary", [0.4, 0.6])
+      summary = Summary.new("custom", "custom summary", quantiles: [0.4, 0.6])
 
       (1..10).each do |i|
         summary.observe(i)
