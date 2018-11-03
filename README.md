@@ -14,6 +14,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
     * [Per-process stats](#per-process-stats)
     * [Sidekiq metrics](#sidekiq-metrics)
     * [Delayed Job plugin](#delayed-job-plugin)
+    * [Hutch metrics](#hutch-message-processing-tracer)
   * [Puma metrics](#puma-metrics)
   * [Custom type collectors](#custom-type-collectors)
   * [Multi process mode with custom collector](#multi-process-mode-with-custom-collector)
@@ -215,6 +216,17 @@ In an initializer:
 unless Rails.env == "test"
   require 'prometheus_exporter/instrumentation'
   PrometheusExporter::Instrumentation::DelayedJob.register_plugin
+end
+```
+
+#### Hutch Message Processing Tracer
+
+Capture [Hutch](https://github.com/gocardless/hutch) metrics (how many jobs ran? how many failed? how long did they take?)
+
+```ruby
+unless Rails.env == "test"
+  require 'prometheus_exporter/instrumentation'
+  Hutch::Config.set(:tracer, PrometheusExporter::Instrumentation::Hutch)
 end
 ```
 
