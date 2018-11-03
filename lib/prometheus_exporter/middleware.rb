@@ -19,6 +19,11 @@ class PrometheusExporter::Middleware
           :exec, :async_exec, :exec_prepared, :send_query_prepared, :query
         ], :sql)
       end
+      if defined? Mysql2::Client
+        MethodProfiler.patch(Mysql2::Client, [:query], :sql)
+        MethodProfiler.patch(Mysql2::Statement, [:execute], :sql)
+        MethodProfiler.patch(Mysql2::Result, [:each], :sql)
+      end
     end
   end
 
