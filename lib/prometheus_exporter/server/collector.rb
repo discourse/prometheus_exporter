@@ -31,6 +31,7 @@ module PrometheusExporter::Server
       register_collector(SidekiqCollector.new)
       register_collector(DelayedJobCollector.new)
       register_collector(PumaCollector.new)
+      register_collector(HutchCollector.new)
     end
 
     def register_collector(collector)
