@@ -2,6 +2,7 @@ require 'test_helper'
 require 'mini_racer'
 require 'prometheus_exporter/server'
 require 'prometheus_exporter/instrumentation'
+require 'active_support/core_ext/string/filters'
 
 class PrometheusCollectorTest < Minitest::Test
 
@@ -258,5 +259,39 @@ class PrometheusCollectorTest < Minitest::Test
     assert(result.include?("puma_request_backlog_total 0"), "has total backlog")
     assert(result.include?("puma_thread_pool_capacity_total 32"), "has pool capacity")
     mock_puma.verify
+  end
+
+  def test_it_can_collect_active_record_metrics
+    require "active_support/subscriber"
+    require "prometheus_exporter/utils/sql_sanitizer"
+
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector)
+
+    event = ActiveSupport::Notifications::Event.new(
+      "sql.active_record",
+      DateTime.parse("2018-11-30 11:49:53"),
+      DateTime.parse("2018-11-30 11:49:54"),
+      "1",
+      {
+        sql: "SELECT table_name FROM information_schema.tables".freeze,
+        name: "SCHEMA",
+        binds: [],
+        type_casted_binds: [],
+        statement_name: nil,
+        connection_id: 70188100015940
+      }
+    )
+
+    instrument = PrometheusExporter::Instrumentation::ActiveRecord.new(event, client: client)
+    instrument.call do
+      # nothing
+    end
+
+    result = collector.prometheus_metrics_text
+
+    assert(result.include?("active_record_queries_total{query=\"SELECT table_name FROM information_schema.tables\",action=\"SCHEMA\"} 1"), "has query")
+    assert(result.include?("active_record_query_duration_seconds{query=\"SELECT table_name FROM information_schema.tables\",action=\"SCHEMA\"}"), "has duration")
+    assert(result.include?("active_record_query_duration_seconds_summary"), "has summary")
   end
 end
