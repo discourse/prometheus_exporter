@@ -110,6 +110,133 @@ class PrometheusCollectorTest < Minitest::Test
     assert_equal(text, collector.prometheus_metrics_text)
   end
 
+  def test_it_can_export_summary_stats
+    name = 'test_name'
+    help = 'test_help'
+    collector = PrometheusExporter::Server::Collector.new
+    json = {
+      type: :summary,
+      help: help,
+      name: name,
+      keys: {key1: 'test1'},
+      value: 0.6
+    }.to_json
+
+    collector.process(json)
+    collector.process(json)
+    text = <<~TXT
+      # HELP test_name test_help
+      # TYPE test_name summary
+      test_name{key1=\"test1\",quantile=\"0.99\"} 0.6
+      test_name{key1=\"test1\",quantile=\"0.9\"} 0.6
+      test_name{key1=\"test1\",quantile=\"0.5\"} 0.6
+      test_name{key1=\"test1\",quantile=\"0.1\"} 0.6
+      test_name{key1=\"test1\",quantile=\"0.01\"} 0.6
+      test_name_sum{key1=\"test1\"} 1.2
+      test_name_count{key1=\"test1\"} 2
+    TXT
+
+    assert_equal(text, collector.prometheus_metrics_text)
+  end
+
+  def test_it_can_pass_options_to_summary
+    name = 'test_name'
+    help = 'test_help'
+    collector = PrometheusExporter::Server::Collector.new
+    json = {
+      type: :summary,
+      help: help,
+      name: name,
+      keys: {key1: 'test1'},
+      opts: {quantiles: [0.75, 0.5, 0.25]},
+      value: 8
+    }
+    collector.process(json.to_json)
+
+    %w[3 3 5 8 1 7 9 1 2 6 4 0 2 8 3 6 4 2 4 5 4 8 9 1 4 7 3 6 1 5 6 4].each do |num|
+      json[:value] = num.to_i
+      collector.process(json.to_json)
+    end
+
+    # In this case our 0 to 10 based data is skewed a bit low
+    text = <<~TXT
+      # HELP test_name test_help
+      # TYPE test_name summary
+      test_name{key1=\"test1\",quantile=\"0.75\"} 6.0
+      test_name{key1=\"test1\",quantile=\"0.5\"} 4.0
+      test_name{key1=\"test1\",quantile=\"0.25\"} 3.0
+      test_name_sum{key1=\"test1\"} 149.0
+      test_name_count{key1=\"test1\"} 33
+    TXT
+
+    assert_equal(text, collector.prometheus_metrics_text)
+  end
+
+  def test_it_can_export_histogram_stats
+    name = 'test_name'
+    help = 'test_help'
+    collector = PrometheusExporter::Server::Collector.new
+    json = {
+      type: :histogram,
+      help: help,
+      name: name,
+      keys: {key1: 'test1'},
+      value: 6
+    }.to_json
+
+    collector.process(json)
+    collector.process(json)
+    text = <<~TXT
+      # HELP test_name test_help
+      # TYPE test_name histogram
+      test_name_bucket{key1=\"test1\",le=\"+Inf\"} 2
+      test_name_bucket{key1=\"test1\",le=\"10.0\"} 2
+      test_name_bucket{key1=\"test1\",le=\"5.0\"} 0
+      test_name_bucket{key1=\"test1\",le=\"2.5\"} 0
+      test_name_bucket{key1=\"test1\",le=\"1\"} 0
+      test_name_bucket{key1=\"test1\",le=\"0.5\"} 0
+      test_name_bucket{key1=\"test1\",le=\"0.25\"} 0
+      test_name_bucket{key1=\"test1\",le=\"0.1\"} 0
+      test_name_bucket{key1=\"test1\",le=\"0.05\"} 0
+      test_name_bucket{key1=\"test1\",le=\"0.025\"} 0
+      test_name_bucket{key1=\"test1\",le=\"0.01\"} 0
+      test_name_bucket{key1=\"test1\",le=\"0.005\"} 0
+      test_name_count{key1=\"test1\"} 2
+      test_name_sum{key1=\"test1\"} 12.0
+    TXT
+
+    assert_equal(text, collector.prometheus_metrics_text)
+  end
+
+  def test_it_can_pass_options_to_histogram
+    name = 'test_name'
+    help = 'test_help'
+    collector = PrometheusExporter::Server::Collector.new
+    json = {
+      type: :histogram,
+      help: help,
+      name: name,
+      keys: {key1: 'test1'},
+      opts: {buckets: [5,6,7]},
+      value: 6
+    }.to_json
+
+    collector.process(json)
+    collector.process(json)
+    text = <<~TXT
+      # HELP test_name test_help
+      # TYPE test_name histogram
+      test_name_bucket{key1=\"test1\",le=\"+Inf\"} 2
+      test_name_bucket{key1=\"test1\",le=\"7\"} 2
+      test_name_bucket{key1=\"test1\",le=\"6\"} 2
+      test_name_bucket{key1=\"test1\",le=\"5\"} 0
+      test_name_count{key1=\"test1\"} 2
+      test_name_sum{key1=\"test1\"} 12.0
+    TXT
+
+    assert_equal(text, collector.prometheus_metrics_text)
+  end
+
   def test_it_can_collect_sidekiq_metrics
     collector = PrometheusExporter::Server::Collector.new
     client = PipedClient.new(collector)
