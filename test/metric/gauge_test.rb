@@ -11,6 +11,29 @@ module PrometheusExporter::Metric
       Base.default_prefix = ''
     end
 
+    it "should not allow observe to corrupt data" do
+      assert_raises do
+        gauge.observe("hello")
+      end
+
+      # going to special case nil here instead of adding a new API
+      # observing nil should set to nothing
+      # this is a slight difference to official API which would raise
+      # on non numeric, however it provides a bit more flexibility
+      # and allows us to remove metrics if we wish
+      gauge.observe(100)
+      gauge.observe(nil)
+      gauge.observe(nil, a: "thing")
+
+      text = <<~TEXT
+        # HELP a_gauge my amazing gauge
+        # TYPE a_gauge gauge
+
+      TEXT
+
+      assert_equal(gauge.to_prometheus_text, text)
+    end
+
     it "supports a dynamic prefix" do
       Base.default_prefix = 'web_'
       gauge.observe(400.11)

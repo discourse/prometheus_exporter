@@ -20,7 +20,14 @@ module PrometheusExporter::Metric
     end
 
     def observe(value, labels = {})
-      @data[labels] = value
+      if value.nil?
+        data.delete(labels)
+      else
+        if !(Numeric === value)
+          raise ArgumentError, 'value must be a number'
+        end
+        @data[labels] = value
+      end
     end
 
     def increment(labels = {}, value = 1)
