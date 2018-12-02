@@ -262,7 +262,7 @@ class PrometheusCollectorTest < Minitest::Test
   end
 
   def test_it_can_collect_active_record_metrics
-    require "active_support/subscriber"
+    require "active_support/notifications"
     require "prometheus_exporter/utils/sql_sanitizer"
 
     collector = PrometheusExporter::Server::Collector.new

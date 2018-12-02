@@ -1,7 +1,7 @@
 module PrometheusExporter::Instrumentation
   class ActiveRecord
     def self.start(client: nil)
-      require "active_support/subscriber"
+      require "active_support/notifications"
       require "prometheus_exporter/utils/sql_sanitizer"
 
       ActiveSupport::Notifications.subscribe("sql.active_record") do |*args|
