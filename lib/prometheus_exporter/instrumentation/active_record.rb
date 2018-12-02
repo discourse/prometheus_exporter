@@ -21,15 +21,21 @@ module PrometheusExporter::Instrumentation
     end
 
     def call
+      return if name == "SCHEMA".freeze || name == "CACHE".freeze
+
       @client.send_json(
         type: "active_record",
         duration: duration,
-        action: @active_record_event.payload[:name],
+        action: name,
         query: clean_query
       )
     end
 
     private
+
+    def name
+      @active_record_event.payload[:name]
+    end
 
     def duration
       @active_record_event.duration / 1000

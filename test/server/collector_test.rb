@@ -274,8 +274,8 @@ class PrometheusCollectorTest < Minitest::Test
       DateTime.parse("2018-11-30 11:49:54"),
       "1",
       {
-        sql: "SELECT table_name FROM information_schema.tables".freeze,
-        name: "SCHEMA",
+        sql: "SELECT * FROM users".freeze,
+        name: "User Load",
         binds: [],
         type_casted_binds: [],
         statement_name: nil,
@@ -288,10 +288,26 @@ class PrometheusCollectorTest < Minitest::Test
       # nothing
     end
 
+    event.payload[:name] = "SCHEMA"
+
+    instrument = PrometheusExporter::Instrumentation::ActiveRecord.new(event, client: client)
+    instrument.call do
+      # nothing
+    end
+
+    event.payload[:name] = "CACHE"
+
+    instrument = PrometheusExporter::Instrumentation::ActiveRecord.new(event, client: client)
+    instrument.call do
+      # nothing
+    end
+
     result = collector.prometheus_metrics_text
 
-    assert(result.include?("active_record_queries_total{query=\"SELECT table_name FROM information_schema.tables\",action=\"SCHEMA\"} 1"), "has query")
-    assert(result.include?("active_record_query_duration_seconds{query=\"SELECT table_name FROM information_schema.tables\",action=\"SCHEMA\"}"), "has duration")
+    assert(result.include?("active_record_queries_total{query=\"SELECT * FROM users\",action=\"User Load\"} 1"), "has query")
+    assert(result.include?("active_record_query_duration_seconds{query=\"SELECT * FROM users\",action=\"User Load\"}"), "has duration")
     assert(result.include?("active_record_query_duration_seconds_summary"), "has summary")
+    assert(!result.include?("action=\"SCHEMA\""), "no schema")
+    assert(!result.include?("action=\"CACHE\""), "no cache")
   end
 end
