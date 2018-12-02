@@ -15,6 +15,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
     * [Sidekiq metrics](#sidekiq-metrics)
     * [Delayed Job plugin](#delayed-job-plugin)
     * [Hutch metrics](#hutch-message-processing-tracer)
+    * [ActiveRecord query metrics](#active-record-query-metrics)
   * [Puma metrics](#puma-metrics)
   * [Custom type collectors](#custom-type-collectors)
   * [Multi process mode with custom collector](#multi-process-mode-with-custom-collector)
@@ -227,6 +228,20 @@ Capture [Hutch](https://github.com/gocardless/hutch) metrics (how many jobs ran?
 unless Rails.env == "test"
   require 'prometheus_exporter/instrumentation'
   Hutch::Config.set(:tracer, PrometheusExporter::Instrumentation::Hutch)
+end
+```
+
+#### Active Record Query Metrics
+
+Uses Rails Instrumentation API to collect query stats. It sanitize the queries to be able to group them into generic query types passed as labeles to prometheus.
+
+```ruby
+# in an initializer
+unless Rails.env == "test"
+  require 'prometheus_exporter/instrumentation'
+
+  # this reports active record sql queries stats
+  PrometheusExporter::Instrumentation::ActiveRecord.start
 end
 ```
 
