@@ -21,13 +21,7 @@ module PrometheusExporter
       end
 
       def raw_database_adapter
-        adapter = ActiveRecord::Base.connection_config[:adapter].to_s rescue nil
-
-        if adapter.nil?
-          adapter = ActiveRecord::Base.configurations[env]["adapter"]
-        end
-
-        return adapter
+        ActiveRecord::Base.connection_config[:adapter].to_s
       rescue
         nil
       end

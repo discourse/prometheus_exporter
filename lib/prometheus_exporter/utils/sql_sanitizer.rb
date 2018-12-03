@@ -37,15 +37,10 @@ module PrometheusExporter
       end
 
       def sql
-        @sql ||= scrubbed(@raw_sql.dup) # don't do this in initialize as it is extra work that isn't needed unless we have a slow transaction.
+        @sql ||= scrubbed(@raw_sql.dup)
       end
 
       def to_s
-        if @sanitized
-          sql
-        else
-          @sanitized = true
-        end
         case database_engine
         when :postgres then to_s_postgres
         when :mysql    then to_s_mysql
@@ -89,20 +84,10 @@ module PrometheusExporter
         sql
       end
 
-      def has_encodings?(encodings=['UTF-8', 'binary'])
-        encodings.all?{|enc| Encoding.find(enc) rescue false}
-      end
-
       def scrubbed(str)
-        return '' if !str.is_a?(String) || str.length > MAX_SQL_LENGTH # safeguard - don't sanitize or scrub large SQL statements
-        return str if str.valid_encoding? # Whatever encoding it is, it is valid and we can operate on it
-
-        if str.respond_to?(:scrub) # Prefer to scrub before we have to convert
-          return str.scrub('_')
-        elsif has_encodings?(['UTF-8', 'binary'])
-          return str.encode('UTF-8', 'binary', :invalid => :replace, :undef => :replace, :replace => '_')
-        end
-        ''
+        return '' if !str.is_a?(String) || str.length > MAX_SQL_LENGTH
+        return str if str.valid_encoding?
+        return str.scrub('_')
       end
     end
   end
