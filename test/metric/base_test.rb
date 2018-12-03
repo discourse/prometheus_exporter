@@ -1,8 +1,6 @@
 require 'test_helper'
 require 'prometheus_exporter/metric'
 
-
-
 module PrometheusExporter::Metric
   describe Base do
     let :counter do

@@ -52,7 +52,7 @@ module PrometheusExporter::Metric
       @counts[labels] ||= 0
       buckets = @observations[labels]
       if buckets.nil?
-        buckets = @buckets.map{|b| [b, 0]}.to_h
+        buckets = @buckets.map { |b| [b, 0] }.to_h
         @observations[labels] = buckets
       end
       buckets
@@ -66,7 +66,7 @@ module PrometheusExporter::Metric
     end
 
     def with_bucket(labels, bucket)
-      labels.merge({"le" => bucket})
+      labels.merge("le" => bucket)
     end
 
   end

@@ -85,6 +85,6 @@ class PrometheusExporter::Middleware
   # this method takes care to convert both into a proper second + fractions timestamp
   def convert_header_to_ms(str)
     str = str.gsub(/t=|\./, '')
-    "#{str[0,10]}.#{str[10,13]}".to_f
+    "#{str[0, 10]}.#{str[10, 13]}".to_f
   end
 end

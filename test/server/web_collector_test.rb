@@ -9,13 +9,13 @@ class PrometheusWebCollectorTest < Minitest::Test
   end
 
   def test_collecting_metrics_without_specific_timings
-    collector.collect({
+    collector.collect(
       type: "web",
       timings: nil,
       action: 'index',
       controller: 'home',
       status: 200
-    })
+    )
 
     metrics = collector.metrics
 
@@ -23,7 +23,7 @@ class PrometheusWebCollectorTest < Minitest::Test
   end
 
   def test_collecting_metrics
-    collector.collect({
+    collector.collect(
       "type" => "web",
       "timings" => {
         "sql" => {
@@ -40,14 +40,14 @@ class PrometheusWebCollectorTest < Minitest::Test
       "action" => 'index',
       "controller" => 'home',
       "status" => 200
-    })
+    )
 
     metrics = collector.metrics
     assert_equal 5, metrics.size
   end
 
   def test_collecting_metrics_with_custom_labels
-    collector.collect({
+    collector.collect(
       'type' => 'web',
       'timings' => nil,
       'action' => 'index',
@@ -56,7 +56,7 @@ class PrometheusWebCollectorTest < Minitest::Test
       'custom_labels' => {
         'service' => 'service1'
       }
-    })
+    )
 
     metrics = collector.metrics
 
