@@ -11,7 +11,7 @@ module PrometheusExporter::Server
 
       ensure_active_record_metrics
       @active_record_query_duration_seconds.observe(obj["duration"], labels)
-      @active_record_query_duration_seconds_summary.observe(obj["duration"], labels)
+      @active_record_query_duration_seconds_summary.observe(obj["duration"])
       @active_record_queries_total.observe(1, labels)
     end
 
