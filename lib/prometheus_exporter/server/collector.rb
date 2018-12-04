@@ -48,13 +48,19 @@ module PrometheusExporter::Server
           if !metric
             metric = register_metric_unsafe(obj)
           end
+
+          keys = obj["keys"] || {}
+          if obj["custom_labels"]
+            keys = obj["custom_labels"].merge(keys)
+          end
+
           case obj["prometheus_exporter_action"]
           when 'increment'
-            metric.increment(obj["keys"], obj["value"])
+            metric.increment(keys, obj["value"])
           when 'decrement'
-            metric.decrement(obj["keys"], obj["value"])
+            metric.decrement(keys, obj["value"])
           else
-            metric.observe(obj["value"], obj["keys"])
+            metric.observe(obj["value"], keys)
           end
         end
       end
