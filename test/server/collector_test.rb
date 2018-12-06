@@ -146,6 +146,32 @@ class PrometheusCollectorTest < Minitest::Test
     assert(result.include?('sidekiq_jobs_total{job_name="WrappedClass",service="service1"} 1'), "has sidekiq working job from ActiveJob")
   end
 
+  def test_it_merges_custom_labels_for_generic_metrics
+    name = 'test_name'
+    help = 'test_help'
+    collector = PrometheusExporter::Server::Collector.new
+    metric = PrometheusExporter::Metric::Gauge.new(name, help)
+    collector.register_metric(metric)
+    json = {
+      type: :gauge,
+      help: help,
+      name: name,
+      custom_labels: { host: "example.com" },
+      keys: { key1: 'test1' },
+      value: 5
+    }.to_json
+
+    collector.process(json)
+
+    text = <<~TXT
+      # HELP test_name test_help
+      # TYPE test_name gauge
+      test_name{host="example.com",key1="test1"} 5
+    TXT
+
+    assert_equal(text, collector.prometheus_metrics_text)
+  end
+
   def test_it_can_collect_process_metrics
     # make some mini racer data
     ctx = MiniRacer::Context.new
