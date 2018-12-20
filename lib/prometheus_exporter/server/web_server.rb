@@ -47,7 +47,7 @@ module PrometheusExporter::Server
       @timeout = timeout
 
       @server.mount_proc '/' do |req, res|
-        res['ContentType'] = 'text/plain; charset=utf-8'
+        res['Content-Type'] = 'text/plain; charset=utf-8'
         if req.path == '/metrics'
           res.status = 200
           if req.header["accept-encoding"].to_s.include?("gzip")
