@@ -49,6 +49,7 @@ class PrometheusExporter::Client
 
   MAX_SOCKET_AGE = 25
   MAX_QUEUE_SIZE = 10_000
+  STOP_QUEUE_WAIT_TIMEOUT_SECONDS = 10
 
   def initialize(host: 'localhost', port: PrometheusExporter::DEFAULT_PORT, max_queue_size: nil, thread_sleep: 0.5, json_serializer: nil, custom_labels: nil)
     @metrics = []
@@ -121,6 +122,7 @@ class PrometheusExporter::Client
 
   def stop
     @mutex.synchronize do
+      wait_for_empty_queue_with_timeout(STOP_QUEUE_WAIT_TIMEOUT_SECONDS)
       @worker_thread&.kill
       while @worker_thread.alive?
         sleep 0.001
@@ -196,4 +198,11 @@ class PrometheusExporter::Client
     raise
   end
 
+  def wait_for_empty_queue_with_timeout(timeout_seconds)
+    start_time = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
+    while @queue.length > 0
+      break if start_time + timeout_seconds < ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
+      sleep(0.05)
+    end
+  end
 end
