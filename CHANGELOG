@@ -1,3 +1,8 @@
+0.4.3 - 11-02-2019
+
+- Feature: Add alias for Gauge #observe called #set, this makes it a bit easier to migrate from prom
+- Feature: Add increment and decrement to Counter
+
 0.4.2 - 30-11-2018
 
 - Fix/Feature: setting a Gauge to nil will remove Gauge (setting to non numeric will raise)
