@@ -30,6 +30,8 @@ module PrometheusExporter::Metric
       end
     end
 
+    alias_method :set, :observe
+
     def increment(labels = {}, value = 1)
       @data[labels] ||= 0
       @data[labels] += value
