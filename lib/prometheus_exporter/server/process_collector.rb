@@ -62,7 +62,8 @@ module PrometheusExporter::Server
       obj["created_at"] = now
 
       @process_metrics.delete_if do |current|
-        obj["pid"] == current["pid"] || (current["created_at"] + MAX_PROCESS_METRIC_AGE < now)
+        (obj["pid"] == current["pid"] && obj["process_type"] == current["process_type"]) ||
+        (current["created_at"] + MAX_PROCESS_METRIC_AGE < now)
       end
       @process_metrics << obj
     end

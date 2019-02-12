@@ -191,6 +191,30 @@ class PrometheusCollectorTest < Minitest::Test
     assert(text.include?("minor_gc_ops_total"), "must include counters")
   end
 
+  def test_it_can_collect_process_metrics_for_multiple_types
+    # make some mini racer data
+    ctx = MiniRacer::Context.new
+    ctx.eval("1")
+
+    collector = PrometheusExporter::Server::Collector.new
+
+    process_instrumentation = PrometheusExporter::Instrumentation::Process.new(:web)
+    collected = process_instrumentation.collect
+    collector.process(collected.to_json)
+
+    process_instrumentation = PrometheusExporter::Instrumentation::Process.new(:delayed_job)
+    collected = process_instrumentation.collect
+    collector.process(collected.to_json)
+
+    text = collector.prometheus_metrics_text
+
+    v8_web_str = "v8_heap_count{pid=\"#{collected[:pid]}\",type=\"web\"} #{collected[:v8_heap_count]}"
+    assert(text.include?(v8_web_str), "must include web v8 metric")
+
+    v8_job_str = "v8_heap_count{pid=\"#{collected[:pid]}\",type=\"delayed_job\"} #{collected[:v8_heap_count]}"
+    assert(text.include?(v8_job_str), "must include delayed job v8 metric")
+  end
+
   def test_it_can_collect_delayed_job_metrics
     collector = PrometheusExporter::Server::Collector.new
     client = PipedClient.new(collector)
