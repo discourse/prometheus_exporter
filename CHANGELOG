@@ -1,3 +1,8 @@
+0.4.4 - 14-02-2019
+
+- Feature: Allow process collector to ship custom labels for all process metrics
+- Fix: Always scope process metrics on hostname in collector
+
 0.4.3 - 11-02-2019
 
 - Feature: Add alias for Gauge #observe called #set, this makes it a bit easier to migrate from prom

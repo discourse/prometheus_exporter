@@ -68,7 +68,7 @@ server.start
 PrometheusExporter::Client.default = PrometheusExporter::LocalClient.new(collector: server.collector)
 
 # this ensures basic process instrumentation metrics are added such as RSS and Ruby metrics
-PrometheusExporter::Instrumentation::Process.start
+PrometheusExporter::Instrumentation::Process.start(type: "my program", labels: {my_custom: "label for all process metrics"})
 
 gauge = PrometheusExporter::Metric::Gauge.new("rss", "used RSS for process")
 counter = PrometheusExporter::Metric::Counter.new("web_requests", "number of web requests")
