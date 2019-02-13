@@ -1,6 +1,7 @@
 require 'test_helper'
 require 'mini_racer'
 require 'prometheus_exporter/server'
+require 'prometheus_exporter/client'
 require 'prometheus_exporter/instrumentation'
 
 class PrometheusCollectorTest < Minitest::Test
@@ -19,6 +20,23 @@ class PrometheusCollectorTest < Minitest::Test
       payload = obj.merge(custom_labels: @custom_labels).to_json
       @collector.process(payload)
     end
+  end
+
+  def test_local_metric
+    collector = PrometheusExporter::Server::Collector.new
+    client = PrometheusExporter::LocalClient.new(collector: collector)
+
+    PrometheusExporter::Instrumentation::Process.start(client: client)
+
+    metrics_text = ""
+    TestHelper.wait_for(2) do
+      metrics_text = collector.prometheus_metrics_text
+      metrics_text != ""
+    end
+
+    PrometheusExporter::Instrumentation::Process.stop
+
+    assert(metrics_text.match?(/heap_live_slots/))
   end
 
   def test_register_metric

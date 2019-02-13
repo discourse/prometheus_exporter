@@ -1,10 +1,15 @@
+# frozen_string_literal: true
+
 # collects stats from currently running process
 module PrometheusExporter::Instrumentation
   class Process
     def self.start(client: nil, type: "ruby", frequency: 30)
       process_collector = new(type)
       client ||= PrometheusExporter::Client.default
-      Thread.new do
+
+      stop if @thread
+
+      @thread = Thread.new do
         while true
           begin
             metric = process_collector.collect
@@ -15,6 +20,13 @@ module PrometheusExporter::Instrumentation
             sleep frequency
           end
         end
+      end
+    end
+
+    def self.stop
+      if t = @thread
+        t.kill
+        @thread = nil
       end
     end
 
