@@ -15,11 +15,18 @@ module PrometheusExporter::Server
       @sidekiq_jobs_total.observe(1, labels)
       @sidekiq_restarted_jobs_total.observe(1, labels) if obj["shutdown"]
       @sidekiq_failed_jobs_total.observe(1, labels) if !obj["success"] && !obj["shutdown"]
+      @sidekiq_dead_jobs_total.observe(1, labels) if obj["retries_exhausted"]
     end
 
     def metrics
       if @sidekiq_jobs_total
-        [@sidekiq_job_duration_seconds, @sidekiq_jobs_total,@sidekiq_restarted_jobs_total, @sidekiq_failed_jobs_total]
+        [
+          @sidekiq_job_duration_seconds,
+          @sidekiq_jobs_total,
+          @sidekiq_restarted_jobs_total,
+          @sidekiq_failed_jobs_total,
+          @sidekiq_dead_jobs_total,
+        ]
       else
         []
       end
@@ -45,6 +52,10 @@ module PrometheusExporter::Server
         @sidekiq_failed_jobs_total =
         PrometheusExporter::Metric::Counter.new(
           "sidekiq_failed_jobs_total", "Total number of failed sidekiq jobs.")
+
+        @sidekiq_dead_jobs_total =
+        PrometheusExporter::Metric::Counter.new(
+          "sidekiq_dead_jobs_total", "Total number of dead sidekiq jobs.")
       end
     end
   end

@@ -26,8 +26,25 @@ module PrometheusExporter::Instrumentation
         name: class_name,
         success: success,
         shutdown: shutdown,
+        retries_exhausted: retries_exhausted?(msg),
         duration: duration
       )
+    end
+
+    private
+
+    def retries_exhausted?(msg)
+      max_retries_or_bool = msg["retry"]
+      return true unless max_retries_or_bool
+      max_retries =
+        if max_retries_or_bool.is_a?(Numeric)
+          max_retries_or_bool
+        else
+          #Sidekiq's default max_retries is 25
+          ::Sidekiq.options[:max_retries] || 25
+        end
+      current_retry_index = msg["retry_count"] || 0
+      current_retry_index + 1 >= max_retries
     end
   end
 end
