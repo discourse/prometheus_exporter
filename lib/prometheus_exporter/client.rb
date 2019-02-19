@@ -119,7 +119,7 @@ class PrometheusExporter::Client
     end
   end
 
-  def stop(wait_timeout_seconds = 10)
+  def stop(wait_timeout_seconds: 0)
     @mutex.synchronize do
       wait_for_empty_queue_with_timeout(wait_timeout_seconds)
       @worker_thread&.kill
