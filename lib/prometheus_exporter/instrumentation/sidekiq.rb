@@ -40,8 +40,7 @@ module PrometheusExporter::Instrumentation
         if max_retries_or_bool.is_a?(Numeric)
           max_retries_or_bool
         else
-          #Sidekiq's default max_retries is 25
-          ::Sidekiq.options[:max_retries] || 25
+          ::Sidekiq.options[:max_retries] || ::Sidekiq::JobRetry::DEFAULT_MAX_RETRY_ATTEMPTS
         end
       current_retry_index = msg["retry_count"] || 0
       current_retry_index + 1 >= max_retries
