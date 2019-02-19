@@ -3,6 +3,7 @@
 module PrometheusExporter::Instrumentation
   class Sidekiq
     def self.set_death_handler_once(client)
+      return unless const_defined?("Sidekiq")
       unless @death_handler_set
         ::Sidekiq.configure_server do |config|
           config.death_handlers << -> (job, ex) do
