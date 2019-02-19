@@ -11,11 +11,14 @@ module PrometheusExporter::Server
       labels = custom_labels.nil? ? default_labels : default_labels.merge(custom_labels)
 
       ensure_sidekiq_metrics
-      @sidekiq_job_duration_seconds.observe(obj["duration"], labels)
-      @sidekiq_jobs_total.observe(1, labels)
-      @sidekiq_restarted_jobs_total.observe(1, labels) if obj["shutdown"]
-      @sidekiq_failed_jobs_total.observe(1, labels) if !obj["success"] && !obj["shutdown"]
-      @sidekiq_dead_jobs_total.observe(1, labels) if obj["retries_exhausted"]
+      if obj["dead"]
+        @sidekiq_dead_jobs_total.observe(1, labels)
+      else
+        @sidekiq_job_duration_seconds.observe(obj["duration"], labels)
+        @sidekiq_jobs_total.observe(1, labels)
+        @sidekiq_restarted_jobs_total.observe(1, labels) if obj["shutdown"]
+        @sidekiq_failed_jobs_total.observe(1, labels) if !obj["success"] && !obj["shutdown"]
+      end
     end
 
     def metrics
