@@ -147,6 +147,18 @@ awesome 10
 
 ```
 
+### Short-lived processes
+
+For short-lived processes (e.g. scripts / cron jobs), it is possible that the job finishes before the background worker thread is able to send queued messages.  To ensure that all messages are sent, call the 'flush' method (optionally specifying a max timeout to send queued messages).
+
+```ruby
+require 'prometheus_exporter/client'
+client = PrometheusExporter::Client.default
+gauge = client.register(:gauge, "awesome", "amount of awesome")
+gauge.observe(10)
+client.flush
+```
+
 ### Rails integration
 
 You can easily integrate into any Rack application.

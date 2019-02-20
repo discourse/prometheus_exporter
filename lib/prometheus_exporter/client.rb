@@ -86,6 +86,21 @@ module PrometheusExporter
       @metrics << metric
       metric
     end
+    
+    # Ensures queued entries are delivered
+    def flush(timeout=5)
+      begin
+        Timeout::timeout(timeout) do
+          while(@queue.length > 0)
+            Thread.pass
+            sleep 0.01
+          end
+          return true
+        end
+      rescue => e
+      end
+      return false
+    end
 
     def send_json(obj)
       payload = @custom_labels.nil? ? obj : obj.merge(custom_labels: @custom_labels)
