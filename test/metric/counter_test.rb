@@ -40,6 +40,32 @@ module PrometheusExporter::Metric
       assert_equal(counter.to_prometheus_text, text)
     end
 
+    it "can correctly increment" do
+      counter.observe(1, sam: "ham")
+      counter.increment({ sam: "ham" }, 2)
+
+      text = <<~TEXT
+        # HELP a_counter my amazing counter
+        # TYPE a_counter counter
+        a_counter{sam="ham"} 3
+      TEXT
+
+      assert_equal(counter.to_prometheus_text, text)
+    end
+
+    it "can correctly decrement" do
+      counter.observe(5, sam: "ham")
+      counter.decrement({ sam: "ham" }, 2)
+
+      text = <<~TEXT
+        # HELP a_counter my amazing counter
+        # TYPE a_counter counter
+        a_counter{sam="ham"} 3
+      TEXT
+
+      assert_equal(counter.to_prometheus_text, text)
+    end
+
     it "can correctly log multiple increments" do
 
       counter.observe

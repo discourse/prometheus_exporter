@@ -1,6 +1,7 @@
 require 'test_helper'
 require 'mini_racer'
 require 'prometheus_exporter/server'
+require 'prometheus_exporter/client'
 require 'prometheus_exporter/instrumentation'
 
 class PrometheusCollectorTest < Minitest::Test
@@ -19,6 +20,24 @@ class PrometheusCollectorTest < Minitest::Test
       payload = obj.merge(custom_labels: @custom_labels).to_json
       @collector.process(payload)
     end
+  end
+
+  def test_local_metric
+    collector = PrometheusExporter::Server::Collector.new
+    client = PrometheusExporter::LocalClient.new(collector: collector)
+
+    PrometheusExporter::Instrumentation::Process.start(client: client, labels: { hello: "custom label" })
+
+    metrics_text = ""
+    TestHelper.wait_for(2) do
+      metrics_text = collector.prometheus_metrics_text
+      metrics_text != ""
+    end
+
+    PrometheusExporter::Instrumentation::Process.stop
+
+    assert(metrics_text.match?(/heap_live_slots/))
+    assert(metrics_text.match?(/hello.*custom label/))
   end
 
   def test_register_metric
@@ -179,14 +198,15 @@ class PrometheusCollectorTest < Minitest::Test
 
     collector = PrometheusExporter::Server::Collector.new
 
-    process_instrumentation = PrometheusExporter::Instrumentation::Process.new(:web)
+    process_instrumentation = PrometheusExporter::Instrumentation::Process.new(type: "web")
     collected = process_instrumentation.collect
 
     collector.process(collected.to_json)
 
     text = collector.prometheus_metrics_text
 
-    v8_str = "v8_heap_count{pid=\"#{collected[:pid]}\",type=\"web\"} #{collected[:v8_heap_count]}"
+    v8_str = "v8_heap_count{type=\"web\",pid=\"#{collected[:pid]}\"} #{collected[:v8_heap_count]}"
+
     assert(text.include?(v8_str), "must include v8 metric")
     assert(text.include?("minor_gc_ops_total"), "must include counters")
   end

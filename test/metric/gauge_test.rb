@@ -77,6 +77,20 @@ module PrometheusExporter::Metric
       assert_equal(gauge.to_prometheus_text, text)
     end
 
+    it "can use the set on alias" do
+
+      gauge.set(10)
+      gauge.set(11)
+
+      text = <<~TEXT
+        # HELP a_gauge my amazing gauge
+        # TYPE a_gauge gauge
+        a_gauge 11
+      TEXT
+
+      assert_equal(gauge.to_prometheus_text, text)
+    end
+
     it "can correctly reset on change with labels" do
       gauge.observe(1, sam: "ham")
       gauge.observe(2, sam: "ham")
