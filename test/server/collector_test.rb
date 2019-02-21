@@ -114,12 +114,12 @@ class PrometheusCollectorTest < Minitest::Test
 
     instrument = PrometheusExporter::Instrumentation::Sidekiq.new(client: client)
 
-    instrument.call("hello", {}, "default") do
+    instrument.call("hello", nil, "default") do
       # nothing
     end
 
     begin
-      instrument.call(false, {}, "default") do
+      instrument.call(false, nil, "default") do
         boom
       end
     rescue
@@ -139,12 +139,12 @@ class PrometheusCollectorTest < Minitest::Test
 
     instrument = PrometheusExporter::Instrumentation::Sidekiq.new(client: client)
 
-    instrument.call("hello", {}, "default") do
+    instrument.call("hello", nil, "default") do
       # nothing
     end
 
     begin
-      instrument.call(false, {}, "default") do
+      instrument.call(false, nil, "default") do
         boom
       end
     rescue
