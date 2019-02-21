@@ -1,10 +1,25 @@
+# frozen_string_literal: true
+
 # collects stats from currently running process
 module PrometheusExporter::Instrumentation
   class Process
-    def self.start(client: nil, type: "ruby", frequency: 30)
-      process_collector = new(type)
+    def self.start(client: nil, type: "ruby", frequency: 30, labels: nil)
+
+      metric_labels =
+        if labels && type
+          labels.merge(type: type)
+        elsif labels
+          labels
+        else
+          { type: type }
+        end
+
+      process_collector = new(metric_labels)
       client ||= PrometheusExporter::Client.default
-      Thread.new do
+
+      stop if @thread
+
+      @thread = Thread.new do
         while true
           begin
             metric = process_collector.collect
@@ -18,14 +33,33 @@ module PrometheusExporter::Instrumentation
       end
     end
 
-    def initialize(type)
-      @type = type
+    def self.stop
+      if t = @thread
+        t.kill
+        @thread = nil
+      end
+    end
+
+    def initialize(metric_labels)
+      @metric_labels = metric_labels
+      @hostname = nil
+    end
+
+    def hostname
+      @hostname ||=
+        begin
+          `hostname`.strip
+        rescue => e
+          STDERR.puts "Unable to lookup hostname #{e}"
+          "unknown-host"
+        end
     end
 
     def collect
       metric = {}
       metric[:type] = "process"
-      metric[:process_type] = @type
+      metric[:metric_labels] = @metric_labels
+      metric[:hostname] = hostname
       collect_gc_stats(metric)
       collect_v8_stats(metric)
       collect_process_stats(metric)

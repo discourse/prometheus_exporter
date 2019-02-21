@@ -34,7 +34,7 @@ module PrometheusExporter::Server
       metrics = {}
 
       @process_metrics.map do |m|
-        metric_key = { pid: m["pid"], type: m["process_type"] }
+        metric_key = m["metric_labels"].merge("pid" => m["pid"])
 
         PROCESS_GAUGES.map do |k, help|
           k = k.to_s
@@ -62,8 +62,10 @@ module PrometheusExporter::Server
       obj["created_at"] = now
 
       @process_metrics.delete_if do |current|
-        obj["pid"] == current["pid"] || (current["created_at"] + MAX_PROCESS_METRIC_AGE < now)
+        (obj["pid"] == current["pid"] && obj["hostname"] == current["hostname"]) ||
+          (current["created_at"] + MAX_PROCESS_METRIC_AGE < now)
       end
+
       @process_metrics << obj
     end
   end

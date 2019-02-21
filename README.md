@@ -56,9 +56,19 @@ Simplest way of consuming Prometheus exporter is in a single process mode.
 ```ruby
 require 'prometheus_exporter/server'
 
+# client allows instrumentation to send info to server
+require 'prometheus_exporter/client'
+require 'prometheus_exporter/instrumentation'
+
 # port is the port that will provide the /metrics route
 server = PrometheusExporter::Server::WebServer.new port: 12345
 server.start
+
+# wire up a default local client
+PrometheusExporter::Client.default = PrometheusExporter::LocalClient.new(collector: server.collector)
+
+# this ensures basic process instrumentation metrics are added such as RSS and Ruby metrics
+PrometheusExporter::Instrumentation::Process.start(type: "my program", labels: {my_custom: "label for all process metrics"})
 
 gauge = PrometheusExporter::Metric::Gauge.new("rss", "used RSS for process")
 counter = PrometheusExporter::Metric::Counter.new("web_requests", "number of web requests")

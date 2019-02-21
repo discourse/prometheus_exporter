@@ -3,22 +3,6 @@
 module PrometheusExporter::Server
 
   class Collector < CollectorBase
-    MAX_PROCESS_METRIC_AGE = 60
-    PROCESS_GAUGES = {
-      heap_free_slots: "Free ruby heap slots.",
-      heap_live_slots: "Used ruby heap slots.",
-      v8_heap_size: "Total JavaScript V8 heap size (bytes).",
-      v8_used_heap_size: "Total used JavaScript V8 heap size (bytes).",
-      v8_physical_size: "Physical size consumed by V8 heaps.",
-      v8_heap_count: "Number of V8 contexts running.",
-      rss: "Total RSS used by process.",
-    }
-
-    PROCESS_COUNTERS = {
-      major_gc_ops_total: "Major GC operations by process.",
-      minor_gc_ops_total: "Minor GC operations by process.",
-      allocated_objects_total: "Total number of allocated objects by process.",
-    }
 
     def initialize(json_serializer: nil)
       @process_metrics = []
@@ -39,7 +23,10 @@ module PrometheusExporter::Server
     end
 
     def process(str)
-      obj = @json_serializer.parse(str)
+      process_hash(@json_serializer.parse(str))
+    end
+
+    def process_hash(obj)
       @mutex.synchronize do
         if collector = @collectors[obj["type"]]
           collector.collect(obj)
