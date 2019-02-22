@@ -2,25 +2,18 @@
 
 module PrometheusExporter::Instrumentation
   class Sidekiq
-    def self.set_death_handler_once(client)
-      return unless const_defined?("Sidekiq")
-      unless @death_handler_set
-        ::Sidekiq.configure_server do |config|
-          config.death_handlers << -> (job, ex) do
-            client.send_json(
-              type: "sidekiq",
-              name: job["class"],
-              dead: true,
-            )
-          end
-        end
-        @death_handler_set = true
+    def self.death_handler
+      -> (job, ex) do
+        PrometheusExporter::Client.default.send_json(
+          type: "sidekiq",
+          name: job["class"],
+          dead: true,
+        )
       end
     end
 
     def initialize(client: nil)
       @client = client || PrometheusExporter::Client.default
-      self.class.set_death_handler_once(@client)
     end
 
     def call(worker, msg, queue)
