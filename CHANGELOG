@@ -1,3 +1,8 @@
+0.4.5 - 22-02-2019
+
+- Feature: Add sidekiq metrics: restarted, dead jobs counters
+- Fix: Client shutting down before sending metrics to collector
+
 0.4.4 - 14-02-2019
 
 - Feature: Allow process collector to ship custom labels for all process metrics
