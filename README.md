@@ -219,6 +219,16 @@ Sidekiq.configure_server do |config|
 end
 ```
 
+Sometimes the Sidekiq server shuts down before it can send metrics, that were generated right before the shutdown, to the collector. Especially if you care about the `sidekiq_restarted_jobs_total` metric, it is a good idea to explicitly stop the client:
+
+```ruby
+  Sidekiq.configure_server do |config|
+    at_exit do
+      PrometheusExporter::Client.default.stop(wait_timeout_seconds: 10)
+    end
+  end
+```
+
 #### Delayed Job plugin
 
 In an initializer:
