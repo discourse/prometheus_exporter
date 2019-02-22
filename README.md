@@ -196,7 +196,7 @@ end
 
 #### Sidekiq metrics
 
-Including Sidekiq metrics (how many jobs ran? how many failed? how long did they take?)
+Including Sidekiq metrics (how many jobs ran? how many failed? how long did they take? how many are dead? how many were restarted?)
 
 ```ruby
 Sidekiq.configure_server do |config|
@@ -204,6 +204,7 @@ Sidekiq.configure_server do |config|
       require 'prometheus_exporter/instrumentation'
       chain.add PrometheusExporter::Instrumentation::Sidekiq
    end
+   config.death_handlers << PrometheusExporter::Instrumentation::Sidekiq.death_handler
 end
 ```
 
