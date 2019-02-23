@@ -87,19 +87,14 @@ module PrometheusExporter
       metric
     end
     
-    # Ensures queued entries are delivered
-    def flush(timeout=5)
-      begin
-        Timeout::timeout(timeout) do
-          while(@queue.length > 0)
-            Thread.pass
-            sleep 0.01
-          end
-          return true
-        end
-      rescue => e
+    # Ensures queued entries are delivered for up to timeout seconds
+    def flush(timeout = 5)
+      timeout *= 1000
+      while(@queue.length > 0 && (timeout -= 1) >= 0)
+        Thread.pass
+        sleep 0.001
       end
-      return false
+      @queue.length > 0 ? false : true
     end
 
     def send_json(obj)

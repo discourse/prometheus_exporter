@@ -18,11 +18,11 @@ describe PrometheusExporter::Client do
   describe "flush" do
     it "sends all queued entries within the timeout" do
       @client.instance_variable_set(:@queue, MockQueue.new())
-      assert @client.flush(0.1)
+      assert @client.flush(0.01)
     end
-    it "fails to send queued entries before the timeot" do
+    it "fails to send all entries (timeout)" do
       @client.instance_variable_set(:@queue, [99])
-      refute @client.flush(0.1)
+      refute @client.flush(0.01)
     end
   end
   
