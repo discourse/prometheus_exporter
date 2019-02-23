@@ -14,14 +14,14 @@ module PrometheusExporter::Server
       @verbose = verbose
 
       @metrics_total = PrometheusExporter::Metric::Counter.new("collector_metrics_total", "Total metrics processed by exporter web.")
+
       @sessions_total = PrometheusExporter::Metric::Counter.new("collector_sessions_total", "Total send_metric sessions processed by exporter web.")
+
       @bad_metrics_total = PrometheusExporter::Metric::Counter.new("collector_bad_metrics_total", "Total mis-handled metrics by collector.")
-      @metrics_info = PrometheusExporter::Metric::Gauge.new("collector_info", "prometheus_exporter info.")
 
       @metrics_total.observe(0)
       @sessions_total.observe(0)
       @bad_metrics_total.observe(0)
-      @metrics_info.observe(1, {version: PrometheusExporter::VERSION})
 
       access_log, logger = nil
 
@@ -123,7 +123,7 @@ module PrometheusExporter::Server
       end
 
       metrics = []
-      
+
       metrics << add_gauge(
         "collector_working",
         "Is the master process collector able to collect metrics",
@@ -139,7 +139,6 @@ module PrometheusExporter::Server
       metrics << @metrics_total
       metrics << @sessions_total
       metrics << @bad_metrics_total
-      metrics << @metrics_info
 
       <<~TEXT
       #{metrics.map(&:to_prometheus_text).join("\n\n")}
