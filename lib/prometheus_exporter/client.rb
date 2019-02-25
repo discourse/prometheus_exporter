@@ -120,16 +120,16 @@ module PrometheusExporter
       end
     end
 
-    def stop
+    def stop(wait_timeout_seconds: 0)
       @mutex.synchronize do
+        wait_for_empty_queue_with_timeout(wait_timeout_seconds)
         @worker_thread&.kill
         while @worker_thread.alive?
           sleep 0.001
         end
         @worker_thread = nil
       end
-
-      close_socket!
+        close_socket!
     end
 
     private
@@ -212,4 +212,11 @@ module PrometheusExporter
     end
   end
 
+  def wait_for_empty_queue_with_timeout(timeout_seconds)
+    start_time = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
+    while @queue.length > 0
+      break if start_time + timeout_seconds < ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
+      sleep(0.05)
+    end
+  end
 end
