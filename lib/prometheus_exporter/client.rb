@@ -197,6 +197,13 @@ module PrometheusExporter
       raise
     end
 
+    def wait_for_empty_queue_with_timeout(timeout_seconds)
+      start_time = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
+      while @queue.length > 0
+        break if start_time + timeout_seconds < ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
+        sleep(0.05)
+      end
+    end
   end
 
   class LocalClient < Client
@@ -209,14 +216,6 @@ module PrometheusExporter
 
     def send(json)
       @collector.process(json)
-    end
-  end
-
-  def wait_for_empty_queue_with_timeout(timeout_seconds)
-    start_time = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
-    while @queue.length > 0
-      break if start_time + timeout_seconds < ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
-      sleep(0.05)
     end
   end
 end
