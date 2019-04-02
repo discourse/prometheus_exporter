@@ -1,12 +1,17 @@
-0.4.5 - 22-02-2019
+0.4.6 - 02-04-2019
 
+- Feature: Allow resetting a counter
 - Feature: Add sidekiq metrics: restarted, dead jobs counters
 - Fix: Client shutting down before sending metrics to collector
 
-0.4.4 - 14-02-2019
+0.4.5 - 14-02-2019
 
 - Feature: Allow process collector to ship custom labels for all process metrics
 - Fix: Always scope process metrics on hostname in collector
+
+0.4.4 - 13-02-2019
+
+- Feature: add support for local metric collection without using HTTP 
 
 0.4.3 - 11-02-2019
 
