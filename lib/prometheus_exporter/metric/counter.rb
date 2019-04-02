@@ -33,5 +33,9 @@ module PrometheusExporter::Metric
       @data[labels] ||= 0
       @data[labels] -= value
     end
+
+    def reset(labels = {}, value = 0)
+      @data[labels] = value
+    end
   end
 end

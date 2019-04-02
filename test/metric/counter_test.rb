@@ -80,5 +80,31 @@ module PrometheusExporter::Metric
 
       assert_equal(counter.to_prometheus_text, text)
     end
+
+    it "can correctly reset to a default value" do
+      counter.observe(5, sam: "ham")
+      counter.reset({ sam: "ham" })
+
+      text = <<~TEXT
+        # HELP a_counter my amazing counter
+        # TYPE a_counter counter
+        a_counter{sam="ham"} 0
+      TEXT
+
+      assert_equal(counter.to_prometheus_text, text)
+    end
+
+    it "can correctly reset to an explicit value" do
+      counter.observe(5, sam: "ham")
+      counter.reset({ sam: "ham" }, 2)
+
+      text = <<~TEXT
+        # HELP a_counter my amazing counter
+        # TYPE a_counter counter
+        a_counter{sam="ham"} 2
+      TEXT
+
+      assert_equal(counter.to_prometheus_text, text)
+    end
   end
 end
