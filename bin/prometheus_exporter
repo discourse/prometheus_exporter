@@ -37,6 +37,13 @@ def run
       options[:verbose] = true
     end
 
+    opt.on('--unicorn-listen-address ADDRESS', String, '(optional) Address where unicorn listens on (unix or TCP address)') do |o|
+      options[:unicorn_listen_address] = o
+    end
+
+    opt.on('--unicorn-master PID_FILE', String, '(optional) PID file of unicorn master process to monitor unicorn') do |o|
+      options[:unicorn_pid_file] = o
+    end
   end.parse!
 
   if custom_collector_filename
