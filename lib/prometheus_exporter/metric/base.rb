@@ -57,6 +57,8 @@ module PrometheusExporter::Metric
       labels = (labels || {}).merge(Base.default_labels)
       if labels && labels.length > 0
         s = labels.map do |key, value|
+          value = value.to_s
+          value = escape_value(value) if needs_escape?(value)
           "#{key}=\"#{value}\""
         end.join(",")
         "{#{s}}"
@@ -70,5 +72,29 @@ module PrometheusExporter::Metric
         #{metric_text}
       TEXT
     end
+
+    private
+
+    def escape_value(str)
+      str.gsub(/[\n"\\]/m) do |m|
+        if m == "\n"
+          "\\n"
+        else
+          "\\#{m}"
+        end
+      end
+    end
+
+    # when we drop Ruby 2.3 we can drop this
+    if "".respond_to? :match?
+      def needs_escape?(str)
+        str.match?(/[\n"\\]/m)
+      end
+    else
+      def needs_escape?(str)
+        !!str.match(/[\n"\\]/m)
+      end
+    end
+
   end
 end

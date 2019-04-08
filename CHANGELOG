@@ -1,3 +1,8 @@
+0.4.7 - 08-04-2019
+
+- Fix: collector was not escaping " \ and \n correctly. This could lead
+  to a corrupt payload in some cases.
+
 0.4.6 - 02-04-2019
 
 - Feature: Allow resetting a counter
@@ -11,7 +16,7 @@
 
 0.4.4 - 13-02-2019
 
-- Feature: add support for local metric collection without using HTTP 
+- Feature: add support for local metric collection without using HTTP
 
 0.4.3 - 11-02-2019
 

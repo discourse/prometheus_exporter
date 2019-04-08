@@ -81,9 +81,27 @@ module PrometheusExporter::Metric
       assert_equal(counter.to_prometheus_text, text)
     end
 
+    it "can correctly escape label names" do
+      counter.observe(1, sam: "encoding \\ \\")
+      counter.observe(1, sam: "encoding \" \"")
+      counter.observe(1, sam: "encoding \n \n")
+
+      # per spec: label_value can be any sequence of UTF-8 characters, but the backslash (\, double-quote ("}, and line feed (\n) characters have to be escaped as \\, \", and \n, respectively
+
+      text = <<~TEXT
+        # HELP a_counter my amazing counter
+        # TYPE a_counter counter
+        a_counter{sam="encoding \\\\ \\\\"} 1
+        a_counter{sam="encoding \\" \\""} 1
+        a_counter{sam="encoding \\n \\n"} 1
+      TEXT
+
+      assert_equal(counter.to_prometheus_text, text)
+    end
+
     it "can correctly reset to a default value" do
       counter.observe(5, sam: "ham")
-      counter.reset({ sam: "ham" })
+      counter.reset(sam: "ham")
 
       text = <<~TEXT
         # HELP a_counter my amazing counter
