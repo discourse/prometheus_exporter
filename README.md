@@ -16,6 +16,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
     * [Delayed Job plugin](#delayed-job-plugin)
     * [Hutch metrics](#hutch-message-processing-tracer)
   * [Puma metrics](#puma-metrics)
+  * [Unicorn metrics](#unicorn-metrics)
   * [Custom type collectors](#custom-type-collectors)
   * [Multi process mode with custom collector](#multi-process-mode-with-custom-collector)
   * [GraphQL support](#graphql-support)
@@ -158,6 +159,7 @@ gem 'prometheus_exporter'
 ```
 
 In an initializer:
+
 ```ruby
 unless Rails.env == "test"
   require 'prometheus_exporter/middleware'
@@ -275,6 +277,21 @@ after_worker_boot do
 end
 ```
 
+### Unicorn process metrics
+
+In order to gather metrics from unicorn processes, we use `rainbows`, which exposes `Rainbows::Linux.tcp_listener_stats` to gather information about active workers and queued requests. To start monitoring your unicorn processes, you'll need to know both the path to unicorn PID file and the listen address (`pid_file` and `listen` in your unicorn config file)
+
+Then, run `prometheus_exporter` with `--unicorn-master` and `--unicorn-listen-address` options:
+
+```bash
+prometheus_exporter --unicorn-master /var/run/unicorn.pid --unicorn-listen-address 127.0.0.1:3000
+
+# alternatively, if you're using unix sockets:
+prometheus_exporter --unicorn-master /var/run/unicorn.pid --unicorn-listen-address /var/run/unicorn.sock
+```
+
+Note: You must install the `raindrops` gem in your `Gemfile` or locally.
+
 ### Custom type collectors
 
 In some cases you may have custom metrics you want to ship the collector in a batch. In this case you may still be interested in the base collector behavior, but would like to add your own special messages.
@@ -312,7 +329,6 @@ PrometheusExporter::Client.default.send_json(type: "person", age: 40)
 ```
 
 To load the custom collector run:
-
 
 ```
 $ bundle exec prometheus_exporter -a person_collector.rb
