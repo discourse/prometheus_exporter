@@ -1,3 +1,7 @@
+0.4.8 - 10-04-2019
+
+- Feature: added helpers for instrumenting unicorn using raindrops
+
 0.4.7 - 08-04-2019
 
 - Fix: collector was not escaping " \ and \n correctly. This could lead
