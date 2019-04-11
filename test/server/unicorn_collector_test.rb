@@ -4,6 +4,11 @@ require 'prometheus_exporter/server'
 require 'prometheus_exporter/instrumentation'
 
 class PrometheusUnicornCollectorTest < Minitest::Test
+
+  def setup
+    PrometheusExporter::Metric::Base.default_prefix = ''
+  end
+
   def collector
     @collector ||= PrometheusExporter::Server::UnicornCollector.new
   end

@@ -22,6 +22,7 @@ module PrometheusExporter::Metric
       TEXT
 
       assert_equal(counter.to_prometheus_text, text)
+      Base.default_prefix = ''
     end
 
     it "can correctly increment counters with labels" do

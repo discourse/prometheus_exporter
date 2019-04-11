@@ -45,6 +45,8 @@ module PrometheusExporter::Metric
       TEXT
 
       assert_equal(gauge.to_prometheus_text, text)
+
+      Base.default_prefix = ''
     end
 
     it "can correctly set gauges with labels" do
