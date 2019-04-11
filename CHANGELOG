@@ -1,3 +1,7 @@
+0.4.9 - 11-04-2019
+
+- Fix: Gem was not working correctly in Ruby 2.4 and below due to a syntax error
+
 0.4.8 - 10-04-2019
 
 - Feature: added helpers for instrumenting unicorn using raindrops
