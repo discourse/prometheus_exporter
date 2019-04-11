@@ -31,5 +31,8 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "oj", "~> 3.0"
   spec.add_development_dependency "rack-test", "~> 0.8.3"
   spec.add_development_dependency "minitest-stub-const", "~> 0.6"
+  if !RUBY_ENGINE == 'jruby'
+    spec.add_development_dependency "raindrops", "~> 0.19"
+  end
   spec.required_ruby_version = '>= 2.3.0'
 end
