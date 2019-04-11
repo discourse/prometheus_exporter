@@ -12,12 +12,14 @@ module PrometheusExporter::Instrumentation
       client ||= PrometheusExporter::Client.default
       Thread.new do
         loop do
-          metric = unicorn_collector.collect
-          client.send_json metric
-        rescue StandardError => e
-          STDERR.puts("Prometheus Exporter Failed To Collect Unicorn Stats #{e}")
-        ensure
-          sleep frequency
+          begin
+            metric = unicorn_collector.collect
+            client.send_json metric
+          rescue StandardError => e
+            STDERR.puts("Prometheus Exporter Failed To Collect Unicorn Stats #{e}")
+          ensure
+            sleep frequency
+          end
         end
       end
     end
