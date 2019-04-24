@@ -61,9 +61,9 @@ module PrometheusExporter::Instrumentation
 
     def listener_address_stats
       if @tcp
-        Raindrops::Linux.tcp_listener_stats(@listener_address)[@listener_address]
+        Raindrops::Linux.tcp_listener_stats([@listener_address])[@listener_address]
       else
-        Raindrops::Linux.unix_listener_stats(@listener_address)[@listener_address]
+        Raindrops::Linux.unix_listener_stats([@listener_address])[@listener_address]
       end
     end
   end
