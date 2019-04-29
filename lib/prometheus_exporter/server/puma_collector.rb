@@ -26,7 +26,10 @@ module PrometheusExporter::Server
       @puma_metrics.map do |m|
         labels = {}
         if m["phase"]
-          labels.merge(phase: m["phase"])
+          labels.merge!(phase: m["phase"])
+        end
+        if m["custom_labels"]
+          labels.merge!(m["custom_labels"])
         end
 
         PUMA_GAUGES.map do |k, help|

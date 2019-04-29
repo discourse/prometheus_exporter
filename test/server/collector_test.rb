@@ -283,7 +283,7 @@ class PrometheusCollectorTest < Minitest::Test
 
   def test_it_can_collect_puma_metrics
     collector = PrometheusExporter::Server::Collector.new
-    client = PipedClient.new(collector)
+    client = PipedClient.new(collector, custom_labels: { service: 'service1' } )
 
     mock_puma = Minitest::Mock.new
     mock_puma.expect(
@@ -299,9 +299,9 @@ class PrometheusCollectorTest < Minitest::Test
     end
 
     result = collector.prometheus_metrics_text
-    assert(result.include?("puma_booted_workers_total 1"), "has booted workers")
-    assert(result.include?("puma_request_backlog_total 0"), "has total backlog")
-    assert(result.include?("puma_thread_pool_capacity_total 32"), "has pool capacity")
+    assert(result.include?('puma_booted_workers_total{phase="0",service="service1"} 1'), "has booted workers")
+    assert(result.include?('puma_request_backlog_total{phase="0",service="service1"} 0'), "has total backlog")
+    assert(result.include?('puma_thread_pool_capacity_total{phase="0",service="service1"} 32'), "has pool capacity")
     mock_puma.verify
   end
 end
