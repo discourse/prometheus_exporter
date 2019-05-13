@@ -124,7 +124,7 @@ module PrometheusExporter
       @mutex.synchronize do
         wait_for_empty_queue_with_timeout(wait_timeout_seconds)
         @worker_thread&.kill
-        while @worker_thread.alive?
+        while @worker_thread&.alive?
           sleep 0.001
         end
         @worker_thread = nil
