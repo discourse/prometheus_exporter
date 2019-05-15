@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'test_helper'
 require 'prometheus_exporter/server'
 require 'prometheus_exporter/client'

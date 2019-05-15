@@ -1,3 +1,8 @@
+0.4.11 - 15-05-2019
+
+- Fix: Handle stopping nil worker_threads in Client
+- Dev: add frozen string literals
+
 0.4.10 - 29-04-2019
 
 - Fix: Custom label support for puma collector

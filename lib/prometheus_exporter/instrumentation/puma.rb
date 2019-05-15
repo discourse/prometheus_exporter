@@ -1,4 +1,6 @@
-require 'json'
+# frozen_string_literal: true
+
+require "json"
 
 # collects stats from puma
 module PrometheusExporter::Instrumentation
@@ -30,7 +32,7 @@ module PrometheusExporter::Instrumentation
     def collect_puma_stats(metric)
       stats = JSON.parse(::Puma.stats)
 
-      if stats.key? 'workers'
+      if stats.key?("workers")
         metric[:phase] = stats["phase"]
         metric[:workers_total] = stats["workers"]
         metric[:booted_workers_total] = stats["booted_workers"]

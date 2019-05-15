@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CustomTypeCollector < PrometheusExporter::Server::TypeCollector
   def type
     "custom1"

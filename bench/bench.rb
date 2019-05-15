@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative '../lib/prometheus_exporter'
 require_relative '../lib/prometheus_exporter/client'
 require_relative '../lib/prometheus_exporter/server'

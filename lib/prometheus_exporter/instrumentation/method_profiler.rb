@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # see https://samsaffron.com/archive/2017/10/18/fastest-way-to-profile-a-method-in-ruby
 module PrometheusExporter::Instrumentation; end
 

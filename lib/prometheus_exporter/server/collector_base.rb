@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module PrometheusExporter::Server
 
   # minimal interface to implement a customer collector

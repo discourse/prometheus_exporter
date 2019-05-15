@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'test_helper'
 require 'mini_racer'
 require 'prometheus_exporter/server'
@@ -283,7 +285,7 @@ class PrometheusCollectorTest < Minitest::Test
 
   def test_it_can_collect_puma_metrics
     collector = PrometheusExporter::Server::Collector.new
-    client = PipedClient.new(collector, custom_labels: { service: 'service1' } )
+    client = PipedClient.new(collector, custom_labels: { service: 'service1' })
 
     mock_puma = Minitest::Mock.new
     mock_puma.expect(

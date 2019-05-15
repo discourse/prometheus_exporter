@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module PrometheusExporter::Server
   class TypeCollector
     def type

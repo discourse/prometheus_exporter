@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module PrometheusExporter::Instrumentation
   class DelayedJob
     JOB_CLASS_REGEXP = %r{job_class: (\w+:{0,2})+}.freeze

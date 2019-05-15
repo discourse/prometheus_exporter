@@ -7,3 +7,4 @@ rvm:
  - 2.5
  - 2.6
  - jruby
+script: bach -c "bundle exec rubocop && bundle exec rake"

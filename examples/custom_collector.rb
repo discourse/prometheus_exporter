@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class MyCustomCollector < PrometheusExporter::Server::Collector
   def initialize
     @gauge1 = PrometheusExporter::Metric::Gauge.new("thing1", "I am thing 1")
