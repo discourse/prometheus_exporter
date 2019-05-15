@@ -38,8 +38,8 @@ class PrometheusCollectorTest < Minitest::Test
 
     PrometheusExporter::Instrumentation::Process.stop
 
-    assert(metrics_text.match?(/heap_live_slots/))
-    assert(metrics_text.match?(/hello.*custom label/))
+    assert_match(/heap_live_slots/, metrics_text)
+    assert_match(/hello.*custom label/, metrics_text)
   end
 
   def test_register_metric
