@@ -1,3 +1,7 @@
+0.4.12 - 30-05-2019
+
+- Fix: unicorn collector reporting incorrect number of unicorn workers
+
 0.4.11 - 15-05-2019
 
 - Fix: Handle stopping nil worker_threads in Client
