@@ -51,13 +51,13 @@ module PrometheusExporter::Instrumentation
 
     def worker_process_count
       return nil unless File.exist?(@pid_file)
-      pid = File.read(@pid_file)
+      pid = File.read(@pid_file).to_i
 
-      return nil unless pid && pid.to_i > 0
+      return nil unless pid && pid > 0
 
       # find all processes whose parent is the unicorn master
       # but we're actually only interested in the number of processes (= lines of output)
-      result = `ps --no-header -o pid --ppid #{pid}`
+      result = `pgrep -P #{pid} -f unicorn -a`
       result.lines.count
     end
 
