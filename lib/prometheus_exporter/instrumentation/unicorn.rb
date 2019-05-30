@@ -53,7 +53,7 @@ module PrometheusExporter::Instrumentation
       return nil unless File.exist?(@pid_file)
       pid = File.read(@pid_file).to_i
 
-      return nil unless pid && pid > 0
+      return nil if pid < 1
 
       # find all processes whose parent is the unicorn master
       # but we're actually only interested in the number of processes (= lines of output)
