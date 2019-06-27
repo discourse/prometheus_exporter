@@ -14,7 +14,7 @@ module PrometheusExporter
     def self.parse(obj)
       Oj.compat_load(obj)
     end
-    def self.dump(obj)
+    def self.generate(obj)
       Oj.dump(obj, mode: :compat)
     end
   end
