@@ -1,3 +1,7 @@
+0.4.13 - 09-07-2019
+
+- Fix: Memory leak in unicorn and puma collectors
+
 0.4.12 - 30-05-2019
 
 - Fix: unicorn collector reporting incorrect number of unicorn workers
