@@ -16,7 +16,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
     * [Delayed Job plugin](#delayed-job-plugin)
     * [Hutch metrics](#hutch-message-processing-tracer)
   * [Puma metrics](#puma-metrics)
-  * [Unicorn metrics](#unicorn-metrics)
+  * [Unicorn metrics](#unicorn-process-metrics)
   * [Custom type collectors](#custom-type-collectors)
   * [Multi process mode with custom collector](#multi-process-mode-with-custom-collector)
   * [GraphQL support](#graphql-support)
