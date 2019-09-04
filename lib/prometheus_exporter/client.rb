@@ -128,8 +128,8 @@ module PrometheusExporter
           sleep 0.001
         end
         @worker_thread = nil
-      end
         close_socket!
+      end
     end
 
     private
