@@ -7,6 +7,8 @@ module PrometheusExporter
 
   class Client
     class RemoteMetric
+      attr_reader :name, :type, :help
+
       def initialize(name:, help:, type:, client:)
         @name = name
         @help = help
@@ -85,6 +87,16 @@ module PrometheusExporter
       metric = RemoteMetric.new(type: type, name: name, help: help, client: self)
       @metrics << metric
       metric
+    end
+
+    def find_registered_metric(name, type: nil, help: nil)
+      @metrics.find do |metric|
+        type_match = type ? metric.type == type : true
+        help_match = help ? metric.help == help : true
+        name_match = metric.name == name
+
+        type_match && help_match && name_match
+      end
     end
 
     def send_json(obj)
