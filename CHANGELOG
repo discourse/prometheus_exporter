@@ -1,3 +1,8 @@
+0.4.14 - 10-09-2019
+
+- FEATURE: allow finding metrics by name RemoteMetric #find_registered_metric
+- FIX: guard socket closing
+
 0.4.13 - 09-07-2019
 
 - Fix: Memory leak in unicorn and puma collectors
