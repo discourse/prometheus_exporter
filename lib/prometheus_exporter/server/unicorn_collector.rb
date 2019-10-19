@@ -25,11 +25,13 @@ class PrometheusExporter::Server::UnicornCollector < PrometheusExporter::Server:
     metrics = {}
 
     @unicorn_metrics.map do |m|
+      labels = m["custom_labels"] || {}
+
       UNICORN_GAUGES.map do |k, help|
         k = k.to_s
         if (v = m[k])
           g = metrics[k] ||= PrometheusExporter::Metric::Gauge.new("unicorn_#{k}", help)
-          g.observe(v)
+          g.observe(v, labels)
         end
       end
     end
