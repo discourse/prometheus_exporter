@@ -31,4 +31,20 @@ class PrometheusUnicornCollectorTest < Minitest::Test
     ]
     assert_equal expected, metrics.map(&:metric_text)
   end
+
+  def test_collecting_metrics_with_custom_labels
+    collector.collect(
+      'type' => 'unicorn',
+      'workers_total' => 2,
+      'active_workers_total' => 0,
+      'request_backlog_total' => 0,
+      'custom_labels' => {
+        'hostname' => 'a323d2f681e2'
+      }
+    )
+
+    metrics = collector.metrics
+
+    assert(metrics.first.metric_text.include?('unicorn_workers_total{hostname="a323d2f681e2"}'))
+  end
 end

@@ -9,7 +9,7 @@ end
 module PrometheusExporter::Instrumentation
   # collects stats from unicorn
   class Unicorn
-    def self.start(pid_file:, listener_address:, client:, frequency: 30)
+    def self.start(pid_file:, listener_address:, client: nil, frequency: 30)
       unicorn_collector = new(pid_file: pid_file, listener_address: listener_address)
       client ||= PrometheusExporter::Client.default
       Thread.new do
