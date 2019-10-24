@@ -73,10 +73,10 @@ module PrometheusExporter::Server
       name = obj["name"]
       help = obj["help"]
       opts = if obj.key?("opts")
-               symbolize_keys(obj["opts"])
-             else
-               {}
-           end
+        symbolize_keys(obj["opts"])
+      else
+        {}
+      end
 
       metric =
         case obj["type"]

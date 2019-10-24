@@ -118,7 +118,7 @@ class PrometheusCollectorTest < Minitest::Test
       type: :summary,
       help: help,
       name: name,
-      keys: {key1: 'test1'},
+      keys: { key1: 'test1' },
       value: 0.6
     }.to_json
 
@@ -147,8 +147,8 @@ class PrometheusCollectorTest < Minitest::Test
       type: :summary,
       help: help,
       name: name,
-      keys: {key1: 'test1'},
-      opts: {quantiles: [0.75, 0.5, 0.25]},
+      keys: { key1: 'test1' },
+      opts: { quantiles: [0.75, 0.5, 0.25] },
       value: 8
     }
     collector.process(json.to_json)
@@ -180,7 +180,7 @@ class PrometheusCollectorTest < Minitest::Test
       type: :histogram,
       help: help,
       name: name,
-      keys: {key1: 'test1'},
+      keys: { key1: 'test1' },
       value: 6
     }.to_json
 
@@ -216,8 +216,8 @@ class PrometheusCollectorTest < Minitest::Test
       type: :histogram,
       help: help,
       name: name,
-      keys: {key1: 'test1'},
-      opts: {buckets: [5,6,7]},
+      keys: { key1: 'test1' },
+      opts: { buckets: [5, 6, 7] },
       value: 6
     }.to_json
 
