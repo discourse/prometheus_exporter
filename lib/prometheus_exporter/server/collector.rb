@@ -72,7 +72,11 @@ module PrometheusExporter::Server
     def register_metric_unsafe(obj)
       name = obj["name"]
       help = obj["help"]
-      opts = symbolize_keys(obj["opts"] || {})
+      opts = if obj.key?("opts")
+               symbolize_keys(obj["opts"])
+             else
+               {}
+           end
 
       metric =
         case obj["type"]

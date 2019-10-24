@@ -9,12 +9,12 @@ module PrometheusExporter
     class RemoteMetric
       attr_reader :name, :type, :help
 
-      def initialize(name:, help:, type:, client:, opts:)
+      def initialize(name:, help:, type:, client:, opts: {})
         @name = name
         @help = help
         @client = client
         @type = type
-        @opts = opts || {}
+        @opts = opts
       end
 
       def standard_values(value, keys, prometheus_exporter_action = nil)
