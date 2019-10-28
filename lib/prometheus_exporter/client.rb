@@ -4,16 +4,16 @@ require 'socket'
 require 'thread'
 
 module PrometheusExporter
-
   class Client
     class RemoteMetric
       attr_reader :name, :type, :help
 
-      def initialize(name:, help:, type:, client:)
+      def initialize(name:, help:, type:, client:, opts: {})
         @name = name
         @help = help
         @client = client
         @type = type
+        @opts = opts
       end
 
       def standard_values(value, keys, prometheus_exporter_action = nil)
@@ -39,7 +39,6 @@ module PrometheusExporter
       def decrement(keys = nil, value = 1)
         @client.send_json(standard_values(value, keys, :decrement))
       end
-
     end
 
     def self.default
@@ -83,8 +82,8 @@ module PrometheusExporter
       @custom_labels = custom_labels
     end
 
-    def register(type, name, help)
-      metric = RemoteMetric.new(type: type, name: name, help: help, client: self)
+    def register(type, name, help, opts = {})
+      metric = RemoteMetric.new(type: type, name: name, help: help, client: self, opts: opts)
       @metrics << metric
       metric
     end

@@ -72,6 +72,7 @@ module PrometheusExporter::Server
     def register_metric_unsafe(obj)
       name = obj["name"]
       help = obj["help"]
+      opts = symbolize_keys(obj["opts"] || {})
 
       metric =
         case obj["type"]
@@ -80,9 +81,9 @@ module PrometheusExporter::Server
         when "counter"
           PrometheusExporter::Metric::Counter.new(name, help)
         when "summary"
-          PrometheusExporter::Metric::Summary.new(name, help)
+          PrometheusExporter::Metric::Summary.new(name, help, opts)
         when "histogram"
-          PrometheusExporter::Metric::Histogram.new(name, help)
+          PrometheusExporter::Metric::Histogram.new(name, help, opts)
         end
 
       if metric
@@ -90,6 +91,10 @@ module PrometheusExporter::Server
       else
         STDERR.puts "failed to register metric #{obj}"
       end
+    end
+
+    def symbolize_keys(hash)
+      hash.inject({}) { |memo, k| memo[k.first.to_sym] = k.last; memo }
     end
   end
 end
