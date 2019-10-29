@@ -8,7 +8,7 @@ module PrometheusExporter
     class RemoteMetric
       attr_reader :name, :type, :help
 
-      def initialize(name:, help:, type:, client:, opts: {})
+      def initialize(name:, help:, type:, client:, opts: nil)
         @name = name
         @help = help
         @client = client
@@ -25,6 +25,7 @@ module PrometheusExporter
           value: value
         }
         values[:prometheus_exporter_action] = prometheus_exporter_action if prometheus_exporter_action
+        values[:opts] = @opts if @opts
         values
       end
 
@@ -82,7 +83,7 @@ module PrometheusExporter
       @custom_labels = custom_labels
     end
 
-    def register(type, name, help, opts = {})
+    def register(type, name, help, opts = nil)
       metric = RemoteMetric.new(type: type, name: name, help: help, client: self, opts: opts)
       @metrics << metric
       metric

@@ -41,4 +41,14 @@ class PrometheusExporterTest < Minitest::Test
     result = client.find_registered_metric('counter_metric', type: :counter, help: 'helping')
     assert_equal(counter_metric, result)
   end
+
+  def test_standard_values
+    client = PrometheusExporter::Client.new
+    counter_metric = client.register(:counter, 'counter_metric', 'helping')
+    assert_equal(false, counter_metric.standard_values('value', 'key').has_key?(:opts))
+
+    expected_quantiles = { quantiles: [0.99, 9] }
+    summary_metric = client.register(:summary, 'summary_metric', 'helping', expected_quantiles)
+    assert_equal(expected_quantiles, summary_metric.standard_values('value', 'key')[:opts])
+  end
 end
