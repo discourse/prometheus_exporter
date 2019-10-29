@@ -13,6 +13,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
   * [Rails integration](#rails-integration)
     * [Per-process stats](#per-process-stats)
     * [Sidekiq metrics](#sidekiq-metrics)
+    * [ActiveRecord Connection Pool Metrics](#activerecord-connection-pool-metrics)
     * [Delayed Job plugin](#delayed-job-plugin)
     * [Hutch metrics](#hutch-message-processing-tracer)
   * [Puma metrics](#puma-metrics)
@@ -173,6 +174,36 @@ Ensure you run the exporter in a monitored background process:
 
 ```
 $ bundle exec prometheus_exporter
+```
+
+#### Activerecord Connection Pool Metrics
+
+This collects activerecord connection pool metrics.
+
+For Puma single mode 
+```ruby
+#in puma.rb
+require 'prometheus_exporter/instrumentation'
+PrometheusExporter::Instrumentation::ActiveRecord.start
+```
+
+For Puma cluster mode
+
+```ruby
+# in puma.rb
+on_worker_boot do
+  require 'prometheus_exporter/instrumentation'
+  PrometheusExporter::Instrumentation::ActiveRecord.start
+end
+```
+
+For unicorn / passenger
+
+```ruby
+after_fork do 
+  require 'prometheus_exporter/instrumentation'
+  PrometheusExporter::Instrumentation::ActiveRecord.start
+end
 ```
 
 #### Per-process stats
