@@ -6,7 +6,7 @@ module PrometheusExporter::Server
     ACTIVE_RECORD_GAUGES = {
       connections: "Total connections in pool",
       busy: "Connections in use in pool",
-      dead: "Dead or hanging connection in pool",
+      dead: "Dead connections in pool",
       idle: "Idle connections in pool",
       waiting: "Connection requests waiting",
       size: "Maximum allowed connection pool size"
