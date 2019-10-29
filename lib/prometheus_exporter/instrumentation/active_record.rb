@@ -6,7 +6,7 @@ module PrometheusExporter::Instrumentation
     def self.start(client: nil, frequency: 30, labels: nil)
 
       # Not all rails versions support coonection pool stats
-      unless ActiveRecord::Base.connection_pool.respond_to?(:stat)
+      unless ::ActiveRecord::Base.connection_pool.respond_to?(:stat)
         STDERR.puts("ActiveRecord connection pool stats not supported in your rails version")
         return
       end
