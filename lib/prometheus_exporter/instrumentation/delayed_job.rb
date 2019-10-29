@@ -13,7 +13,9 @@ module PrometheusExporter::Instrumentation
           callbacks do |lifecycle|
             lifecycle.around(:invoke_job) do |job, *args, &block|
               max_attempts = Delayed::Worker.max_attempts
-              instrumenter.call(job, max_attempts, *args, &block)
+              enqueued_count = Delayed::Job.count
+              pending_count = Delayed::Job.where(attempts: 0, locked_at: nil).count
+              instrumenter.call(job, max_attempts, enqueued_count, pending_count, *args, &block)
             end
           end
         end
@@ -26,7 +28,7 @@ module PrometheusExporter::Instrumentation
       @client = client || PrometheusExporter::Client.default
     end
 
-    def call(job, max_attempts, *args, &block)
+    def call(job, max_attempts, enqueued_count, pending_count, *args, &block)
       success = false
       start = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
       attempts = job.attempts + 1 # Increment because we're adding the current attempt
@@ -42,7 +44,9 @@ module PrometheusExporter::Instrumentation
         success: success,
         duration: duration,
         attempts: attempts,
-        max_attempts: max_attempts
+        max_attempts: max_attempts,
+        enqueued: enqueued_count,
+        pending: pending_count
       )
     end
   end
