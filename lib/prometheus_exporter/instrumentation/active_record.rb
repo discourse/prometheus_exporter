@@ -78,10 +78,11 @@ module PrometheusExporter::Instrumentation
       ObjectSpace.each_object(::ActiveRecord::ConnectionAdapters::ConnectionPool) do |pool|
         next if pool.connections.nil?
 
-        labels_from_config = pool.spec.config.select { |k, v| @config_labels.include? k }
-        labels = @metric_labels
-          .merge(pool_name: pool.spec.name)
-          .merge(labels_from_config)
+        labels_from_config = pool.spec.config
+          .select { |k, v| @config_labels.include? k }
+          .map { |k, v| [k.to_s.prepend("dbconfig_"), v] }
+
+        labels = @metric_labels.merge(pool_name: pool.spec.name).merge(Hash[labels_from_config])
 
         metric = {
           pid: pid,
