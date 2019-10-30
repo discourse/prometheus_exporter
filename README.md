@@ -148,7 +148,7 @@ awesome 10
 
 ```
 
-Custom qunantiles for summaries and buckets for histograms can also be passed in.
+Custom quantiles for summaries and buckets for histograms can also be passed in.
 
 ```ruby
 require 'prometheus_exporter/client'
