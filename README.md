@@ -148,6 +148,17 @@ awesome 10
 
 ```
 
+Custom qunantiles for summaries and buckets for histograms can also be passed in.
+
+```ruby
+require 'prometheus_exporter/client'
+
+client = PrometheusExporter::Client.default
+histogram = client.register(:histogram, "api_time", "time to call api", buckets: [0.1, 0.5, 1])
+
+histogram.observe(0.2, api: 'twitter')
+```
+
 ### Rails integration
 
 You can easily integrate into any Rack application.
