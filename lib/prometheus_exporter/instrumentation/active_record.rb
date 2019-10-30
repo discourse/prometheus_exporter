@@ -3,7 +3,9 @@
 # collects stats from currently running process
 module PrometheusExporter::Instrumentation
   class ActiveRecord
-    def self.start(client: nil, frequency: 30, labels: nil)
+    ALLOWED_CONFIG_LABELS = %i(database username host port)
+
+    def self.start(client: nil, frequency: 30, custom_labels: {}, config_labels: [])
 
       # Not all rails versions support coonection pool stats
       unless ::ActiveRecord::Base.connection_pool.respond_to?(:stat)
@@ -11,9 +13,11 @@ module PrometheusExporter::Instrumentation
         return
       end
 
-      metric_labels = labels || {}
+      config_labels.map!(&:to_sym)
+      validate_config_labels(config_labels)
 
-      process_collector = new(metric_labels)
+      active_record_collector = new(custom_labels, config_labels)
+
       client ||= PrometheusExporter::Client.default
 
       stop if @thread
@@ -21,8 +25,8 @@ module PrometheusExporter::Instrumentation
       @thread = Thread.new do
         while true
           begin
-            metric = process_collector.collect
-            client.send_json metric
+            metrics = active_record_collector.collect
+            metrics.each { |metric| client.send_json metric }
           rescue => e
             STDERR.puts("Prometheus Exporter Failed To Collect Process Stats #{e}")
           ensure
@@ -32,6 +36,11 @@ module PrometheusExporter::Instrumentation
       end
     end
 
+    def self.validate_config_labels(config_labels)
+      return if config_labels.size == 0
+      raise "Invalid Config Labels, available options #{ALLOWED_CONFIG_LABELS}" if (config_labels - ALLOWED_CONFIG_LABELS).size > 0
+    end
+
     def self.stop
       if t = @thread
         t.kill
@@ -39,8 +48,9 @@ module PrometheusExporter::Instrumentation
       end
     end
 
-    def initialize(metric_labels)
+    def initialize(metric_labels, config_labels)
       @metric_labels = metric_labels
+      @config_labels = config_labels
       @hostname = nil
     end
 
@@ -55,22 +65,33 @@ module PrometheusExporter::Instrumentation
     end
 
     def collect
-      metric = {}
-      metric[:type] = "active_record"
-      metric[:metric_labels] = @metric_labels
-      metric[:hostname] = hostname
-      collect_active_record_pool_stats(metric)
-      metric
+      metrics = []
+      collect_active_record_pool_stats(metrics)
+      metrics
     end
 
     def pid
       @pid = ::Process.pid
     end
 
-    def collect_active_record_pool_stats(metric)
-      metric[:pid] = pid
-      # Pick active record from top namespace
-      metric.merge!(::ActiveRecord::Base.connection_pool.stat)
+    def collect_active_record_pool_stats(metrics)
+      ObjectSpace.each_object(::ActiveRecord::ConnectionAdapters::ConnectionPool) do |pool|
+        next if pool.connections.nil?
+
+        labels_from_config = pool.spec.config.select { |k, v| @config_labels.include? k }
+        labels = @metric_labels
+          .merge(pool_name: pool.spec.name)
+          .merge(labels_from_config)
+
+        metric = {
+          pid: pid,
+          type: "active_record",
+          hostname: hostname,
+          metric_labels: labels
+        }
+        metric.merge!(pool.stat)
+        metrics << metric
+      end
     end
   end
 end

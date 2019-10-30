@@ -180,11 +180,16 @@ $ bundle exec prometheus_exporter
 
 This collects activerecord connection pool metrics.
 
+It supports injection of custom labels and the connection config options (`username`, `database`, `host`, `port`) as labels.
+
 For Puma single mode 
 ```ruby
 #in puma.rb
 require 'prometheus_exporter/instrumentation'
-PrometheusExporter::Instrumentation::ActiveRecord.start
+PrometheusExporter::Instrumentation::ActiveRecord.start(
+  custom_labels: { type: "puma_single_mode" }, #optional params
+  config_labels: [:database, :host] #optional params
+)
 ```
 
 For Puma cluster mode
@@ -193,16 +198,35 @@ For Puma cluster mode
 # in puma.rb
 on_worker_boot do
   require 'prometheus_exporter/instrumentation'
-  PrometheusExporter::Instrumentation::ActiveRecord.start
+  PrometheusExporter::Instrumentation::ActiveRecord.start(
+    custom_labels: { type: "puma_worker" }, #optional params
+    config_labels: [:database, :host] #optional params
+  )
 end
 ```
 
-For unicorn / passenger
+For Unicorn / Passenger
 
 ```ruby
 after_fork do 
   require 'prometheus_exporter/instrumentation'
-  PrometheusExporter::Instrumentation::ActiveRecord.start
+  PrometheusExporter::Instrumentation::ActiveRecord.start(
+    custom_labels: { type: "unicorn_worker" }, #optional params
+    config_labels: [:database, :host] #optional params
+  )
+end
+```
+
+For Sidekiq
+```ruby
+Sidekiq.configure_server do |config|
+  config.on :startup do
+    require 'prometheus_exporter/instrumentation'
+    PrometheusExporter::Instrumentation::ActiveRecord.start(
+      custom_labels: { type: "sidekiq" }, #optional params
+      config_labels: [:database, :host] #optional params
+    )
+  end
 end
 ```
 
