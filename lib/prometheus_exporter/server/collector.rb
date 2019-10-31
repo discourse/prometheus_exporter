@@ -17,6 +17,7 @@ module PrometheusExporter::Server
       register_collector(PumaCollector.new)
       register_collector(HutchCollector.new)
       register_collector(UnicornCollector.new)
+      register_collector(ActiveRecordCollector.new)
     end
 
     def register_collector(collector)
