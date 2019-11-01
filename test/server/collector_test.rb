@@ -350,7 +350,7 @@ class PrometheusCollectorTest < Minitest::Test
     job.expect(:handler, "job_class: Class")
     job.expect(:attempts, 0)
 
-    instrument.call(job, 20, nil, "default") do
+    instrument.call(job, 20, 10, 0, nil, "default") do
       # nothing
     end
 
@@ -359,7 +359,7 @@ class PrometheusCollectorTest < Minitest::Test
     failed_job.expect(:attempts, 1)
 
     begin
-      instrument.call(failed_job, 25, nil, "default") do
+      instrument.call(failed_job, 25, 10, 0, nil, "default") do
         boom
       end
     rescue
@@ -370,6 +370,8 @@ class PrometheusCollectorTest < Minitest::Test
     assert(result.include?("delayed_failed_jobs_total{job_name=\"Object\"} 1"), "has failed job")
     assert(result.include?("delayed_jobs_total{job_name=\"Class\"} 1"), "has working job")
     assert(result.include?("delayed_job_duration_seconds"), "has duration")
+    assert(result.include?("delayed_jobs_enqueued 10"), "has enqueued count")
+    assert(result.include?("delayed_jobs_pending 0"), "has pending count")
     job.verify
     failed_job.verify
   end
@@ -384,7 +386,7 @@ class PrometheusCollectorTest < Minitest::Test
     job.expect(:handler, "job_class: Class")
     job.expect(:attempts, 0)
 
-    instrument.call(job, 25, nil, "default") do
+    instrument.call(job, 25, 10, 0, nil, "default") do
       # nothing
     end
 
@@ -393,7 +395,7 @@ class PrometheusCollectorTest < Minitest::Test
     failed_job.expect(:attempts, 1)
 
     begin
-      instrument.call(failed_job, 25, nil, "default") do
+      instrument.call(failed_job, 25, 10, 0, nil, "default") do
         boom
       end
     rescue
@@ -404,6 +406,8 @@ class PrometheusCollectorTest < Minitest::Test
     assert(result.include?('delayed_failed_jobs_total{job_name="Object",service="service1"} 1'), "has failed job")
     assert(result.include?('delayed_jobs_total{job_name="Class",service="service1"} 1'), "has working job")
     assert(result.include?('delayed_job_duration_seconds{job_name="Class",service="service1"}'), "has duration")
+    assert(result.include?("delayed_jobs_enqueued 10"), "has enqueued count")
+    assert(result.include?("delayed_jobs_pending 0"), "has pending count")
     job.verify
     failed_job.verify
   end
