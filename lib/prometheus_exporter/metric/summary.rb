@@ -10,12 +10,16 @@ module PrometheusExporter::Metric
 
     def initialize(name, help, opts = {})
       super(name, help)
+      reset!
+      @quantiles = opts[:quantiles] || DEFAULT_QUANTILES
+    end
+
+    def reset!
       @buffers = [{}, {}]
       @last_rotated = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       @current_buffer = 0
       @counts = {}
       @sums = {}
-      @quantiles = opts[:quantiles] || DEFAULT_QUANTILES
     end
 
     def type

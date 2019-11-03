@@ -1,3 +1,7 @@
+0.4.16 - 04-11-2019
+
+- FEATURE: Support #reset! on all metric types to reset a metric to default
+
 0.4.15 - 04-11-2019
 
 - FEATURE: Improve delayed job collector, add pending counts

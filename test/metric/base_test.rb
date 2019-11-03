@@ -9,6 +9,11 @@ module PrometheusExporter::Metric
       Counter.new("a_counter", "my amazing counter")
     end
 
+    before  do
+      Base.default_prefix = ''
+      Base.default_labels = {}
+    end
+
     after do
       Base.default_prefix = ''
       Base.default_labels = {}
@@ -41,6 +46,70 @@ module PrometheusExporter::Metric
       TEXT
 
       assert_equal(counter.to_prometheus_text, text)
+    end
+
+    it "supports reset! for Gauge" do
+
+      gauge = Gauge.new("test", "test")
+
+      gauge.observe(999)
+      gauge.observe(100, a: "a")
+      gauge.reset!
+
+      text = <<~TEXT
+        # HELP test test
+        # TYPE test gauge
+      TEXT
+
+      assert_equal(gauge.to_prometheus_text.strip, text.strip)
+    end
+
+    it "supports reset! for Counter" do
+
+      counter = Counter.new("test", "test")
+
+      counter.observe(999)
+      counter.observe(100, a: "a")
+      counter.reset!
+
+      text = <<~TEXT
+        # HELP test test
+        # TYPE test counter
+      TEXT
+
+      assert_equal(counter.to_prometheus_text.strip, text.strip)
+    end
+
+    it "supports reset! for Histogram" do
+
+      histogram = Histogram.new("test", "test")
+
+      histogram.observe(999)
+      histogram.observe(100, a: "a")
+      histogram.reset!
+
+      text = <<~TEXT
+        # HELP test test
+        # TYPE test histogram
+      TEXT
+
+      assert_equal(histogram.to_prometheus_text.strip, text.strip)
+    end
+
+    it "supports reset! for Summary" do
+
+      summary = Summary.new("test", "test")
+
+      summary.observe(999)
+      summary.observe(100, a: "a")
+      summary.reset!
+
+      text = <<~TEXT
+        # HELP test test
+        # TYPE test summary
+      TEXT
+
+      assert_equal(summary.to_prometheus_text.strip, text.strip)
     end
   end
 end

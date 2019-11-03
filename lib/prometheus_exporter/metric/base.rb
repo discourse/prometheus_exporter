@@ -34,6 +34,10 @@ module PrometheusExporter::Metric
       raise "Not implemented"
     end
 
+    def reset!
+      raise "Not implemented"
+    end
+
     def from_json(json)
       json = JSON.parse(json) if String === json
       @name = json["name"]

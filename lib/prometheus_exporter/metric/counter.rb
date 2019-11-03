@@ -6,11 +6,15 @@ module PrometheusExporter::Metric
 
     def initialize(name, help)
       super
-      @data = {}
+      reset!
     end
 
     def type
       "counter"
+    end
+
+    def reset!
+      @data = {}
     end
 
     def metric_text

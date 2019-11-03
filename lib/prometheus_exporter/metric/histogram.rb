@@ -8,6 +8,10 @@ module PrometheusExporter::Metric
     def initialize(name, help, opts = {})
       super(name, help)
       @buckets = (opts[:buckets] || DEFAULT_BUCKETS).sort.reverse
+      reset!
+    end
+
+    def reset!
       @sums = {}
       @counts = {}
       @observations = {}

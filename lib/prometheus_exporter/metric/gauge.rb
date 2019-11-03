@@ -6,7 +6,7 @@ module PrometheusExporter::Metric
 
     def initialize(name, help)
       super
-      @data = {}
+      reset!
     end
 
     def type
@@ -17,6 +17,10 @@ module PrometheusExporter::Metric
       @data.map do |labels, value|
         "#{prefix(@name)}#{labels_text(labels)} #{value}"
       end.join("\n")
+    end
+
+    def reset!
+      @data = {}
     end
 
     def observe(value, labels = {})
