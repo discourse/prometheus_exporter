@@ -1,3 +1,10 @@
+0.4.15 - 04-11-2019
+
+- FEATURE: Improve delayed job collector, add pending counts
+- FEATURE: New ActiveRecord collector (documented in readme)
+- FEATURE: Allow passing in histogram and summary options
+- FEATURE: Allow custom labels for unicorn collector
+
 0.4.14 - 10-09-2019
 
 - FEATURE: allow finding metrics by name RemoteMetric #find_registered_metric
