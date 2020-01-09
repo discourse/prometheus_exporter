@@ -127,5 +127,12 @@ module PrometheusExporter::Metric
 
       assert_equal(counter.to_prometheus_text, text)
     end
+
+    it "can correctly return data set" do
+      counter.observe(5, sam: "ham")
+      counter.observe(10, foo: "bar")
+
+      assert_equal(counter.to_h, { sam: "ham" } => 5, { foo: "bar" } => 10)
+    end
   end
 end

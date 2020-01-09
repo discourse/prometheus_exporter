@@ -22,6 +22,16 @@ module PrometheusExporter::Metric
       @sums = {}
     end
 
+    def to_h
+      data = {}
+      calculate_all_quantiles.each do |labels, quantiles|
+        count = @counts[labels]
+        sum = @sums[labels]
+        data[labels] = { "count" => count, "sum" => sum }
+      end
+      data
+    end
+
     def type
       "summary"
     end

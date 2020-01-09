@@ -23,6 +23,10 @@ module PrometheusExporter::Metric
       @data = {}
     end
 
+    def to_h
+      @data.dup
+    end
+
     def observe(value, labels = {})
       if value.nil?
         data.delete(labels)

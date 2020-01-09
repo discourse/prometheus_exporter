@@ -17,6 +17,16 @@ module PrometheusExporter::Metric
       @observations = {}
     end
 
+    def to_h
+      data = {}
+      @observations.each do |labels, buckets|
+        count = @counts[labels]
+        sum = @sums[labels]
+        data[labels] = { "count" => count, "sum" => sum }
+      end
+      data
+    end
+
     def type
       "histogram"
     end
