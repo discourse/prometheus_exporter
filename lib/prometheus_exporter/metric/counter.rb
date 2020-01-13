@@ -23,6 +23,10 @@ module PrometheusExporter::Metric
       end.join("\n")
     end
 
+    def to_h
+      @data.dup
+    end
+
     def observe(increment = 1, labels = {})
       @data[labels] ||= 0
       @data[labels] += increment

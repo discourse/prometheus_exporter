@@ -118,5 +118,13 @@ module PrometheusExporter::Metric
 
       assert_equal(histogram.to_prometheus_text, expected)
     end
+
+    it "can correctly return data set" do
+      histogram.observe(0.1, name: "bob", family: "skywalker")
+      histogram.observe(0.7, name: "bob", family: "skywalker")
+      histogram.observe(0.99, name: "bob", family: "skywalker")
+
+      assert_equal(histogram.to_h, { name: "bob", family: "skywalker" } => { "count" => 3, "sum" => 1.79 })
+    end
   end
 end
