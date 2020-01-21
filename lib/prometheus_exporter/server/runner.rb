@@ -4,10 +4,8 @@ require 'prometheus_exporter/client'
 require_relative '../instrumentation/unicorn'
 
 module PrometheusExporter::Server
-  class RunnerException < StandardError;
-  end
-  class WrongInheritance < RunnerException;
-  end
+  class RunnerException < StandardError; end
+  class WrongInheritance < RunnerException; end
 
   class Runner
     def initialize(options = {})
