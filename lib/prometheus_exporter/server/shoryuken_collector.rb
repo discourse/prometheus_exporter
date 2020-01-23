@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module PrometheusExporter::Server
   class ShoryukenCollector < TypeCollector
 
@@ -6,7 +8,7 @@ module PrometheusExporter::Server
     end
 
     def collect(obj)
-      default_labels = { job_name: obj['name'] , queue_name: obj['queue']}
+      default_labels = { job_name: obj['name'] , queue_name: obj['queue'] }
       custom_labels = obj['custom_labels']
       labels = custom_labels.nil? ? default_labels : default_labels.merge(custom_labels)
 
