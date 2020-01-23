@@ -13,6 +13,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
   * [Rails integration](#rails-integration)
     * [Per-process stats](#per-process-stats)
     * [Sidekiq metrics](#sidekiq-metrics)
+    * [Shoryuken metrics](#shoryuken-metrics)
     * [ActiveRecord Connection Pool Metrics](#activerecord-connection-pool-metrics)
     * [Delayed Job plugin](#delayed-job-plugin)
     * [Hutch metrics](#hutch-message-processing-tracer)
@@ -295,6 +296,19 @@ Sometimes the Sidekiq server shuts down before it can send metrics, that were ge
       PrometheusExporter::Client.default.stop(wait_timeout_seconds: 10)
     end
   end
+```
+
+#### Shoryuken metrics
+
+For Shoryuken metrics (how many jobs ran? how many failed? how long did they take? how many were restarted?)
+
+```ruby
+Shoryuken.configure_server do |config|
+  config.server_middleware do |chain|
+    require 'prometheus_exporter/instrumentation'
+    chain.add PrometheusExporter::Instrumentation::Shoryuken
+  end
+end
 ```
 
 #### Delayed Job plugin
