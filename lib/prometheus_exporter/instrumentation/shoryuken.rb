@@ -13,7 +13,7 @@ module PrometheusExporter::Instrumentation
       result = yield
       success = true
       result
-    rescue Shoryuken::Shutdown => e
+    rescue ::Shoryuken::Shutdown => e
       shutdown = true
       raise e
     ensure
