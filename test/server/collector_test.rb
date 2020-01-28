@@ -270,14 +270,17 @@ class PrometheusCollectorTest < Minitest::Test
 
     instrument.call("hello", nil, "default", "body") do
     end
-    instrument.call("hello", nil, "default", "body") do
-      boom
-    end
+    begin
+      instrument.call(false, nil, "default", "body") do
+        boom
+      end
     rescue
+    end
 
     result = collector.prometheus_metrics_text
-    assert(result.include?("shoryuken_failed_jobs_total{job_name=\"String\",queue_name=\"\"} 1"), "has failed job")
-    assert(result.include?("shoryuken_jobs_total{job_name=\"String\",queue_name=\"\"} 2"), "has working job")
+
+    assert(result.include?("shoryuken_failed_jobs_total{job_name=\"FalseClass\",queue_name=\"\"} 1"), "has failed job")
+    assert(result.include?("shoryuken_jobs_total{job_name=\"String\",queue_name=\"\"} 1"), "has working job")
     assert(result.include?("shoryuken_job_duration_seconds{job_name=\"String\",queue_name=\"\"} "), "has duration")
   end
 
