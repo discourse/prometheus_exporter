@@ -219,7 +219,7 @@ end
 For Unicorn / Passenger
 
 ```ruby
-after_fork do 
+after_fork do |_server, _worker|
   require 'prometheus_exporter/instrumentation'
   PrometheusExporter::Instrumentation::ActiveRecord.start(
     custom_labels: { type: "unicorn_worker" }, #optional params
