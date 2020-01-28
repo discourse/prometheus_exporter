@@ -262,6 +262,25 @@ class PrometheusCollectorTest < Minitest::Test
     assert(result.include?("sidekiq_job_duration_seconds"), "has duration")
   end
 
+  def test_it_can_collect_shoryuken_metrics
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector)
+
+    instrument = PrometheusExporter::Instrumentation::Shoryuken.new(client: client)
+
+    instrument.call("hello", nil, "default", "body") do
+    end
+    instrument.call("hello", nil, "default", "body") do
+      boom
+    end
+    rescue
+
+    result = collector.prometheus_metrics_text
+    assert(result.include?("shoryuken_failed_jobs_total{job_name=\"String\",queue_name=\"\"} 1"), "has failed job")
+    assert(result.include?("shoryuken_jobs_total{job_name=\"String\",queue_name=\"\"} 2"), "has working job")
+    assert(result.include?("shoryuken_job_duration_seconds{job_name=\"String\",queue_name=\"\"} "), "has duration")
+  end
+
   def test_it_can_collect_sidekiq_metrics_with_custom_labels
     collector = PrometheusExporter::Server::Collector.new
     client = PipedClient.new(collector, custom_labels: { service: 'service1' })
