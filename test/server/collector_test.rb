@@ -262,28 +262,6 @@ class PrometheusCollectorTest < Minitest::Test
     assert(result.include?("sidekiq_job_duration_seconds"), "has duration")
   end
 
-  def test_it_can_collect_shoryuken_metrics
-    collector = PrometheusExporter::Server::Collector.new
-    client = PipedClient.new(collector)
-
-    instrument = PrometheusExporter::Instrumentation::Shoryuken.new(client: client)
-
-    instrument.call("hello", nil, "default", "body") do
-    end
-    begin
-      instrument.call(false, nil, "default", "body") do
-        boom
-      end
-    rescue
-    end
-
-    result = collector.prometheus_metrics_text
-
-    assert(result.include?("shoryuken_failed_jobs_total{job_name=\"FalseClass\",queue_name=\"\"} 1"), "has failed job")
-    assert(result.include?("shoryuken_jobs_total{job_name=\"String\",queue_name=\"\"} 1"), "has working job")
-    assert(result.include?("shoryuken_job_duration_seconds{job_name=\"String\",queue_name=\"\"} "), "has duration")
-  end
-
   def test_it_can_collect_sidekiq_metrics_with_custom_labels
     collector = PrometheusExporter::Server::Collector.new
     client = PipedClient.new(collector, custom_labels: { service: 'service1' })
@@ -314,6 +292,28 @@ class PrometheusCollectorTest < Minitest::Test
     assert(result.include?('sidekiq_jobs_total{job_name="String",service="service1"} 1'), "has working job")
     assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",service="service1"}'), "has duration")
     assert(result.include?('sidekiq_jobs_total{job_name="WrappedClass",service="service1"} 1'), "has sidekiq working job from ActiveJob")
+  end
+
+  def test_it_can_collect_shoryuken_metrics_with_custom_lables
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector, custom_labels: { service: 'service1' })
+
+    instrument = PrometheusExporter::Instrumentation::Shoryuken.new(client: client)
+
+    instrument.call("hello", nil, "default", "body") do
+    end
+    begin
+      instrument.call(false, nil, "default", "body") do
+        boom
+      end
+    rescue
+    end
+
+    result = collector.prometheus_metrics_text
+
+    assert(result.include?("shoryuken_failed_jobs_total{job_name=\"FalseClass\",queue_name=\"\",service=\"service1\"} 1"), "has failed job")
+    assert(result.include?("shoryuken_jobs_total{job_name=\"String\",queue_name=\"\",service=\"service1\"} 1"), "has working job")
+    assert(result.include?("shoryuken_job_duration_seconds{job_name=\"String\",queue_name=\"\",service=\"service1\"} "), "has duration")
   end
 
   def test_it_merges_custom_labels_for_generic_metrics
