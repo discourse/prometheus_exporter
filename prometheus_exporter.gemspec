@@ -37,4 +37,6 @@ Gem::Specification.new do |spec|
     spec.add_development_dependency "raindrops", "~> 0.19"
   end
   spec.required_ruby_version = '>= 2.3.0'
+  
+  spec.post_install_message = "prometheus_exporter will only bind to localhost by default as of v0.5"
 end
