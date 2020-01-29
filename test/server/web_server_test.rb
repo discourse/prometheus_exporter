@@ -36,7 +36,7 @@ class PrometheusExporterTest < Minitest::Test
       begin
         TCPSocket.new("localhost", port).close
         port += 1
-      rescue Errno::ECONNREFUSED
+      rescue Errno::ECONNREFUSED, Errno::ECONNRESET
         break
       end
     end
