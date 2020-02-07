@@ -64,7 +64,7 @@ require 'prometheus_exporter/instrumentation'
 
 # bind is the address, on which the webserver will listen
 # port is the port that will provide the /metrics route
-server = PrometheusExporter::Server::WebServer.new bind: localhost, port: 12345
+server = PrometheusExporter::Server::WebServer.new bind: 'localhost', port: 12345
 server.start
 
 # wire up a default local client
