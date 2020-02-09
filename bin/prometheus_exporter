@@ -19,6 +19,12 @@ def run
            "Port exporter should listen on (default: #{PrometheusExporter::DEFAULT_PORT})") do |o|
       options[:port] = o.to_i
     end
+    opt.on('-b',
+           '--bind STRING',
+           String,
+           "IP address exporter should listen on (default: #{PrometheusExporter::DEFAULT_BIND_ADDRESS})") do |o|
+      options[:bind] = o.to_s
+    end
     opt.on('-t',
            '--timeout INTEGER',
            Integer,
@@ -81,7 +87,7 @@ def run
 
   runner = PrometheusExporter::Server::Runner.new(options)
 
-  puts "#{Time.now} Starting prometheus exporter on port #{runner.port}"
+  puts "#{Time.now} Starting prometheus exporter on #{runner.bind}:#{runner.port}"
   runner.start
   sleep
 end

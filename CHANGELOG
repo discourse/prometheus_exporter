@@ -1,3 +1,7 @@
+0.5.0 - pending
+
+- Breaking change: listen only to localhost by default to prevent unintended insecure configuration
+
 0.4.17 - 13-01-2019
 
 - FEATURE: add support for `to_h` on all metrics which can be used to query existing key/values

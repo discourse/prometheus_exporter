@@ -63,8 +63,9 @@ require 'prometheus_exporter/server'
 require 'prometheus_exporter/client'
 require 'prometheus_exporter/instrumentation'
 
+# bind is the address, on which the webserver will listen
 # port is the port that will provide the /metrics route
-server = PrometheusExporter::Server::WebServer.new port: 12345
+server = PrometheusExporter::Server::WebServer.new bind: 'localhost', port: 12345
 server.start
 
 # wire up a default local client
@@ -116,7 +117,7 @@ In some cases (for example, unicorn or puma clusters) you may want to aggregate 
 
 Simplest way to achieve this is to use the built-in collector.
 
-First, run an exporter on your desired port (we use the default port of 9394):
+First, run an exporter on your desired port (we use the default bind to localhost and port of 9394):
 
 ```
 $ prometheus_exporter

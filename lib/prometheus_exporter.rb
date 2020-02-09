@@ -7,6 +7,7 @@ require "thread"
 module PrometheusExporter
   # per: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
   DEFAULT_PORT = 9394
+  DEFAULT_BIND_ADDRESS = 'localhost'
   DEFAULT_PREFIX = 'ruby_'
   DEFAULT_TIMEOUT = 2
 
