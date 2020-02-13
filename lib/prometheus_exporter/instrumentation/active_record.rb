@@ -57,7 +57,7 @@ module PrometheusExporter::Instrumentation
     def hostname
       @hostname ||=
         begin
-          `hostname`.strip
+          Socket.gethostname
         rescue => e
           STDERR.puts "Unable to lookup hostname #{e}"
           "unknown-host"
