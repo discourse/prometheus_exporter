@@ -42,24 +42,13 @@ module PrometheusExporter::Instrumentation
 
     def initialize(metric_labels)
       @metric_labels = metric_labels
-      @hostname = nil
-    end
-
-    def hostname
-      @hostname ||=
-        begin
-          `hostname`.strip
-        rescue => e
-          STDERR.puts "Unable to lookup hostname #{e}"
-          "unknown-host"
-        end
     end
 
     def collect
       metric = {}
       metric[:type] = "process"
       metric[:metric_labels] = @metric_labels
-      metric[:hostname] = hostname
+      metric[:hostname] = ::PrometheusExporter.hostname
       collect_gc_stats(metric)
       collect_v8_stats(metric)
       collect_process_stats(metric)

@@ -20,6 +20,17 @@ module PrometheusExporter
     end
   end
 
+  def self.hostname
+    @hostname ||=
+      begin
+        require 'socket'
+        Socket.gethostname
+      rescue => e
+        STDERR.puts "Unable to lookup hostname #{e}"
+        "unknown-host"
+      end
+  end
+
   def self.detect_json_serializer(preferred)
     if preferred.nil?
       preferred = :oj if has_oj?

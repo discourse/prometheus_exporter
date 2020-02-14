@@ -51,17 +51,6 @@ module PrometheusExporter::Instrumentation
     def initialize(metric_labels, config_labels)
       @metric_labels = metric_labels
       @config_labels = config_labels
-      @hostname = nil
-    end
-
-    def hostname
-      @hostname ||=
-        begin
-          `hostname`.strip
-        rescue => e
-          STDERR.puts "Unable to lookup hostname #{e}"
-          "unknown-host"
-        end
     end
 
     def collect
@@ -87,7 +76,7 @@ module PrometheusExporter::Instrumentation
         metric = {
           pid: pid,
           type: "active_record",
-          hostname: hostname,
+          hostname: ::PrometheusExporter.hostname,
           metric_labels: labels
         }
         metric.merge!(pool.stat)

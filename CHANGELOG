@@ -1,6 +1,7 @@
-0.5.0 - pending
+0.5.0 - 14-02-2019
 
 - Breaking change: listen only to localhost by default to prevent unintended insecure configuration
+- FIX: Avoid calling `hostname` aggressively, instead cache it on the exporter instance
 
 0.4.17 - 13-01-2019
 
