@@ -24,6 +24,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
   * [GraphQL support](#graphql-support)
   * [Metrics default prefix / labels](#metrics-default-prefix--labels)
   * [Client default labels](#client-default-labels)
+  * [Client default host](#client-default-host)
 * [Transport concerns](#transport-concerns)
 * [JSON generation and parsing](#json-generation-and-parsing)
 * [Contributing](#contributing)
@@ -195,7 +196,7 @@ This collects activerecord connection pool metrics.
 
 It supports injection of custom labels and the connection config options (`username`, `database`, `host`, `port`) as labels.
 
-For Puma single mode 
+For Puma single mode
 ```ruby
 #in puma.rb
 require 'prometheus_exporter/instrumentation'
@@ -560,6 +561,9 @@ Will result in:
 http_requests_total{controller="home","action"="index",service="app-server-01",app_name="app-01"} 2
 http_requests_total{service="app-server-01",app_name="app-01"} 1
 ```
+### Client default host
+
+By default, `PrometheusExporter::Client.default` connects to `localhost:9394`. If your setup requires this (e.g. when using `docker-compose`), you can change the default host and port by setting the environment variables `PROMETHEUS_EXPORTER_HOST` and `PROMETHEUS_EXPORTER_PORT`.
 
 ## Transport concerns
 
