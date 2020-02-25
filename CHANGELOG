@@ -1,3 +1,7 @@
+0.5.1 - 25-02-2019
+
+- FEATURE: Allow configuring the default client's host and port via environment variables
+
 0.5.0 - 14-02-2019
 
 - Breaking change: listen only to localhost by default to prevent unintended insecure configuration
