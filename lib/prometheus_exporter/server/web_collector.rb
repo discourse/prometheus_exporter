@@ -1,8 +1,16 @@
 # frozen_string_literal: true
 
+require 'yaml'
+
 module PrometheusExporter::Server
   class WebCollector < TypeCollector
     def initialize
+      if ENV["RAIL_PROMETHEUS_EXPORTER_CONFIG"] then
+        @config = YAML.load(File.read(ENV["RAIL_PROMETHEUS_EXPORTER_CONFIG"]))
+      else
+        puts("Could not find env RAIL_PROMETHEUS_EXPORTER_CONFIG. Loading defualt configuration.")
+        @config = {"histogram_buckets"=>[ 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0, 20.0, 30.0 ]}
+      end
       @metrics = {}
     end
 
@@ -28,9 +36,16 @@ module PrometheusExporter::Server
           "Total HTTP requests from web app."
         )
 
-        @metrics["http_duration_seconds"] = @http_duration_seconds = PrometheusExporter::Metric::Summary.new(
+        # Commenting out request duration summary metrics
+        # @metrics["http_duration_seconds"] = @http_duration_seconds = PrometheusExporter::Metric::Summary.new(
+        #   "http_duration_seconds",
+        #   "Time spent in HTTP reqs in seconds."
+        # )
+
+        @metrics["http_duration_seconds"] = @http_duration_seconds = PrometheusExporter::Metric::Histogram.new(
           "http_duration_seconds",
-          "Time spent in HTTP reqs in seconds."
+          "Time spent in HTTP reqs in seconds.",
+          opts={:buckets=>@config["histogram_buckets"]}
         )
 
         @metrics["http_redis_duration_seconds"] = @http_redis_duration_seconds = PrometheusExporter::Metric::Summary.new(
