@@ -16,6 +16,7 @@ module PrometheusExporter::Server
 
     def start
       PrometheusExporter::Metric::Base.default_prefix = prefix
+      PrometheusExporter::Metric::Base.default_labels = label
 
       register_type_collectors
 
@@ -37,7 +38,7 @@ module PrometheusExporter::Server
     end
 
     attr_accessor :unicorn_listen_address, :unicorn_pid_file
-    attr_writer :prefix, :port, :bind, :collector_class, :type_collectors, :timeout, :verbose, :server_class
+    attr_writer :prefix, :port, :bind, :collector_class, :type_collectors, :timeout, :verbose, :server_class, :label
 
     def prefix
       @prefix || PrometheusExporter::DEFAULT_PREFIX
@@ -74,6 +75,10 @@ module PrometheusExporter::Server
 
     def collector
       @_collector ||= collector_class.new
+    end
+
+    def label
+      @label ||= PrometheusExporter::DEFAULT_LABEL
     end
 
     private
