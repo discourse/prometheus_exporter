@@ -61,7 +61,7 @@ class PrometheusRunnerTest < Minitest::Test
       collector_class: CollectorMock,
       type_collectors: [TypeCollectorMock],
       verbose: true,
-      label: {environment: 'integration'}
+      label: { environment: 'integration' }
     )
 
     assert_equal(runner.prefix, 'new_')
@@ -70,13 +70,13 @@ class PrometheusRunnerTest < Minitest::Test
     assert_equal(runner.collector_class, CollectorMock)
     assert_equal(runner.type_collectors, [TypeCollectorMock])
     assert_equal(runner.verbose, true)
-    assert_equal(runner.label, {environment: 'integration'})
+    assert_equal(runner.label, { environment: 'integration' })
 
     reset_base_metric_label
   end
 
   def test_runner_start
-    runner = PrometheusExporter::Server::Runner.new(server_class: MockerWebServer, label: {environment: 'integration'})
+    runner = PrometheusExporter::Server::Runner.new(server_class: MockerWebServer, label: { environment: 'integration' })
     result = runner.start
 
     assert_equal(result, true)
@@ -84,7 +84,7 @@ class PrometheusRunnerTest < Minitest::Test
     assert_equal(runner.port, 9394)
     assert_equal(runner.timeout, 2)
     assert_equal(runner.verbose, false)
-    assert_equal(PrometheusExporter::Metric::Base.default_labels, {environment: 'integration'})
+    assert_equal(PrometheusExporter::Metric::Base.default_labels, { environment: 'integration' })
     assert_instance_of(PrometheusExporter::Server::Collector, runner.collector)
 
     reset_base_metric_label
@@ -126,6 +126,6 @@ class PrometheusRunnerTest < Minitest::Test
   end
 
   def reset_base_metric_label
-    PrometheusExporter::Metric::Base.default_labels={}
+    PrometheusExporter::Metric::Base.default_labels = {}
   end
 end
