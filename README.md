@@ -542,6 +542,26 @@ ruby_web_requests{hostname="app-server-01",route="test/route"} 1
 ruby_web_requests{hostname="app-server-01"} 1
 ```
 
+### Exporter Process Configuration
+
+When running the process for `prometheus_exporter` using `bin/prometheus_exporter`, there are several configurations that
+can be passed in:
+
+The following will run the process at
+- Port `8080` (default `9394`)
+- Bind to `0.0.0.0` (default `localhost`)
+- Timeout in `1 second` for metrics endpoint (default `2 seconds`)
+- Metric prefix as `foo_` (default `ruby_`) 
+- Default labels as `{environment: "integration", foo: "bar"}` 
+
+```bash
+prometheus_exporter -p 8080 \
+                    -b 0.0.0.0 \
+                    -t 1 \
+                    --label '{"environment": "integration", "foo": "bar"}' \
+                    --prefix 'foo_'
+```
+
 ### Client default labels
 
 You can specify a default label for instrumentation metrics sent by a specific client. For example:

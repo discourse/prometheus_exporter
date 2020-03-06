@@ -9,6 +9,7 @@ module PrometheusExporter
   DEFAULT_PORT = 9394
   DEFAULT_BIND_ADDRESS = 'localhost'
   DEFAULT_PREFIX = 'ruby_'
+  DEFAULT_LABEL = {}
   DEFAULT_TIMEOUT = 2
 
   class OjCompat
