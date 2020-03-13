@@ -283,4 +283,3 @@ test_name{host="example.com",key1="test1"} 5
     mock_puma.verify
   end
 end
-
