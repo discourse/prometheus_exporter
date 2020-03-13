@@ -4,15 +4,11 @@ module PrometheusExporter::Instrumentation
   class Sidekiq
     def self.death_handler
       -> (job, ex) do
-        job_is_fire_and_forget = job["retry"] == false
-
-        unless job_is_fire_and_forget
-          PrometheusExporter::Client.default.send_json(
-            type: "sidekiq",
-            name: job["class"],
-            dead: true,
-          )
-        end
+        PrometheusExporter::Client.default.send_json(
+          type: "sidekiq",
+          name: job["class"],
+          dead: true,
+        )
       end
     end
 
@@ -21,7 +17,10 @@ module PrometheusExporter::Instrumentation
     end
 
     def call(worker, msg, queue)
-      queue_time = Time.now.to_i - msg['enqueued_at'].to_i
+      queue_time = 0
+      if not msg.nil?
+        queue_time = Time.now.to_i - msg['enqueued_at'].to_i
+      end
       success = false
       shutdown = false
       start = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
@@ -47,3 +46,4 @@ module PrometheusExporter::Instrumentation
     end
   end
 end
+
