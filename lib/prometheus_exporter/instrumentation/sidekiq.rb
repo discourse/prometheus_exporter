@@ -46,4 +46,3 @@ module PrometheusExporter::Instrumentation
     end
   end
 end
-
