@@ -21,6 +21,7 @@ module PrometheusExporter::Instrumentation
     end
 
     def call(worker, msg, queue)
+      queue_time = Time.now.to_i - msg['enqueued_at'].to_i
       success = false
       shutdown = false
       start = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
@@ -37,6 +38,8 @@ module PrometheusExporter::Instrumentation
       @client.send_json(
         type: "sidekiq",
         name: class_name,
+        queue_time: queue_time,
+        queue: queue,
         success: success,
         shutdown: shutdown,
         duration: duration
