@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module PrometheusExporter::Server
   class SidekiqCollector < TypeCollector
 
@@ -69,4 +71,3 @@ module PrometheusExporter::Server
     end
   end
 end
-
