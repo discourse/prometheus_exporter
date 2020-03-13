@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'test_helper'
 require 'prometheus_exporter/server'
 require 'prometheus_exporter/client'
@@ -114,7 +116,7 @@ test_name{key1="test1"} -10
     instrument = PrometheusExporter::Instrumentation::Sidekiq.new(client: client)
 
     instrument.call("hello", nil, "default") do
-# nothing
+      # nothing
     end
 
     begin
@@ -137,7 +139,7 @@ test_name{key1="test1"} -10
     instrument = PrometheusExporter::Instrumentation::Sidekiq.new(client: client)
 
     instrument.call("hello", nil, "default") do
-# nothing
+      # nothing
     end
 
     begin
@@ -150,7 +152,7 @@ test_name{key1="test1"} -10
     active_job_worker = {}
     active_job_worker.stub(:class, "ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper") do
       instrument.call(active_job_worker, { 'wrapped' => 'WrappedClass' }, "default") do
-# nothing
+        # nothing
       end
     end
 
@@ -198,7 +200,7 @@ test_name{host="example.com",key1="test1"} 5
     job.expect(:attempts, 0)
 
     instrument.call(job, 20, nil, "default") do
-# nothing
+      # nothing
     end
 
     failed_job = Minitest::Mock.new
@@ -232,7 +234,7 @@ test_name{host="example.com",key1="test1"} 5
     job.expect(:attempts, 0)
 
     instrument.call(job, 25, nil, "default") do
-# nothing
+      # nothing
     end
 
     failed_job = Minitest::Mock.new
