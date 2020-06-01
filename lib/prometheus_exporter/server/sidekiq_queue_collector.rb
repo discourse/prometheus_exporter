@@ -12,9 +12,6 @@ module PrometheusExporter::Server
     def initialize
       @sidekiq_metrics = []
       @gauges = {}
-      SIDEKIQ_QUEUE_GAUGES.each do |name, help|
-        @gauges[name] ||= PrometheusExporter::Metric::Gauge.new("sidekiq_queue_#{name}", help)
-      end
     end
 
     def type
@@ -24,9 +21,10 @@ module PrometheusExporter::Server
     def metrics
       sidekiq_metrics.map do |metric|
         labels = metric.fetch("labels", {})
-        SIDEKIQ_QUEUE_GAUGES.map do |name, _|
+        SIDEKIQ_QUEUE_GAUGES.map do |name, help|
           if (value = metric[name])
-            gauges[name].observe(value, labels)
+            gauge = gauges[name] ||= PrometheusExporter::Metric::Gauge.new("sidekiq_queue_#{name}", help)
+            gauge.observe(value, labels)
           end
         end
       end
