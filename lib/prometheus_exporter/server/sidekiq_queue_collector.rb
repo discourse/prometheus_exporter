@@ -36,7 +36,6 @@ module PrometheusExporter::Server
       now = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
       object['queues'].each do |queue|
         queue["created_at"] = now
-        sidekiq_metrics << queue
         sidekiq_metrics.delete_if { |metric| metric['created_at'] + MAX_SIDEKIQ_METRIC_AGE < now }
         sidekiq_metrics << queue
       end
