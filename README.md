@@ -279,6 +279,17 @@ Sidekiq.configure_server do |config|
 end
 ```
 
+To monitor Queue size and latency:
+
+```ruby
+Sidekiq.configure_server do |config|
+  config.on :startup do
+    require 'prometheus_exporter/instrumentation'
+    PrometheusExporter::Instrumentation::SidekiqQueue.start
+  end
+end
+```
+
 To monitor Sidekiq process info:
 
 ```ruby
@@ -551,8 +562,8 @@ The following will run the process at
 - Port `8080` (default `9394`)
 - Bind to `0.0.0.0` (default `localhost`)
 - Timeout in `1 second` for metrics endpoint (default `2 seconds`)
-- Metric prefix as `foo_` (default `ruby_`) 
-- Default labels as `{environment: "integration", foo: "bar"}` 
+- Metric prefix as `foo_` (default `ruby_`)
+- Default labels as `{environment: "integration", foo: "bar"}`
 
 ```bash
 prometheus_exporter -p 8080 \
