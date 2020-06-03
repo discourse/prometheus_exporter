@@ -1,1 +1,0 @@
-inherit_from: https://raw.githubusercontent.com/discourse/discourse/master/.rubocop.yml
