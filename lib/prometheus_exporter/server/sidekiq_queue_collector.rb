@@ -1,9 +1,10 @@
+# frozen_string_literal: true
 module PrometheusExporter::Server
   class SidekiqQueueCollector < TypeCollector
     MAX_SIDEKIQ_METRIC_AGE = 60
 
     SIDEKIQ_QUEUE_GAUGES = {
-      'backlog_total'   => 'Size of the sidekiq queue.',
+      'backlog_total' => 'Size of the sidekiq queue.',
       'latency_seconds' => 'Latency of the sidekiq queue.',
     }.freeze
 

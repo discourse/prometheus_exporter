@@ -29,7 +29,7 @@ module PrometheusExporter::Instrumentation
     def collect_queue_stats
       ::Sidekiq::Queue.all.map do |queue|
         {
-          backlog_total:   queue.size,
+          backlog_total: queue.size,
           latency_seconds: queue.latency.to_i,
           labels: { queue: queue.name }
         }
