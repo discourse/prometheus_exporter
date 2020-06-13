@@ -295,6 +295,25 @@ end
 
 ```
 
+##### Metrics collected by Process Instrumentation
+
+| Type    | Name                      | Description                                  |
+| ---     | ---                       | ---                                          |
+| Gauge   | `heap_free_slots`         | Free ruby heap slots                         |
+| Gauge   | `heap_live_slots`         | Used ruby heap slots                         |
+| Gauge   | `v8_heap_size`*           | Total JavaScript V8 heap size (bytes)        |
+| Gauge   | `v8_used_heap_size`*      | Total used JavaScript V8 heap size (bytes)   |
+| Gauge   | `v8_physical_size`*       | Physical size consumed by V8 heaps           |
+| Gauge   | `v8_heap_count`*          | Number of V8 contexts running                |
+| Gauge   | `rss`                     | Total RSS used by process                    |
+| Counter | `major_gc_ops_total`      | Major GC operations by process               |
+| Counter | `minor_gc_ops_total`      | Minor GC operations by process               |
+| Counter | `allocated_objects_total` | Total number of allocated objects by process |
+
+_Metrics marked with * are only collected when `MiniRacer` is defined._
+
+Metrics collected by Process instrumentation include labels `type` (as given with the `type` option), `pid` (of the process the stats where collected in), and any custom labels given to `Process.start` with the `labels` option.
+
 #### Sidekiq metrics
 
 Including Sidekiq metrics (how many jobs ran? how many failed? how long did they take? how many are dead? how many were restarted?)
