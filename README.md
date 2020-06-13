@@ -260,7 +260,7 @@ end
 # in unicorn/puma/passenger be sure to run a new process instrumenter after fork
 after_fork do
   require 'prometheus_exporter/instrumentation'
-  PrometheusExporter::Instrumentation::Process.start(type:"web")
+  PrometheusExporter::Instrumentation::Process.start(type: "web")
 end
 
 ```
