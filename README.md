@@ -360,6 +360,35 @@ Sometimes the Sidekiq server shuts down before it can send metrics, that were ge
   end
 ```
 
+##### Metrics collected by Sidekiq Instrumentation
+
+**PrometheusExporter::Instrumentation::Sidekiq**
+| Type    | Name                           | Description                                                                  |
+| ---     | ---                            | ---                                                                          |
+| Counter | `sidekiq_job_duration_seconds` | Total time spent in sidekiq jobs                                             |
+| Counter | `sidekiq_jobs_total`           | Total number of sidekiq jobs executed                                        |
+| Counter | `sidekiq_restarted_jobs_total` | Total number of sidekiq jobs that we restarted because of a sidekiq shutdown |
+| Counter | `sidekiq_failed_jobs_total`    | Total number of failed sidekiq jobs                                          |
+
+All metrics have a `job_name` label.
+
+**PrometheusExporter::Instrumentation::Sidekiq.death_handler**
+| Type    | Name                      | Description                       |
+| ---     | ---                       | ---                               |
+| Counter | `sidekiq_dead_jobs_total` | Total number of dead sidekiq jobs |
+
+This metric also has a `job_name` label.
+
+**PrometheusExporter::Instrumentation::SidekiqQueue**
+| Type  | Name                            | Description                  |
+| ---   | ---                             | ---                          |
+| Gauge | `sidekiq_queue_backlog_total`   | Size of the sidekiq queue    |
+| Gauge | `sidekiq_queue_latency_seconds` | Latency of the sidekiq queue |
+
+Both metrics will have a `queue` label with the name of the queue.
+
+_See [Metrics collected by Process Instrumentation](#metrics-collected-by-process-instrumentation) for a list of metrics the Process instrumentation will produce._  
+
 #### Shoryuken metrics
 
 For Shoryuken metrics (how many jobs ran? how many failed? how long did they take? how many were restarted?)
