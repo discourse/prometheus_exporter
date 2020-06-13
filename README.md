@@ -261,6 +261,19 @@ Sidekiq.configure_server do |config|
 end
 ```
 
+##### Metrics collected by ActiveRecord Instrumentation
+
+| Type  | Name                                        | Description                           |
+| ---   | ---                                         | ---                                   |
+| Gauge | `active_record_connection_pool_connections` | Total connections in pool             |
+| Gauge | `active_record_connection_pool_busy`        | Connections in use in pool            |
+| Gauge | `active_record_connection_pool_dead`        | Dead connections in pool              |
+| Gauge | `active_record_connection_pool_idle`        | Idle connections in pool              |
+| Gauge | `active_record_connection_pool_waiting`     | Connection requests waiting           |
+| Gauge | `active_record_connection_pool_size`        | Maximum allowed connection pool size  |
+
+All metrics collected by the ActiveRecord integration include at least the following labels: `pid` (of the process the stats where collected in), `pool_name`, any labels included in the `config_labels` option (prefixed with `dbconfig_`, example: `dbconfig_host`), and all custom labels provided with the `custom_labels` option.
+
 #### Per-process stats
 
 You may also be interested in per-process stats. This collects memory and GC stats:
