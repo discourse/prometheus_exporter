@@ -511,6 +511,14 @@ prometheus_exporter --unicorn-master /var/run/unicorn.pid --unicorn-listen-addre
 
 Note: You must install the `raindrops` gem in your `Gemfile` or locally.
 
+#### Metrics collected by Unicorn Instrumentation
+
+| Type  | Name                            | Description                                                    |
+| ---   | ---                             | ---                                                            |
+| Gauge | `unicorn_workers_total`         | Number of unicorn workers                                      |
+| Gauge | `unicorn_active_workers_total`  | Number of active unicorn workers                               |
+| Gauge | `unicorn_request_backlog_total` | Number of requests waiting to be processed by a unicorn worker |
+
 ### Custom type collectors
 
 In some cases you may have custom metrics you want to ship the collector in a batch. In this case you may still be interested in the base collector behavior, but would like to add your own special messages.
