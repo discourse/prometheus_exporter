@@ -402,6 +402,17 @@ Shoryuken.configure_server do |config|
 end
 ```
 
+##### Metrics collected by Shoryuken Instrumentation
+
+| Type    | Name                             | Description                                                                      |
+| ---     | ---                              | ---                                                                              |
+| Counter | `shoryuken_job_duration_seconds` | Total time spent in shoryuken jobs                                               |
+| Counter | `shoryuken_jobs_total`           | Total number of shoryuken jobs executed                                          |
+| Counter | `shoryuken_restarted_jobs_total` | Total number of shoryuken jobs that we restarted because of a shoryuken shutdown |
+| Counter | `shoryuken_failed_jobs_total`    | Total number of failed shoryuken jobs                                            |
+
+All metrics have labels for `job_name` and `queue_name`.  
+
 #### Delayed Job plugin
 
 In an initializer:
