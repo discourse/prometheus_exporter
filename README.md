@@ -424,6 +424,19 @@ unless Rails.env == "test"
 end
 ```
 
+##### Metrics collected by Delayed Job Instrumentation
+
+| Type    | Name                                      | Description                                                        | Labels     |
+| ---     | ---                                       | ---                                                                | ---        |
+| Counter | `delayed_job_duration_seconds`            | Total time spent in delayed jobs                                   | `job_name` |
+| Counter | `delayed_jobs_total`                      | Total number of delayed jobs executed                              | `job_name` |
+| Gauge   | `delayed_jobs_enqueued`                   | Number of enqueued delayed jobs                                    | -          |
+| Gauge   | `delayed_jobs_pending`                    | Number of pending delayed jobs                                     | -          |
+| Counter | `delayed_failed_jobs_total`               | Total number failed delayed jobs executed                          | `job_name` |
+| Counter | `delayed_jobs_max_attempts_reached_total` | Total number of delayed jobs that reached max attempts             | -          |
+| Summary | `delayed_job_duration_seconds_summary`    | Summary of the time it takes jobs to execute                       | `status`   |
+| Summary | `delayed_job_attempts_summary`            | Summary of the amount of attempts it takes delayed jobs to succeed | -          |
+
 #### Hutch Message Processing Tracer
 
 Capture [Hutch](https://github.com/gocardless/hutch) metrics (how many jobs ran? how many failed? how long did they take?)
