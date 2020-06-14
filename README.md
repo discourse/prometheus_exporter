@@ -448,6 +448,16 @@ unless Rails.env == "test"
 end
 ```
 
+##### Metrics collected by Hutch Instrumentation
+
+| Type    | Name                         | Description                             |
+| ---     | ---                          | ---                                     |
+| Counter | `hutch_job_duration_seconds` | Total time spent in hutch jobs          |
+| Counter | `hutch_jobs_total`           | Total number of hutch jobs executed     |
+| Counter | `hutch_failed_jobs_total`    | Total number failed hutch jobs executed |
+
+All metrics have a `job_name` label. 
+
 #### Instrumenting Request Queueing Time
 
 Request Queueing is defined as the time it takes for a request to reach your application (instrumented by this `prometheus_exporter`) from farther upstream (as your load balancer). A high queueing time usually means that your backend cannot handle all the incoming requests in time, so they queue up (= you should see if you need to add more capacity).
