@@ -482,6 +482,20 @@ after_worker_boot do
 end
 ```
 
+#### Metrics collected by Puma Instrumentation
+
+| Type  | Name                              | Description                                                 |
+| ---   | ---                               | ---                                                         |
+| Gauge | `puma_workers_total`              | Number of puma workers                                      |
+| Gauge | `puma_booted_workers_total`       | Number of puma workers booted                               |
+| Gauge | `puma_old_workers_total`          | Number of old puma workers                                  |
+| Gauge | `puma_running_threads_total`      | Number of puma threads currently running                    |
+| Gauge | `puma_request_backlog_total`      | Number of requests waiting to be processed by a puma thread |
+| Gauge | `puma_thread_pool_capacity_total` | Number of puma threads available at current scale           |
+| Gauge | `puma_max_threads_total`          | Number of puma threads at available at max scale            |
+
+All metrics may have a `phase` label.   
+
 ### Unicorn process metrics
 
 In order to gather metrics from unicorn processes, we use `rainbows`, which exposes `Rainbows::Linux.tcp_listener_stats` to gather information about active workers and queued requests. To start monitoring your unicorn processes, you'll need to know both the path to unicorn PID file and the listen address (`pid_file` and `listen` in your unicorn config file)
