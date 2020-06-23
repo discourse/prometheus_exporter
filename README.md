@@ -190,6 +190,23 @@ Ensure you run the exporter in a monitored background process:
 $ bundle exec prometheus_exporter
 ```
 
+#### Metrics collected by Rails integration middleware
+
+| Type    | Name                            | Description                                                 |
+| ---     | ---                             | ---                                                         |
+| Counter | `http_requests_total`           | Total HTTP requests from web app                            |
+| Summary | `http_duration_seconds`         | Time spent in HTTP reqs in seconds                          |
+| Summary | `http_redis_duration_seconds`¹  | Time spent in HTTP reqs in Redis, in seconds                |
+| Summary | `http_sql_duration_seconds`²    | Time spent in HTTP reqs in SQL in seconds                   |
+| Summary | `http_queue_duration_seconds`³  | Time spent queueing the request in load balancer in seconds |
+
+All metrics have a `controller` and an `action` label.  
+`http_requests_total` additionally has a (HTTP response) `status` label.  
+
+¹) Only available when Redis is used.  
+²) Only available when Mysql or PostgreSQL are used.  
+³) Only available when [Instrumenting Request Queueing Time](#instrumenting-request-queueing-time) is set up.  
+
 #### Activerecord Connection Pool Metrics
 
 This collects activerecord connection pool metrics.
@@ -244,6 +261,19 @@ Sidekiq.configure_server do |config|
 end
 ```
 
+##### Metrics collected by ActiveRecord Instrumentation
+
+| Type  | Name                                        | Description                           |
+| ---   | ---                                         | ---                                   |
+| Gauge | `active_record_connection_pool_connections` | Total connections in pool             |
+| Gauge | `active_record_connection_pool_busy`        | Connections in use in pool            |
+| Gauge | `active_record_connection_pool_dead`        | Dead connections in pool              |
+| Gauge | `active_record_connection_pool_idle`        | Idle connections in pool              |
+| Gauge | `active_record_connection_pool_waiting`     | Connection requests waiting           |
+| Gauge | `active_record_connection_pool_size`        | Maximum allowed connection pool size  |
+
+All metrics collected by the ActiveRecord integration include at least the following labels: `pid` (of the process the stats where collected in), `pool_name`, any labels included in the `config_labels` option (prefixed with `dbconfig_`, example: `dbconfig_host`), and all custom labels provided with the `custom_labels` option.
+
 #### Per-process stats
 
 You may also be interested in per-process stats. This collects memory and GC stats:
@@ -260,10 +290,29 @@ end
 # in unicorn/puma/passenger be sure to run a new process instrumenter after fork
 after_fork do
   require 'prometheus_exporter/instrumentation'
-  PrometheusExporter::Instrumentation::Process.start(type:"web")
+  PrometheusExporter::Instrumentation::Process.start(type: "web")
 end
 
 ```
+
+##### Metrics collected by Process Instrumentation
+
+| Type    | Name                      | Description                                  |
+| ---     | ---                       | ---                                          |
+| Gauge   | `heap_free_slots`         | Free ruby heap slots                         |
+| Gauge   | `heap_live_slots`         | Used ruby heap slots                         |
+| Gauge   | `v8_heap_size`*           | Total JavaScript V8 heap size (bytes)        |
+| Gauge   | `v8_used_heap_size`*      | Total used JavaScript V8 heap size (bytes)   |
+| Gauge   | `v8_physical_size`*       | Physical size consumed by V8 heaps           |
+| Gauge   | `v8_heap_count`*          | Number of V8 contexts running                |
+| Gauge   | `rss`                     | Total RSS used by process                    |
+| Counter | `major_gc_ops_total`      | Major GC operations by process               |
+| Counter | `minor_gc_ops_total`      | Minor GC operations by process               |
+| Counter | `allocated_objects_total` | Total number of allocated objects by process |
+
+_Metrics marked with * are only collected when `MiniRacer` is defined._
+
+Metrics collected by Process instrumentation include labels `type` (as given with the `type` option), `pid` (of the process the stats where collected in), and any custom labels given to `Process.start` with the `labels` option.
 
 #### Sidekiq metrics
 
@@ -311,6 +360,35 @@ Sometimes the Sidekiq server shuts down before it can send metrics, that were ge
   end
 ```
 
+##### Metrics collected by Sidekiq Instrumentation
+
+**PrometheusExporter::Instrumentation::Sidekiq**
+| Type    | Name                           | Description                                                                  |
+| ---     | ---                            | ---                                                                          |
+| Counter | `sidekiq_job_duration_seconds` | Total time spent in sidekiq jobs                                             |
+| Counter | `sidekiq_jobs_total`           | Total number of sidekiq jobs executed                                        |
+| Counter | `sidekiq_restarted_jobs_total` | Total number of sidekiq jobs that we restarted because of a sidekiq shutdown |
+| Counter | `sidekiq_failed_jobs_total`    | Total number of failed sidekiq jobs                                          |
+
+All metrics have a `job_name` label.
+
+**PrometheusExporter::Instrumentation::Sidekiq.death_handler**
+| Type    | Name                      | Description                       |
+| ---     | ---                       | ---                               |
+| Counter | `sidekiq_dead_jobs_total` | Total number of dead sidekiq jobs |
+
+This metric also has a `job_name` label.
+
+**PrometheusExporter::Instrumentation::SidekiqQueue**
+| Type  | Name                            | Description                  |
+| ---   | ---                             | ---                          |
+| Gauge | `sidekiq_queue_backlog_total`   | Size of the sidekiq queue    |
+| Gauge | `sidekiq_queue_latency_seconds` | Latency of the sidekiq queue |
+
+Both metrics will have a `queue` label with the name of the queue.
+
+_See [Metrics collected by Process Instrumentation](#metrics-collected-by-process-instrumentation) for a list of metrics the Process instrumentation will produce._  
+
 #### Shoryuken metrics
 
 For Shoryuken metrics (how many jobs ran? how many failed? how long did they take? how many were restarted?)
@@ -324,6 +402,17 @@ Shoryuken.configure_server do |config|
 end
 ```
 
+##### Metrics collected by Shoryuken Instrumentation
+
+| Type    | Name                             | Description                                                                      |
+| ---     | ---                              | ---                                                                              |
+| Counter | `shoryuken_job_duration_seconds` | Total time spent in shoryuken jobs                                               |
+| Counter | `shoryuken_jobs_total`           | Total number of shoryuken jobs executed                                          |
+| Counter | `shoryuken_restarted_jobs_total` | Total number of shoryuken jobs that we restarted because of a shoryuken shutdown |
+| Counter | `shoryuken_failed_jobs_total`    | Total number of failed shoryuken jobs                                            |
+
+All metrics have labels for `job_name` and `queue_name`.  
+
 #### Delayed Job plugin
 
 In an initializer:
@@ -335,6 +424,19 @@ unless Rails.env == "test"
 end
 ```
 
+##### Metrics collected by Delayed Job Instrumentation
+
+| Type    | Name                                      | Description                                                        | Labels     |
+| ---     | ---                                       | ---                                                                | ---        |
+| Counter | `delayed_job_duration_seconds`            | Total time spent in delayed jobs                                   | `job_name` |
+| Counter | `delayed_jobs_total`                      | Total number of delayed jobs executed                              | `job_name` |
+| Gauge   | `delayed_jobs_enqueued`                   | Number of enqueued delayed jobs                                    | -          |
+| Gauge   | `delayed_jobs_pending`                    | Number of pending delayed jobs                                     | -          |
+| Counter | `delayed_failed_jobs_total`               | Total number failed delayed jobs executed                          | `job_name` |
+| Counter | `delayed_jobs_max_attempts_reached_total` | Total number of delayed jobs that reached max attempts             | -          |
+| Summary | `delayed_job_duration_seconds_summary`    | Summary of the time it takes jobs to execute                       | `status`   |
+| Summary | `delayed_job_attempts_summary`            | Summary of the amount of attempts it takes delayed jobs to succeed | -          |
+
 #### Hutch Message Processing Tracer
 
 Capture [Hutch](https://github.com/gocardless/hutch) metrics (how many jobs ran? how many failed? how long did they take?)
@@ -345,6 +447,16 @@ unless Rails.env == "test"
   Hutch::Config.set(:tracer, PrometheusExporter::Instrumentation::Hutch)
 end
 ```
+
+##### Metrics collected by Hutch Instrumentation
+
+| Type    | Name                         | Description                             |
+| ---     | ---                          | ---                                     |
+| Counter | `hutch_job_duration_seconds` | Total time spent in hutch jobs          |
+| Counter | `hutch_jobs_total`           | Total number of hutch jobs executed     |
+| Counter | `hutch_failed_jobs_total`    | Total number failed hutch jobs executed |
+
+All metrics have a `job_name` label. 
 
 #### Instrumenting Request Queueing Time
 
@@ -370,6 +482,20 @@ after_worker_boot do
 end
 ```
 
+#### Metrics collected by Puma Instrumentation
+
+| Type  | Name                              | Description                                                 |
+| ---   | ---                               | ---                                                         |
+| Gauge | `puma_workers_total`              | Number of puma workers                                      |
+| Gauge | `puma_booted_workers_total`       | Number of puma workers booted                               |
+| Gauge | `puma_old_workers_total`          | Number of old puma workers                                  |
+| Gauge | `puma_running_threads_total`      | Number of puma threads currently running                    |
+| Gauge | `puma_request_backlog_total`      | Number of requests waiting to be processed by a puma thread |
+| Gauge | `puma_thread_pool_capacity_total` | Number of puma threads available at current scale           |
+| Gauge | `puma_max_threads_total`          | Number of puma threads at available at max scale            |
+
+All metrics may have a `phase` label.   
+
 ### Unicorn process metrics
 
 In order to gather metrics from unicorn processes, we use `rainbows`, which exposes `Rainbows::Linux.tcp_listener_stats` to gather information about active workers and queued requests. To start monitoring your unicorn processes, you'll need to know both the path to unicorn PID file and the listen address (`pid_file` and `listen` in your unicorn config file)
@@ -384,6 +510,14 @@ prometheus_exporter --unicorn-master /var/run/unicorn.pid --unicorn-listen-addre
 ```
 
 Note: You must install the `raindrops` gem in your `Gemfile` or locally.
+
+#### Metrics collected by Unicorn Instrumentation
+
+| Type  | Name                            | Description                                                    |
+| ---   | ---                             | ---                                                            |
+| Gauge | `unicorn_workers_total`         | Number of unicorn workers                                      |
+| Gauge | `unicorn_active_workers_total`  | Number of active unicorn workers                               |
+| Gauge | `unicorn_request_backlog_total` | Number of requests waiting to be processed by a unicorn worker |
 
 ### Custom type collectors
 
