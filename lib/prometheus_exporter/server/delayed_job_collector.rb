@@ -2,6 +2,17 @@
 
 module PrometheusExporter::Server
   class DelayedJobCollector < TypeCollector
+    def initialize
+      @delayed_jobs_total = nil
+      @delayed_job_duration_seconds = nil
+      @delayed_jobs_total = nil
+      @delayed_failed_jobs_total = nil
+      @delayed_jobs_max_attempts_reached_total = nil
+      @delayed_job_duration_seconds_summary = nil
+      @delayed_job_attempts_summary = nil
+      @delayed_jobs_enqueued = nil
+      @delayed_jobs_pending = nil
+    end
 
     def type
       "delayed_job"

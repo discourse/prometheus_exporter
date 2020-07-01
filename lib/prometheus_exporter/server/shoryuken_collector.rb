@@ -3,6 +3,14 @@
 module PrometheusExporter::Server
   class ShoryukenCollector < TypeCollector
 
+    def initialize
+      @shoryuken_jobs_total = nil
+      @shoryuken_job_duration_seconds = nil
+      @shoryuken_jobs_total = nil
+      @shoryuken_restarted_jobs_total = nil
+      @shoryuken_failed_jobs_total = nil
+    end
+
     def type
       "shoryuken"
     end

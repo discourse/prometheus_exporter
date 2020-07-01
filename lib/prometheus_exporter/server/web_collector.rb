@@ -4,6 +4,11 @@ module PrometheusExporter::Server
   class WebCollector < TypeCollector
     def initialize
       @metrics = {}
+      @http_requests_total = nil
+      @http_duration_seconds = nil
+      @http_redis_duration_seconds = nil
+      @http_sql_duration_seconds = nil
+      @http_queue_duration_seconds = nil
     end
 
     def type

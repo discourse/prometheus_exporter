@@ -2,6 +2,12 @@
 
 module PrometheusExporter::Server
   class HutchCollector < TypeCollector
+    def initialize
+      @hutch_jobs_total = nil
+      @hutch_job_duration_seconds = nil
+      @hutch_jobs_total = nil
+      @hutch_failed_jobs_total = nil
+    end
 
     def type
       "hutch"

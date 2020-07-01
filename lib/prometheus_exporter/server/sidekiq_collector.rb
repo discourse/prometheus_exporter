@@ -3,6 +3,15 @@
 module PrometheusExporter::Server
   class SidekiqCollector < TypeCollector
 
+    def initialize
+      @sidekiq_jobs_total = nil
+      @sidekiq_job_duration_seconds = nil
+      @sidekiq_jobs_total = nil
+      @sidekiq_restarted_jobs_total = nil
+      @sidekiq_failed_jobs_total = nil
+      @sidekiq_dead_jobs_total = nil
+    end
+
     def type
       "sidekiq"
     end

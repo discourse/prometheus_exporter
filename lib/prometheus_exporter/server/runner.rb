@@ -9,6 +9,13 @@ module PrometheusExporter::Server
 
   class Runner
     def initialize(options = {})
+      @timeout = nil
+      @port = nil
+      @bind = nil
+      @collector_class = nil
+      @type_collectors = nil
+      @prefix = nil
+
       options.each do |k, v|
         send("#{k}=", v) if self.class.method_defined?("#{k}=")
       end

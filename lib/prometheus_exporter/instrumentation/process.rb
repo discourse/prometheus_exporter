@@ -3,6 +3,8 @@
 # collects stats from currently running process
 module PrometheusExporter::Instrumentation
   class Process
+    @thread = nil if !defined?(@thread)
+
     def self.start(client: nil, type: "ruby", frequency: 30, labels: nil)
 
       metric_labels =

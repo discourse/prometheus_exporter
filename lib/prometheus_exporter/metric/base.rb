@@ -2,6 +2,10 @@
 
 module PrometheusExporter::Metric
   class Base
+
+    @default_prefix = nil if !defined?(@default_prefix)
+    @default_labels = nil if !defined?(@default_labels)
+
     # prefix applied to all metrics
     def self.default_prefix=(name)
       @default_prefix = name
