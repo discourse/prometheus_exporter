@@ -1,13 +1,18 @@
-0.5.1 - 25-02-2019
+0.5.2 - 01-07-2020
+
+- FEATURE: expanded instrumentation for sidekiq
+- FEATURE: configurable default labels
+
+0.5.1 - 25-02-2020
 
 - FEATURE: Allow configuring the default client's host and port via environment variables
 
-0.5.0 - 14-02-2019
+0.5.0 - 14-02-2020
 
 - Breaking change: listen only to localhost by default to prevent unintended insecure configuration
 - FIX: Avoid calling `hostname` aggressively, instead cache it on the exporter instance
 
-0.4.17 - 13-01-2019
+0.4.17 - 13-01-2020
 
 - FEATURE: add support for `to_h` on all metrics which can be used to query existing key/values
 
