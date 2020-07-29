@@ -126,5 +126,18 @@ module PrometheusExporter::Metric
 
       assert_equal(histogram.to_h, { name: "bob", family: "skywalker" } => { "count" => 3, "sum" => 1.79 })
     end
+
+    it "can correctly remove histograms" do
+      histogram.observe(0.1, name: "bob", family: "skywalker")
+      histogram.observe(0.7, name: "bob", family: "skywalker")
+      histogram.observe(0.99, name: "bob", family: "skywalker")
+
+      histogram.observe(0.6, name: "gandalf", family: "skywalker")
+
+      histogram.remove(name: "gandalf", family: "skywalker")
+      histogram.remove(name: "jane", family: "skywalker")
+
+      assert_equal(histogram.to_h, { name: "bob", family: "skywalker" } => { "count" => 3, "sum" => 1.79 })
+    end
   end
 end

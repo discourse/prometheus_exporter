@@ -27,6 +27,12 @@ module PrometheusExporter::Metric
       data
     end
 
+    def remove(labels)
+      @observations.delete(labels)
+      @counts.delete(labels)
+      @sums.delete(labels)
+    end
+
     def type
       "histogram"
     end

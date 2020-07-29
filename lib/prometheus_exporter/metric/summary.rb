@@ -32,6 +32,13 @@ module PrometheusExporter::Metric
       data
     end
 
+    def remove(labels)
+      @counts.delete(labels)
+      @sums.delete(labels)
+      @buffers[0].delete(labels)
+      @buffers[1].delete(labels)
+    end
+
     def type
       "summary"
     end

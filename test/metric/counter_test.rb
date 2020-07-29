@@ -128,6 +128,15 @@ module PrometheusExporter::Metric
       assert_equal(counter.to_prometheus_text, text)
     end
 
+    it "can correctly remove metrics" do
+      counter.observe(5, sam: "ham")
+      counter.observe(10, foo: "bar")
+      counter.remove(sam: "ham")
+      counter.remove(missing: "ham")
+
+      assert_equal(counter.to_h, { foo: "bar" } => 10)
+    end
+
     it "can correctly return data set" do
       counter.observe(5, sam: "ham")
       counter.observe(10, foo: "bar")

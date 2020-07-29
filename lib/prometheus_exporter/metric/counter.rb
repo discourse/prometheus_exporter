@@ -27,6 +27,10 @@ module PrometheusExporter::Metric
       @data.dup
     end
 
+    def remove(labels)
+      @data.delete(labels)
+    end
+
     def observe(increment = 1, labels = {})
       @data[labels] ||= 0
       @data[labels] += increment

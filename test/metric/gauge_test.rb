@@ -134,6 +134,15 @@ module PrometheusExporter::Metric
       assert_equal(gauge.to_prometheus_text, text)
     end
 
+    it "can correctly remove metrics" do
+      gauge.observe(5, sam: "ham")
+      gauge.observe(10, foo: "bar")
+      gauge.remove(sam: "ham")
+      gauge.remove(bam: "ham")
+
+      assert_equal(gauge.to_h, { foo: "bar" } => 10)
+    end
+
     it "can correctly return data set" do
       gauge.observe(5, sam: "ham")
       gauge.observe(10, foo: "bar")

@@ -27,6 +27,10 @@ module PrometheusExporter::Metric
       @data.dup
     end
 
+    def remove(labels)
+      @data.delete(labels)
+    end
+
     def observe(value, labels = {})
       if value.nil?
         data.delete(labels)

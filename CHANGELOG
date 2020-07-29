@@ -1,3 +1,7 @@
+0.5.3 - 29-07-2020
+
+- FEATURE: added #remove to all metric types so users can remove specific labels if needed
+
 0.5.2 - 01-07-2020
 
 - FEATURE: expanded instrumentation for sidekiq
