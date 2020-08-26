@@ -53,7 +53,7 @@ class PrometheusExporter::Middleware
       status: status
     }
     labels = custom_labels(env)
-    if labels
+    if labels.present? && labels.length > 0
       obj = obj.merge(custom_labels: labels)
     end
     
@@ -61,7 +61,7 @@ class PrometheusExporter::Middleware
   end
 
   def custom_labels(env)
-    nil
+    {}
   end
 
   private
