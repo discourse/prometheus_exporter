@@ -37,6 +37,16 @@ class PrometheusExporter::Middleware
     result
   ensure
     status = (result && result[0]) || -1
+
+    @client.send_json({
+      type: "web",
+      timings: info,
+      queue_time: queue_time,
+      status: status
+    }.merge(labels(env)))
+  end
+
+  def labels(env)
     params = env["action_dispatch.request.parameters"]
     action, controller = nil
     if params
@@ -44,14 +54,10 @@ class PrometheusExporter::Middleware
       controller = params["controller"]
     end
 
-    @client.send_json(
-      type: "web",
-      timings: info,
-      queue_time: queue_time,
+    {
       action: action,
       controller: controller,
-      status: status
-    )
+    }
   end
 
   private
