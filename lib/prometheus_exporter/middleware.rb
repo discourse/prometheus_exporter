@@ -60,6 +60,7 @@ class PrometheusExporter::Middleware
     @client.send_json(obj)
   end
 
+  # allows subclasses to add custom labels based on env
   def custom_labels(env)
     {}
   end
