@@ -107,7 +107,7 @@ module PrometheusExporter
     end
 
     def send_json(obj)
-      payload = @custom_labels.nil? ? obj : obj.merge(custom_labels: @custom_labels)
+      payload = @custom_labels.nil? ? obj : obj.merge(custom_labels: @custom_labels.merge(obj[:custom_labels] || {}))
       send(@json_serializer.dump(payload))
     end
 
