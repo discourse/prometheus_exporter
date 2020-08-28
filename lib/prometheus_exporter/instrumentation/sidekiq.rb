@@ -37,6 +37,7 @@ module PrometheusExporter::Instrumentation
       @client.send_json(
         type: "sidekiq",
         name: class_name,
+        queue: queue,
         success: success,
         shutdown: shutdown,
         duration: duration
