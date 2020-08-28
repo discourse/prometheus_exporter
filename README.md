@@ -577,8 +577,8 @@ Then you can collect the metrics you need on demand:
 
 ```ruby
 def metrics
-  user_count_gague = PrometheusExporter::Metric::Gauge.new('user_count', 'number of users in the app')
-  user_count_gague.observe User.count
+  user_count_gauge = PrometheusExporter::Metric::Gauge.new('user_count', 'number of users in the app')
+  user_count_gauge.observe User.count
   [user_count_gauge]
 end
 ```
