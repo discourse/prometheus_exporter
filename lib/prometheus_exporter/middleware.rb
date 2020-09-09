@@ -6,9 +6,10 @@ require 'prometheus_exporter/client'
 class PrometheusExporter::Middleware
   MethodProfiler = PrometheusExporter::Instrumentation::MethodProfiler
 
-  def initialize(app, config = { instrument: true, client: nil })
+  def initialize(app, config = { instrument: true, client: nil, http_labels_on_duration: false })
     @app = app
     @client = config[:client] || PrometheusExporter::Client.default
+    @http_labels_on_duration = config[:http_labels_on_duration]
 
     if config[:instrument]
       if defined? Redis::Client
@@ -50,7 +51,8 @@ class PrometheusExporter::Middleware
       queue_time: queue_time,
       action: action,
       controller: controller,
-      status: status
+      status: status,
+      http_labels_on_duration: @http_labels_on_duration
     )
   end
 

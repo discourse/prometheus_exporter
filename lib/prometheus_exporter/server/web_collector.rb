@@ -62,11 +62,16 @@ module PrometheusExporter::Server
       }
       custom_labels = obj['custom_labels']
       labels = custom_labels.nil? ? default_labels : default_labels.merge(custom_labels)
+      http_labels = labels.merge(status: obj["status"])
 
-      @http_requests_total.observe(1, labels.merge(status: obj["status"]))
+      @http_requests_total.observe(1, http_labels)
 
       if timings = obj["timings"]
-        @http_duration_seconds.observe(timings["total_duration"], labels)
+        if obj['http_labels_on_duration']
+          @http_duration_seconds.observe(timings["total_duration"], http_labels)
+        else
+          @http_duration_seconds.observe(timings["total_duration"], labels)
+        end
         if redis = timings["redis"]
           @http_redis_duration_seconds.observe(redis["duration"], labels)
         end
