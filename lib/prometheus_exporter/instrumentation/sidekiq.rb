@@ -1,6 +1,15 @@
 # frozen_string_literal: true
 
+require 'yaml'
+
 module PrometheusExporter::Instrumentation
+  JOB_WRAPPER_CLASS_NAME = 'ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper'
+  DELAYED_CLASS_NAMES = [
+    'Sidekiq::Extensions::DelayedClass',
+    'Sidekiq::Extensions::DelayedModel',
+    'Sidekiq::Extensions::DelayedMailer',
+  ]
+
   class Sidekiq
     def self.death_handler
       -> (job, ex) do
@@ -32,15 +41,43 @@ module PrometheusExporter::Instrumentation
       raise e
     ensure
       duration = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC) - start
-      class_name = worker.class.to_s == 'ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper' ?
-                     msg['wrapped'] : worker.class.to_s
       @client.send_json(
         type: "sidekiq",
-        name: class_name,
+        name: get_name(worker, msg),
         success: success,
         shutdown: shutdown,
         duration: duration
       )
+    end
+
+    private
+
+    def get_name(worker, msg)
+      class_name = worker.class.to_s
+      if class_name == JOB_WRAPPER_CLASS_NAME
+        get_job_wrapper_name(msg)
+      elsif DELAYED_CLASS_NAMES.include?(class_name)
+        get_delayed_name(msg, class_name)
+      else
+        class_name
+      end
+    end
+
+    def get_job_wrapper_name(msg)
+      msg['wrapped']
+    end
+
+    def get_delayed_name(msg, class_name)
+      # fallback to class_name since we're relying on the internal implementation
+      # of the delayed extensions
+      # https://github.com/mperham/sidekiq/blob/master/lib/sidekiq/extensions/class_methods.rb
+      begin
+        (target, method_name, _args) = YAML.load(msg['args'].first)
+        "#{target.name}##{method_name}"
+      rescue
+        class_name
+        raise
+      end
     end
   end
 end
