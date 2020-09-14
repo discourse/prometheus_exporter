@@ -56,7 +56,7 @@ class PrometheusExporter::Middleware
     if labels.present? && labels.length > 0
       obj = obj.merge(custom_labels: labels)
     end
-    
+
     @client.send_json(obj)
   end
 
