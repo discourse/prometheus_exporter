@@ -203,6 +203,21 @@ $ bundle exec prometheus_exporter
 All metrics have a `controller` and an `action` label.  
 `http_requests_total` additionally has a (HTTP response) `status` label.  
 
+To add your own labels to the default metrics, create a subclass of `PrometheusExporter::Middleware`, override `custom_labels`, and use it in your initializer.
+```ruby
+class MyMiddleware < PrometheusExporter::Middleware
+  def custom_labels(env)
+    labels = {}
+
+    if env['HTTP_X_PLATFORM']
+      labels['platform'] = env['HTTP_X_PLATFORM']
+    end
+
+    labels
+  end
+end
+```
+
 ¹) Only available when Redis is used.  
 ²) Only available when Mysql or PostgreSQL are used.  
 ³) Only available when [Instrumenting Request Queueing Time](#instrumenting-request-queueing-time) is set up.  
