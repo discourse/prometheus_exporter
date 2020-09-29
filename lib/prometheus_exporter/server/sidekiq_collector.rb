@@ -17,7 +17,7 @@ module PrometheusExporter::Server
     end
 
     def collect(obj)
-      default_labels = { job_name: obj['name'] }
+      default_labels = { job_name: obj['name'], queue: obj['queue'] }
       custom_labels = obj['custom_labels']
       labels = custom_labels.nil? ? default_labels : default_labels.merge(custom_labels)
 

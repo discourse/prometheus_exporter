@@ -44,6 +44,7 @@ module PrometheusExporter::Instrumentation
       @client.send_json(
         type: "sidekiq",
         name: get_name(worker, msg),
+        queue: queue,
         success: success,
         shutdown: shutdown,
         duration: duration

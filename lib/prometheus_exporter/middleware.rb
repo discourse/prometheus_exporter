@@ -44,14 +44,25 @@ class PrometheusExporter::Middleware
       controller = params["controller"]
     end
 
-    @client.send_json(
+    obj = {
       type: "web",
       timings: info,
       queue_time: queue_time,
       action: action,
       controller: controller,
       status: status
-    )
+    }
+    labels = custom_labels(env)
+    if labels
+      obj = obj.merge(custom_labels: labels)
+    end
+
+    @client.send_json(obj)
+  end
+
+  # allows subclasses to add custom labels based on env
+  def custom_labels(env)
+    nil
   end
 
   private
