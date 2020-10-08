@@ -380,19 +380,19 @@ Sometimes the Sidekiq server shuts down before it can send metrics, that were ge
 **PrometheusExporter::Instrumentation::Sidekiq**
 | Type    | Name                           | Description                                                                  |
 | ---     | ---                            | ---                                                                          |
-| Counter | `sidekiq_job_duration_seconds` | Total time spent in sidekiq jobs                                             |
+| Summary | `sidekiq_job_duration_seconds` | Time spent in sidekiq jobs                                                   |
 | Counter | `sidekiq_jobs_total`           | Total number of sidekiq jobs executed                                        |
 | Counter | `sidekiq_restarted_jobs_total` | Total number of sidekiq jobs that we restarted because of a sidekiq shutdown |
 | Counter | `sidekiq_failed_jobs_total`    | Total number of failed sidekiq jobs                                          |
 
-All metrics have a `job_name` label.
+All metrics have a `job_name` label and a `queue` label.
 
 **PrometheusExporter::Instrumentation::Sidekiq.death_handler**
 | Type    | Name                      | Description                       |
 | ---     | ---                       | ---                               |
 | Counter | `sidekiq_dead_jobs_total` | Total number of dead sidekiq jobs |
 
-This metric also has a `job_name` label.
+This metric has a `job_name` label and a `queue` label.
 
 **PrometheusExporter::Instrumentation::SidekiqQueue**
 | Type  | Name                            | Description                  |
