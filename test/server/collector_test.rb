@@ -256,9 +256,9 @@ class PrometheusCollectorTest < Minitest::Test
 
     result = collector.prometheus_metrics_text
 
-    assert(result.include?("sidekiq_failed_jobs_total{job_name=\"FalseClass\"} 1"), "has failed job")
+    assert(result.include?("sidekiq_failed_jobs_total{job_name=\"FalseClass\",queue=\"default\"} 1"), "has failed job")
 
-    assert(result.include?("sidekiq_jobs_total{job_name=\"String\"} 1"), "has working job")
+    assert(result.include?("sidekiq_jobs_total{job_name=\"String\",queue=\"default\"} 1"), "has working job")
     assert(result.include?("sidekiq_job_duration_seconds"), "has duration")
   end
 
@@ -293,17 +293,31 @@ class PrometheusCollectorTest < Minitest::Test
       end
     end
 
+    delayed_worker.stub(:class, "Sidekiq::Extensions::DelayedModel") do
+      instrument.call(delayed_worker, { 'args' => [ "---\n- !ruby/object {}\n- :foo\n- -" ] }, "default") do
+        # nothing
+      end
+    end
+
+    delayed_worker.stub(:class, "Sidekiq::Extensions::DelayedClass") do
+      instrument.call(delayed_worker, { 'args' => [ 1 ] }, "default") do
+        # nothing
+      end
+    end
+
     result = collector.prometheus_metrics_text
 
-    assert(result.include?('sidekiq_failed_jobs_total{job_name="FalseClass",service="service1"} 1'), "has failed job")
-    assert(result.include?('sidekiq_jobs_total{job_name="String",service="service1"} 1'), "has working job")
-    assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",service="service1",quantile="0.99"}'), "has duration quantile 0.99")
-    assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",service="service1",quantile="0.9"}'), "has duration quantile 0.9")
-    assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",service="service1",quantile="0.5"}'), "has duration quantile 0.5")
-    assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",service="service1",quantile="0.1"}'), "has duration quantile 0.1")
-    assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",service="service1",quantile="0.01"}'), "has duration quantile 0.01")
-    assert(result.include?('sidekiq_jobs_total{job_name="WrappedClass",service="service1"} 1'), "has sidekiq working job from ActiveJob")
-    assert(result.include?('sidekiq_jobs_total{job_name="String#foo",service="service1"} 1'), "has sidekiq delayed class")
+    assert(result.include?('sidekiq_failed_jobs_total{job_name="FalseClass",queue="default",service="service1"} 1'), "has failed job")
+    assert(result.include?('sidekiq_jobs_total{job_name="String",queue="default",service="service1"} 1'), "has working job")
+    assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",queue="default",service="service1",quantile="0.99"}'), "has duration quantile 0.99")
+    assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",queue="default",service="service1",quantile="0.9"}'), "has duration quantile 0.9")
+    assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",queue="default",service="service1",quantile="0.5"}'), "has duration quantile 0.5")
+    assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",queue="default",service="service1",quantile="0.1"}'), "has duration quantile 0.1")
+    assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",queue="default",service="service1",quantile="0.01"}'), "has duration quantile 0.01")
+    assert(result.include?('sidekiq_jobs_total{job_name="WrappedClass",queue="default",service="service1"} 1'), "has sidekiq working job from ActiveJob")
+    assert(result.include?('sidekiq_jobs_total{job_name="String#foo",queue="default",service="service1"} 1'), "has sidekiq delayed class")
+    assert(result.include?('sidekiq_jobs_total{job_name="Object#foo",queue="default",service="service1"} 1'), "has sidekiq delayed class")
+    assert(result.include?('sidekiq_jobs_total{job_name="Sidekiq::Extensions::DelayedClass",queue="default",service="service1"} 1'), "has sidekiq delayed class")
   end
 
   def test_it_can_collect_shoryuken_metrics_with_custom_lables

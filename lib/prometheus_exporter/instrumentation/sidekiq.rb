@@ -74,10 +74,13 @@ module PrometheusExporter::Instrumentation
       # https://github.com/mperham/sidekiq/blob/master/lib/sidekiq/extensions/class_methods.rb
       begin
         (target, method_name, _args) = YAML.load(msg['args'].first)
-        "#{target.name}##{method_name}"
+        if target.class == Class
+          "#{target.name}##{method_name}"
+        else
+          "#{target.class.name}##{method_name}"
+        end
       rescue
         class_name
-        raise
       end
     end
   end
