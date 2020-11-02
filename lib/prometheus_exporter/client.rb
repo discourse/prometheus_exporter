@@ -64,8 +64,6 @@ module PrometheusExporter
       @metrics = []
 
       @queue = Queue.new
-      @socket = nil
-      @socket_started = nil
 
       max_queue_size ||= MAX_QUEUE_SIZE
       max_queue_size = max_queue_size.to_i
@@ -107,7 +105,7 @@ module PrometheusExporter
     end
 
     def send_json(obj)
-      payload = 
+      payload =
         if @custom_labels
           if obj[:custom_labels]
             obj.merge(custom_labels: @custom_labels.merge(obj[:custom_labels]))
@@ -136,13 +134,13 @@ module PrometheusExporter
 
         begin
           message = @queue.pop
-          @socket.write(message.bytesize.to_s(16).upcase)
-          @socket.write("\r\n")
-          @socket.write(message)
-          @socket.write("\r\n")
+          socket.write(message.bytesize.to_s(16).upcase)
+          socket.write("\r\n")
+          socket.write(message)
+          socket.write("\r\n")
         rescue => e
           STDERR.puts "Prometheus Exporter is dropping a message: #{e}"
-          @socket = nil
+          self.socket = nil
           raise
         end
       end
@@ -161,6 +159,22 @@ module PrometheusExporter
     end
 
     private
+
+    def socket
+      Thread.current[:socket]
+    end
+
+    def socket=(socket)
+      Thread.current[:socket] = socket
+    end
+
+    def socket_started
+      Thread.current[:socket_started]
+    end
+
+    def socket_started=(socket_started)
+      Thread.current[:socket_started] = socket_started
+    end
 
     def worker_loop
       close_socket_if_old!
@@ -186,42 +200,42 @@ module PrometheusExporter
 
     def close_socket!
       begin
-        if @socket
-          @socket.write("0\r\n")
-          @socket.write("\r\n")
-          @socket.flush
-          @socket.close
+        if socket
+          socket.write("0\r\n")
+          socket.write("\r\n")
+          socket.flush
+          socket.close
         end
       rescue Errno::EPIPE
       end
 
-      @socket = nil
-      @socket_started = nil
+      self.socket = nil
+      self.socket_started = nil
     end
 
     def close_socket_if_old!
-      if @socket && ((@socket_started + MAX_SOCKET_AGE) < Time.now.to_f)
+      if socket && ((socket_started + MAX_SOCKET_AGE) < Time.now.to_f)
         close_socket!
       end
     end
 
     def ensure_socket!
       close_socket_if_old!
-      if !@socket
-        @socket = TCPSocket.new @host, @port
-        @socket.write("POST /send-metrics HTTP/1.1\r\n")
-        @socket.write("Transfer-Encoding: chunked\r\n")
-        @socket.write("Host: #{@host}\r\n")
-        @socket.write("Connection: Close\r\n")
-        @socket.write("Content-Type: application/octet-stream\r\n")
-        @socket.write("\r\n")
-        @socket_started = Time.now.to_f
+      if !socket
+        self.socket = TCPSocket.new @host, @port
+        socket.write("POST /send-metrics HTTP/1.1\r\n")
+        socket.write("Transfer-Encoding: chunked\r\n")
+        socket.write("Host: #{@host}\r\n")
+        socket.write("Connection: Close\r\n")
+        socket.write("Content-Type: application/octet-stream\r\n")
+        socket.write("\r\n")
+        self.socket_started = Time.now.to_f
       end
 
       nil
     rescue
-      @socket = nil
-      @socket_started = nil
+      self.socket = nil
+      self.socket_started = nil
       raise
     end
 
