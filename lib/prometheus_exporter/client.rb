@@ -64,8 +64,10 @@ module PrometheusExporter
       @metrics = []
 
       @queue = Queue.new
+
       @socket = nil
       @socket_started = nil
+      @socket_pid = nil
 
       max_queue_size ||= MAX_QUEUE_SIZE
       max_queue_size = max_queue_size.to_i
@@ -107,7 +109,7 @@ module PrometheusExporter
     end
 
     def send_json(obj)
-      payload = 
+      payload =
         if @custom_labels
           if obj[:custom_labels]
             obj.merge(custom_labels: @custom_labels.merge(obj[:custom_labels]))
@@ -206,6 +208,14 @@ module PrometheusExporter
     end
 
     def ensure_socket!
+      # if process was forked socket may be owned by parent
+      # leave it alone and reset
+      if @socket_pid && @socket_pid != Process.pid
+        @socket = nil
+        @socket_started = nil
+        @socket_pid = nil
+      end
+
       close_socket_if_old!
       if !@socket
         @socket = TCPSocket.new @host, @port
@@ -216,12 +226,14 @@ module PrometheusExporter
         @socket.write("Content-Type: application/octet-stream\r\n")
         @socket.write("\r\n")
         @socket_started = Time.now.to_f
+        @socket_pid = Process.pid
       end
 
       nil
     rescue
       @socket = nil
       @socket_started = nil
+      @socket_pid = nil
       raise
     end
 
