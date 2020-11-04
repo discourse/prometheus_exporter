@@ -210,7 +210,7 @@ module PrometheusExporter
     def ensure_socket!
       # if process was forked socket may be owned by parent
       # leave it alone and reset
-      if @socket_pid && @socket_pid != Process.pid
+      if @socket_pid != Process.pid
         @socket = nil
         @socket_started = nil
         @socket_pid = nil
