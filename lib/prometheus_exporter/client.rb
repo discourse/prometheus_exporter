@@ -202,7 +202,7 @@ module PrometheusExporter
     end
 
     def close_socket_if_old!
-      if @socket && ((@socket_started + MAX_SOCKET_AGE) < Time.now.to_f)
+      if @socket_pid == Process.pid && @socket && @socket_started && ((@socket_started + MAX_SOCKET_AGE) < Time.now.to_f)
         close_socket!
       end
     end
