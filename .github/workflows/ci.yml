@@ -1,0 +1,25 @@
+name: Test Exporter
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 * * 0' # weekly
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Ruby ${{ matrix.ruby }}
+    strategy:
+      matrix:
+        ruby: ["2.7", "2.6", "2.5", "2.4", "2.3"]
+    steps:
+      - uses: actions/checkout@master
+        with:
+          fetch-depth: 1
+      - name: Setup gems
+        run: bundle install --jobs 4
+      - name: Rubocop
+        run: bundle exec rubocop
+      - name: Run tests
+        run: bundle exec rake
