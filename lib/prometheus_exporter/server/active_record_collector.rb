@@ -47,8 +47,10 @@ module PrometheusExporter::Server
       obj["created_at"] = now
 
       @active_record_metrics.delete_if do |current|
-        (obj["pid"] == current["pid"] && obj["hostname"] == current["hostname"]) ||
-          (current["created_at"] + MAX_ACTIVERECORD_METRIC_AGE < now)
+        (obj["pid"] == current["pid"] &&
+        obj["hostname"] == current["hostname"] &&
+        (obj["metric_labels"]&.[]("pool_name") || "") == (current["metric_labels"]&.[]("pool_name") || "")) ||
+        (current["created_at"] + MAX_ACTIVERECORD_METRIC_AGE < now)
       end
 
       @active_record_metrics << obj
