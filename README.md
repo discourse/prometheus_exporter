@@ -200,8 +200,8 @@ $ bundle exec prometheus_exporter
 | Summary | `http_sql_duration_seconds`²    | Time spent in HTTP reqs in SQL in seconds                   |
 | Summary | `http_queue_duration_seconds`³  | Time spent queueing the request in load balancer in seconds |
 
-All metrics have a `controller` and an `action` label.  
-`http_requests_total` additionally has a (HTTP response) `status` label.  
+All metrics have a `controller` and an `action` label.
+`http_requests_total` additionally has a (HTTP response) `status` label.
 
 To add your own labels to the default metrics, create a subclass of `PrometheusExporter::Middleware`, override `custom_labels`, and use it in your initializer.
 ```ruby
@@ -218,9 +218,9 @@ class MyMiddleware < PrometheusExporter::Middleware
 end
 ```
 
-¹) Only available when Redis is used.  
-²) Only available when Mysql or PostgreSQL are used.  
-³) Only available when [Instrumenting Request Queueing Time](#instrumenting-request-queueing-time) is set up.  
+¹) Only available when Redis is used.
+²) Only available when Mysql or PostgreSQL are used.
+³) Only available when [Instrumenting Request Queueing Time](#instrumenting-request-queueing-time) is set up.
 
 #### Activerecord Connection Pool Metrics
 
@@ -402,7 +402,7 @@ This metric has a `job_name` label and a `queue` label.
 
 Both metrics will have a `queue` label with the name of the queue.
 
-_See [Metrics collected by Process Instrumentation](#metrics-collected-by-process-instrumentation) for a list of metrics the Process instrumentation will produce._  
+_See [Metrics collected by Process Instrumentation](#metrics-collected-by-process-instrumentation) for a list of metrics the Process instrumentation will produce._
 
 #### Shoryuken metrics
 
@@ -426,7 +426,7 @@ end
 | Counter | `shoryuken_restarted_jobs_total` | Total number of shoryuken jobs that we restarted because of a shoryuken shutdown |
 | Counter | `shoryuken_failed_jobs_total`    | Total number of failed shoryuken jobs                                            |
 
-All metrics have labels for `job_name` and `queue_name`.  
+All metrics have labels for `job_name` and `queue_name`.
 
 #### Delayed Job plugin
 
@@ -471,7 +471,7 @@ end
 | Counter | `hutch_jobs_total`           | Total number of hutch jobs executed     |
 | Counter | `hutch_failed_jobs_total`    | Total number failed hutch jobs executed |
 
-All metrics have a `job_name` label. 
+All metrics have a `job_name` label.
 
 #### Instrumenting Request Queueing Time
 
@@ -509,7 +509,7 @@ end
 | Gauge | `puma_thread_pool_capacity_total` | Number of puma threads available at current scale           |
 | Gauge | `puma_max_threads_total`          | Number of puma threads at available at max scale            |
 
-All metrics may have a `phase` label.   
+All metrics may have a `phase` label.
 
 ### Unicorn process metrics
 
@@ -707,6 +707,25 @@ ruby_web_requests{hostname="app-server-01"} 1
 When running the process for `prometheus_exporter` using `bin/prometheus_exporter`, there are several configurations that
 can be passed in:
 
+```
+Usage: prometheus_exporter [options]
+    -p, --port INTEGER               Port exporter should listen on (default: 9394)
+    -b, --bind STRING                IP address exporter should listen on (default: localhost)
+    -t, --timeout INTEGER            Timeout in seconds for metrics endpoint (default: 2)
+        --prefix METRIC_PREFIX       Prefix to apply to all metrics (default: ruby_)
+        --label METRIC_LABEL         Label to apply to all metrics (default: {})
+    -c, --collector FILE             (optional) Custom collector to run
+    -a, --type-collector FILE        (optional) Custom type collectors to run in main collector
+    -v, --verbose
+        --auth FILE                  (optional) enable basic authentication using a htpasswd FILE
+        --realm REALM                (optional) Use REALM for basic authentication (default: "Prometheus Exporter")
+        --unicorn-listen-address ADDRESS
+                                     (optional) Address where unicorn listens on (unix or TCP address)
+        --unicorn-master PID_FILE    (optional) PID file of unicorn master process to monitor unicorn
+```
+
+#### Example
+
 The following will run the process at
 - Port `8080` (default `9394`)
 - Bind to `0.0.0.0` (default `localhost`)
@@ -721,6 +740,29 @@ prometheus_exporter -p 8080 \
                     --label '{"environment": "integration", "foo": "bar"}' \
                     --prefix 'foo_'
 ```
+
+#### Enabling Basic Authentication
+
+If you desire authentication on your `/metrics` route, you can enable basic authentication with the `--auth` option.
+
+```
+$ prometheus_exporter --auth my-htpasswd-file
+```
+
+Additionally, the `--realm` option may be used to provide a customized realm for the challenge request.
+
+Notes:
+
+* You will need to create a `htpasswd` formatted file before hand which contains one or more user:password entries
+* Only the basic `crypt` encryption is currently supported
+
+A simple `htpasswd` file can be created with the Apache `htpasswd` utility; e.g:
+
+```
+$ htpasswd -cdb my-htpasswd-file my-user my-unencrypted-password
+```
+
+This will create a file named `my-htpasswd-file` which is suitable for use the `--auth` option.
 
 ### Client default labels
 

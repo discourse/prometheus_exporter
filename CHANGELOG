@@ -1,3 +1,7 @@
+0.6.0 - 10-11-2020
+
+- FEATURE: add support for basic-auth in the prometheus_exporter web server
+
 0.5.3 - 29-07-2020
 
 - FEATURE: added #remove to all metric types so users can remove specific labels if needed

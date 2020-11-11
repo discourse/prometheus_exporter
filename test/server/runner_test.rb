@@ -51,6 +51,8 @@ class PrometheusRunnerTest < Minitest::Test
     assert_equal(runner.type_collectors, [])
     assert_equal(runner.verbose, false)
     assert_empty(runner.label)
+    assert_nil(runner.auth)
+    assert_equal(runner.realm, 'Prometheus Exporter')
   end
 
   def test_runner_custom_options
@@ -61,7 +63,9 @@ class PrometheusRunnerTest < Minitest::Test
       collector_class: CollectorMock,
       type_collectors: [TypeCollectorMock],
       verbose: true,
-      label: { environment: 'integration' }
+      label: { environment: 'integration' },
+      auth: 'my_htpasswd_file',
+      realm: 'test realm'
     )
 
     assert_equal(runner.prefix, 'new_')
@@ -71,6 +75,8 @@ class PrometheusRunnerTest < Minitest::Test
     assert_equal(runner.type_collectors, [TypeCollectorMock])
     assert_equal(runner.verbose, true)
     assert_equal(runner.label, { environment: 'integration' })
+    assert_equal(runner.auth, 'my_htpasswd_file')
+    assert_equal(runner.realm, 'test realm')
 
     reset_base_metric_label
   end
@@ -84,6 +90,8 @@ class PrometheusRunnerTest < Minitest::Test
     assert_equal(runner.port, 9394)
     assert_equal(runner.timeout, 2)
     assert_equal(runner.verbose, false)
+    assert_nil(runner.auth)
+    assert_equal(runner.realm, 'Prometheus Exporter')
     assert_equal(PrometheusExporter::Metric::Base.default_labels, { environment: 'integration' })
     assert_instance_of(PrometheusExporter::Server::Collector, runner.collector)
 

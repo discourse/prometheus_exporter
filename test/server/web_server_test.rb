@@ -28,6 +28,24 @@ class PrometheusExporterTest < Minitest::Test
 
   def setup
     PrometheusExporter::Metric::Base.default_prefix = ''
+
+    @auth_config = {
+      file: 'test/server/my_htpasswd_file',
+      realm: 'Prometheus Exporter',
+      user: 'test_user',
+      passwd: 'test_password',
+    }
+
+    # Create an htpasswd file for basic auth
+    htpasswd = WEBrick::HTTPAuth::Htpasswd.new(@auth_config[:file])
+    htpasswd.set_passwd(@auth_config[:realm], @auth_config[:user], @auth_config[:passwd])
+    htpasswd.flush
+  end
+
+  def teardown
+    # Clean up the .htpasswd file created during setup
+    htpasswd_file = @auth_config[:file]
+    File.delete(htpasswd_file) if htpasswd_file && File.exist?(htpasswd_file)
   end
 
   def find_free_port
@@ -176,6 +194,60 @@ class PrometheusExporterTest < Minitest::Test
       end
 
       assert_match(/200.1/, collector.prometheus_metrics_text)
+    end
+
+  ensure
+    client.stop rescue nil
+    server.stop rescue nil
+  end
+
+  def test_it_can_collect_metrics_with_basic_auth
+    collector = DemoCollector.new
+    port = find_free_port
+
+    server = PrometheusExporter::Server::WebServer.new port: port, collector: collector, auth: @auth_config[:file], realm: @auth_config[:realm]
+    server.start
+
+    client = PrometheusExporter::Client.new host: "localhost", port: port, thread_sleep: 0.001
+    client.send_json "type" => "mem metric", "value" => 150
+    client.send_json "type" => "mem metric", "value" => 199
+
+    TestHelper.wait_for(2) do
+      collector.prometheus_metrics_text =~ /199/
+    end
+
+    assert_match(/199/, collector.prometheus_metrics_text)
+
+    Net::HTTP.new("localhost", port).start do |http|
+      request = Net::HTTP::Get.new "/metrics"
+      request.basic_auth @auth_config[:user], @auth_config[:passwd]
+
+      http.request(request) do |response|
+        assert_equal("200", response.code)
+        assert_equal(["gzip"], response.to_hash["content-encoding"])
+        assert_match(/199/, response.body)
+      end
+    end
+
+  ensure
+    client.stop rescue nil
+    server.stop rescue nil
+  end
+
+  def test_it_fails_with_invalid_auth
+    collector = DemoCollector.new
+    port = find_free_port
+
+    server = PrometheusExporter::Server::WebServer.new port: port, collector: collector, auth: @auth_config[:file], realm: @auth_config[:realm]
+    server.start
+
+    Net::HTTP.new("localhost", port).start do |http|
+      request = Net::HTTP::Get.new "/metrics"
+
+      http.request(request) do |response|
+        assert_equal("401", response.code)
+        assert_match(/Unauthorized/, response.body)
+      end
     end
 
   ensure
