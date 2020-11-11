@@ -17,6 +17,9 @@ jobs:
       - uses: actions/checkout@master
         with:
           fetch-depth: 1
+      - uses: actions/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
       - name: Setup gems
         run: bundle install --jobs 4
       - name: Rubocop
