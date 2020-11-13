@@ -9,9 +9,14 @@ module PrometheusExporter::Server
   class WebServer
     attr_reader :collector
 
-    def initialize(port: , bind: nil, collector: nil, timeout: PrometheusExporter::DEFAULT_TIMEOUT, verbose: false)
-
-      @verbose = verbose
+    def initialize(opts)
+      @port = opts[:port] || PrometheusExporter::DEFAULT_PORT
+      @bind = opts[:bind] || PrometheusExporter::DEFAULT_BIND_ADDRESS
+      @collector = opts[:collector] || Collector.new
+      @timeout = opts[:timeout] || PrometheusExporter::DEFAULT_TIMEOUT
+      @verbose = opts[:verbose] || false
+      @auth = opts[:auth]
+      @realm = opts[:realm] || PrometheusExporter::DEFAULT_REALM
 
       @metrics_total = PrometheusExporter::Metric::Counter.new("collector_metrics_total", "Total metrics processed by exporter web.")
 
@@ -23,33 +28,33 @@ module PrometheusExporter::Server
       @sessions_total.observe(0)
       @bad_metrics_total.observe(0)
 
-      access_log, logger = nil
+      @access_log, @logger = nil
 
-      if verbose
-        access_log = [
+      if @verbose
+        @access_log = [
           [$stderr, WEBrick::AccessLog::COMMON_LOG_FORMAT],
           [$stderr, WEBrick::AccessLog::REFERER_LOG_FORMAT],
         ]
-        logger = WEBrick::Log.new($stderr)
+        @logger = WEBrick::Log.new($stderr)
       else
-        access_log = []
-        logger = WEBrick::Log.new("/dev/null")
+        @access_log = []
+        @logger = WEBrick::Log.new("/dev/null")
       end
 
-      @server = WEBrick::HTTPServer.new(
-        Port: port,
-        BindAddress: bind,
-        Logger: logger,
-        AccessLog: access_log,
-      )
+      @logger.info "Using Basic Authentication via #{@auth}" if @verbose && @auth
 
-      @collector = collector || Collector.new
-      @port = port
-      @timeout = timeout
+      @server = WEBrick::HTTPServer.new(
+        Port: @port,
+        BindAddress: @bind,
+        Logger: @logger,
+        AccessLog: @access_log,
+      )
 
       @server.mount_proc '/' do |req, res|
         res['Content-Type'] = 'text/plain; charset=utf-8'
         if req.path == '/metrics'
+          authenticate(req, res) if @auth
+
           res.status = 200
           if req.header["accept-encoding"].to_s.include?("gzip")
             sio = StringIO.new
@@ -157,6 +162,13 @@ module PrometheusExporter::Server
       gauge = PrometheusExporter::Metric::Gauge.new(name, help)
       gauge.observe(value)
       gauge
+    end
+
+    def authenticate(req, res)
+      htpasswd = WEBrick::HTTPAuth::Htpasswd.new(@auth)
+      basic_auth = WEBrick::HTTPAuth::BasicAuth.new({ Realm: @realm, UserDB: htpasswd, Logger: @logger })
+
+      basic_auth.authenticate(req, res)
     end
 
   end

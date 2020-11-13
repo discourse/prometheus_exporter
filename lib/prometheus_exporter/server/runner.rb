@@ -15,6 +15,8 @@ module PrometheusExporter::Server
       @collector_class = nil
       @type_collectors = nil
       @prefix = nil
+      @auth = nil
+      @realm = nil
 
       options.each do |k, v|
         send("#{k}=", v) if self.class.method_defined?("#{k}=")
@@ -40,12 +42,20 @@ module PrometheusExporter::Server
         )
       end
 
-      server = server_class.new port: port, bind: bind, collector: collector, timeout: timeout, verbose: verbose
+      server = server_class.new(port: port, bind: bind, collector: collector, timeout: timeout, verbose: verbose, auth: auth, realm: realm)
       server.start
     end
 
     attr_accessor :unicorn_listen_address, :unicorn_pid_file
-    attr_writer :prefix, :port, :bind, :collector_class, :type_collectors, :timeout, :verbose, :server_class, :label
+    attr_writer :prefix, :port, :bind, :collector_class, :type_collectors, :timeout, :verbose, :server_class, :label, :auth, :realm
+
+    def auth
+      @auth || nil
+    end
+
+    def realm
+      @realm || PrometheusExporter::DEFAULT_REALM
+    end
 
     def prefix
       @prefix || PrometheusExporter::DEFAULT_PREFIX

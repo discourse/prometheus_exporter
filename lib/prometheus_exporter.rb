@@ -11,6 +11,7 @@ module PrometheusExporter
   DEFAULT_PREFIX = 'ruby_'
   DEFAULT_LABEL = {}
   DEFAULT_TIMEOUT = 2
+  DEFAULT_REALM = 'Prometheus Exporter'
 
   class OjCompat
     def self.parse(obj)
