@@ -1,4 +1,8 @@
-0.6.0 - 10-11-2020
+0.7.0 - TBD
+
+- Dev: Removed support from EOL rubies, only 2.5, 2.6 and 2.7 are supported now.
+
+0.6.0 - 17-11-2020
 
 - FEATURE: add support for basic-auth in the prometheus_exporter web server
 
