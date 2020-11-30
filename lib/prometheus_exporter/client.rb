@@ -188,7 +188,7 @@ module PrometheusExporter
 
     def close_socket!
       begin
-        if @socket
+        if @socket && !@socket.closed?
           @socket.write("0\r\n")
           @socket.write("\r\n")
           @socket.flush
