@@ -67,20 +67,29 @@ module PrometheusExporter::Instrumentation
       ObjectSpace.each_object(::ActiveRecord::ConnectionAdapters::ConnectionPool) do |pool|
         next if pool.connections.nil?
 
-        labels_from_config = pool.spec.config
-          .select { |k, v| @config_labels.include? k }
-          .map { |k, v| [k.to_s.dup.prepend("dbconfig_"), v] }
-
-        labels = @metric_labels.merge(pool_name: pool.spec.name).merge(Hash[labels_from_config])
-
         metric = {
           pid: pid,
           type: "active_record",
           hostname: ::PrometheusExporter.hostname,
-          metric_labels: labels
+          metric_labels: labels(pool)
         }
         metric.merge!(pool.stat)
         metrics << metric
+      end
+    end
+
+    private
+
+    def labels(pool)
+      if pool.respond_to?(:spec) # ActiveRecord <= 6.0
+        @metric_labels.merge(pool_name: pool.spec.name).merge(pool.spec.config
+          .select { |k, v| @config_labels.include? k }
+          .map { |k, v| [k.to_s.dup.prepend("dbconfig_"), v] }.to_h)
+      elsif pool.respond_to?(:db_config) # ActiveRecord >= 6.1.rc1
+        @metric_labels.merge(pool_name: pool.db_config.name).merge(
+          @config_labels.each_with_object({}) { |l, acc| acc["dbconfig_#{l}"] = pool.db_config.public_send(l) })
+      else
+        raise "Unsupported connection pool"
       end
     end
   end
