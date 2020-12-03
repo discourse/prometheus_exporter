@@ -28,10 +28,13 @@ jobs:
             ${{ runner.os }}-${{ matrix.ruby }}-gems-
       - name: Setup gems
         run: |
-          gem install bundler
+          gem install bundle
+          # for Ruby <= 2.6 , details https://github.com/rubygems/rubygems/issues/3284
+          gem update --system 3.0.8 && gem update --system
           bundle config path vendor/bundle
           bundle install --jobs 4
+          bundle exec appraisal install
       - name: Rubocop
         run: bundle exec rubocop
       - name: Run tests
-        run: bundle exec rake
+        run: bundle exec appraisal rake

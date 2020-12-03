@@ -35,6 +35,8 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rack-test", "~> 0.8.3"
   spec.add_development_dependency "minitest-stub-const", "~> 0.6"
   spec.add_development_dependency "rubocop-discourse", ">2"
+  spec.add_development_dependency "appraisal", "~> 2.3"
+  spec.add_development_dependency "activerecord", "~> 6.0.0"
   if !RUBY_ENGINE == 'jruby'
     spec.add_development_dependency "raindrops", "~> 0.19"
   end
