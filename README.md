@@ -218,6 +218,32 @@ class MyMiddleware < PrometheusExporter::Middleware
 end
 ```
 
+If you're not using Rails like framework, you can extend `PrometheusExporter::Middleware#default_labels` in a way to add more relevant labels.
+For example you can mimic [prometheus-client](https://github.com/prometheus/client_ruby) labels with code like this:
+```ruby
+class MyMiddleware < PrometheusExporter::Middleware
+  def default_labels(env, result)
+    status = (result && result[0]) || -1
+    path = [env["SCRIPT_NAME"], env["PATH_INFO"]].join
+    {
+      path: strip_ids_from_path(path),
+      method: env["REQUEST_METHOD"],
+      status: status
+    }
+  end
+
+  def strip_ids_from_path(path)
+    path
+      .gsub(%r{/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(/|$)}, '/:uuid\\1')
+      .gsub(%r{/\d+(/|$)}, '/:id\\1')
+  end
+end
+```
+That way you won't have all metrics labeled with `controller=other` and `action=other`, but have labels such as
+```
+ruby_http_duration_seconds{path="/api/v1/teams/:id",method="GET",status="200",quantile="0.99"} 0.009880661998977303
+```
+
 ¹) Only available when Redis is used.
 ²) Only available when Mysql or PostgreSQL are used.
 ³) Only available when [Instrumenting Request Queueing Time](#instrumenting-request-queueing-time) is set up.

@@ -36,21 +36,12 @@ class PrometheusExporter::Middleware
 
     result
   ensure
-    status = (result && result[0]) || -1
-    params = env["action_dispatch.request.parameters"]
-    action, controller = nil
-    if params
-      action = params["action"]
-      controller = params["controller"]
-    end
 
     obj = {
       type: "web",
       timings: info,
       queue_time: queue_time,
-      action: action,
-      controller: controller,
-      status: status
+      default_labels: default_labels(env, result)
     }
     labels = custom_labels(env)
     if labels
@@ -58,6 +49,22 @@ class PrometheusExporter::Middleware
     end
 
     @client.send_json(obj)
+  end
+
+  def default_labels(env, result)
+    status = (result && result[0]) || -1
+    params = env["action_dispatch.request.parameters"]
+    action = controller = nil
+    if params
+      action = params["action"]
+      controller = params["controller"]
+    end
+
+    {
+      action: action || "other",
+      controller: controller || "other",
+      status: status
+    }
   end
 
   # allows subclasses to add custom labels based on env
