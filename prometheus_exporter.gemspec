@@ -25,11 +25,11 @@ Gem::Specification.new do |spec|
   spec.require_paths        = ["lib"]
 
   spec.add_development_dependency "rubocop", ">= 0.69"
-  spec.add_development_dependency "bundler", "> 1.16"
+  spec.add_development_dependency "bundler", ">= 2.2.2"
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "minitest", "~> 5.0"
   spec.add_development_dependency "guard", "~> 2.0"
-  spec.add_development_dependency "mini_racer", "~> 0.1"
+  spec.add_development_dependency "mini_racer", "~> 0.3.1"
   spec.add_development_dependency "guard-minitest", "~> 2.0"
   spec.add_development_dependency "oj", "~> 3.0"
   spec.add_development_dependency "rack-test", "~> 0.8.3"
