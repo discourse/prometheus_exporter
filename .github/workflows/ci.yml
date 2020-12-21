@@ -36,5 +36,7 @@ jobs:
           bundle exec appraisal install
       - name: Rubocop
         run: bundle exec rubocop
+      - name: install gems
+        run: bundle exec appraisal bundle
       - name: Run tests
         run: bundle exec appraisal rake
