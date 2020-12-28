@@ -1,6 +1,10 @@
-0.7.0 - TBD
+0.7.0 - 29-12-2020
 
-- Dev: Removed support from EOL rubies, only 2.5, 2.6 and 2.7 are supported now.
+- Dev: Removed support from EOL rubies, only 2.5, 2.6, 2.7 and 3.0 are supported now.
+- Dev: Better support for Ruby 3.0, explicitly depending on webrick
+- Dev: Rails 6.1 instrumentation support
+- FEATURE: clean pattern for overriding middleware labels was introduced (in README)
+- Fix: Better support for forking
 
 0.6.0 - 17-11-2020
 
