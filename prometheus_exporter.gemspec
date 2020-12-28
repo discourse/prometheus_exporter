@@ -24,6 +24,8 @@ Gem::Specification.new do |spec|
   spec.executables          = ["prometheus_exporter"]
   spec.require_paths        = ["lib"]
 
+  spec.add_dependency "webrick"
+
   spec.add_development_dependency "rubocop", ">= 0.69"
   spec.add_development_dependency "bundler", ">= 2.2.2"
   spec.add_development_dependency "rake", "~> 13.0"
