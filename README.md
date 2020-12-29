@@ -505,7 +505,7 @@ Request Queueing is defined as the time it takes for a request to reach your app
 
 As this metric starts before `prometheus_exporter` can handle the request, you must add a specific HTTP header as early in your infrastructure as possible (we recommend your load balancer or reverse proxy).
 
-Configure your HTTP server / load balancer to add a header `X-Request-Start: t=<MSEC>` when passing the request upstream. For more information, please consult your software manual.
+The Amazon Application Load Balancer [request tracing header](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-request-tracing.html) is natively supported. If you are using another upstream entrypoint, you may configure your HTTP server / load balancer to add a header `X-Request-Start: t=<MSEC>` when passing the request upstream. For more information, please consult your software manual.
 
 Hint: we aim to be API-compatible with the big APM solutions, so if you've got requests queueing time configured for them, it should be expected to also work with `prometheus_exporter`.
 
