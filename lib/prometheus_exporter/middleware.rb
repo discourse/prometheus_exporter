@@ -90,19 +90,24 @@ class PrometheusExporter::Middleware
     Process.clock_gettime(Process::CLOCK_REALTIME)
   end
 
-  # get the content of the x-queue-start or x-request-start header
+  # determine queue start from well-known trace headers
   def queue_start(env)
+
+    # get the content of the x-queue-start or x-request-start header
     value = env['HTTP_X_REQUEST_START'] || env['HTTP_X_QUEUE_START']
     unless value.nil? || value == ''
-      convert_header_to_ms(value.to_s)
+      # nginx returns time as milliseconds with 3 decimal places
+      # apache returns time as microseconds without decimal places
+      # this method takes care to convert both into a proper second + fractions timestamp
+      value = value.to_s.gsub(/t=|\./, '')
+      return "#{value[0, 10]}.#{value[10, 13]}".to_f
     end
+
+    # get the content of the x-amzn-trace-id header
+    # see also: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-request-tracing.html
+    value = env['HTTP_X_AMZN_TRACE_ID']
+    value&.split('Root=')&.last&.split('-')&.fetch(1)&.to_i(16)
+
   end
 
-  # nginx returns time as milliseconds with 3 decimal places
-  # apache returns time as microseconds without decimal places
-  # this method takes care to convert both into a proper second + fractions timestamp
-  def convert_header_to_ms(str)
-    str = str.gsub(/t=|\./, '')
-    "#{str[0, 10]}.#{str[10, 13]}".to_f
-  end
 end
