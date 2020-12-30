@@ -106,7 +106,7 @@ class PrometheusExporter::Middleware
     # get the content of the x-amzn-trace-id header
     # see also: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-request-tracing.html
     value = env['HTTP_X_AMZN_TRACE_ID']
-    value&.match(/Root=.+\-([0-9a-f]+)-/)&.captures&.last&.to_s&.to_i(16)
+    value&.split('Root=')&.last&.split('-')&.fetch(1)&.to_i(16)
 
   end
 
