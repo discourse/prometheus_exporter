@@ -478,6 +478,8 @@ end
 | Summary | `delayed_job_duration_seconds_summary`    | Summary of the time it takes jobs to execute                       | `status`   |
 | Summary | `delayed_job_attempts_summary`            | Summary of the amount of attempts it takes delayed jobs to succeed | -          |
 
+All metrics have labels for `job_name` and `queue_name`.
+
 #### Hutch Message Processing Tracer
 
 Capture [Hutch](https://github.com/gocardless/hutch) metrics (how many jobs ran? how many failed? how long did they take?)

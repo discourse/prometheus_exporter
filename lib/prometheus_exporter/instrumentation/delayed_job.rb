@@ -13,8 +13,8 @@ module PrometheusExporter::Instrumentation
           callbacks do |lifecycle|
             lifecycle.around(:invoke_job) do |job, *args, &block|
               max_attempts = Delayed::Worker.max_attempts
-              enqueued_count = Delayed::Job.count
-              pending_count = Delayed::Job.where(attempts: 0, locked_at: nil).count
+              enqueued_count = Delayed::Job.where(queue: job.queue).count
+              pending_count = Delayed::Job.where(attempts: 0, locked_at: nil, queue: job.queue).count
               instrumenter.call(job, max_attempts, enqueued_count, pending_count, *args, &block)
             end
           end
@@ -41,6 +41,7 @@ module PrometheusExporter::Instrumentation
       @client.send_json(
         type: "delayed_job",
         name: job.handler.to_s.match(JOB_CLASS_REGEXP).to_a[1].to_s,
+        queue_name: job.queue,
         success: success,
         duration: duration,
         attempts: attempts,

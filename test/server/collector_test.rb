@@ -396,6 +396,7 @@ class PrometheusCollectorTest < Minitest::Test
 
     job = Minitest::Mock.new
     job.expect(:handler, "job_class: Class")
+    job.expect(:queue, "my_queue")
     job.expect(:attempts, 0)
 
     instrument.call(job, 20, 10, 0, nil, "default") do
@@ -404,6 +405,7 @@ class PrometheusCollectorTest < Minitest::Test
 
     failed_job = Minitest::Mock.new
     failed_job.expect(:handler, "job_class: Object")
+    failed_job.expect(:queue, "my_queue")
     failed_job.expect(:attempts, 1)
 
     begin
@@ -415,11 +417,11 @@ class PrometheusCollectorTest < Minitest::Test
 
     result = collector.prometheus_metrics_text
 
-    assert(result.include?("delayed_failed_jobs_total{job_name=\"Object\"} 1"), "has failed job")
-    assert(result.include?("delayed_jobs_total{job_name=\"Class\"} 1"), "has working job")
-    assert(result.include?("delayed_job_duration_seconds"), "has duration")
-    assert(result.include?("delayed_jobs_enqueued 10"), "has enqueued count")
-    assert(result.include?("delayed_jobs_pending 0"), "has pending count")
+    assert(result.include?("delayed_failed_jobs_total{job_name=\"Object\",queue_name=\"my_queue\"} 1"), "has failed job")
+    assert(result.include?("delayed_jobs_total{job_name=\"Class\",queue_name=\"my_queue\"} 1"), "has working job")
+    assert(result.include?("delayed_job_duration_seconds{job_name=\"Class\",queue_name=\"my_queue\"}"), "has duration")
+    assert(result.include?("delayed_jobs_enqueued{job_name=\"Class\",queue_name=\"my_queue\"} 10"), "has enqueued count")
+    assert(result.include?("delayed_jobs_pending{job_name=\"Class\",queue_name=\"my_queue\"} 0"), "has pending count")
     job.verify
     failed_job.verify
   end
@@ -432,6 +434,7 @@ class PrometheusCollectorTest < Minitest::Test
 
     job = Minitest::Mock.new
     job.expect(:handler, "job_class: Class")
+    job.expect(:queue, "my_queue")
     job.expect(:attempts, 0)
 
     instrument.call(job, 25, 10, 0, nil, "default") do
@@ -440,6 +443,7 @@ class PrometheusCollectorTest < Minitest::Test
 
     failed_job = Minitest::Mock.new
     failed_job.expect(:handler, "job_class: Object")
+    failed_job.expect(:queue, "my_queue")
     failed_job.expect(:attempts, 1)
 
     begin
@@ -451,11 +455,11 @@ class PrometheusCollectorTest < Minitest::Test
 
     result = collector.prometheus_metrics_text
 
-    assert(result.include?('delayed_failed_jobs_total{job_name="Object",service="service1"} 1'), "has failed job")
-    assert(result.include?('delayed_jobs_total{job_name="Class",service="service1"} 1'), "has working job")
-    assert(result.include?('delayed_job_duration_seconds{job_name="Class",service="service1"}'), "has duration")
-    assert(result.include?("delayed_jobs_enqueued 10"), "has enqueued count")
-    assert(result.include?("delayed_jobs_pending 0"), "has pending count")
+    assert(result.include?('delayed_failed_jobs_total{job_name="Object",queue_name="my_queue",service="service1"} 1'), "has failed job")
+    assert(result.include?('delayed_jobs_total{job_name="Class",queue_name="my_queue",service="service1"} 1'), "has working job")
+    assert(result.include?('delayed_job_duration_seconds{job_name="Class",queue_name="my_queue",service="service1"}'), "has duration")
+    assert(result.include?('delayed_jobs_enqueued{job_name="Class",queue_name="my_queue",service="service1"} 10'), "has enqueued count")
+    assert(result.include?('delayed_jobs_pending{job_name="Class",queue_name="my_queue",service="service1"} 0'), "has pending count")
     job.verify
     failed_job.verify
   end
