@@ -6,5 +6,5 @@ appraise "ar-60" do
 end
 
 appraise "ar-61" do
-  gem "activerecord", "~> 6.1.0.rc2"
+  gem "activerecord", "~> 6.1.1"
 end
