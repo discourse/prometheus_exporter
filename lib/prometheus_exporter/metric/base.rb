@@ -25,9 +25,10 @@ module PrometheusExporter::Metric
 
     attr_accessor :help, :name, :data
 
-    def initialize(name, help)
+    def initialize(name, help, opts = {})
       @name = name
       @help = help
+      @opts = opts
     end
 
     def type
@@ -62,7 +63,8 @@ module PrometheusExporter::Metric
     end
 
     def prefix(name)
-      Base.default_prefix + name
+      pfx = @opts && @opts.key?(:prefix) ? @opts[:prefix] : Base.default_prefix
+      pfx + name
     end
 
     def labels_text(labels)

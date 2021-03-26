@@ -80,9 +80,9 @@ module PrometheusExporter::Server
       metric =
         case obj["type"]
         when "gauge"
-          PrometheusExporter::Metric::Gauge.new(name, help)
+          PrometheusExporter::Metric::Gauge.new(name, help, opts)
         when "counter"
-          PrometheusExporter::Metric::Counter.new(name, help)
+          PrometheusExporter::Metric::Counter.new(name, help, opts)
         when "summary"
           PrometheusExporter::Metric::Summary.new(name, help, opts)
         when "histogram"

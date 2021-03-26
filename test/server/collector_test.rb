@@ -237,6 +237,52 @@ class PrometheusCollectorTest < Minitest::Test
     assert_equal(text, collector.prometheus_metrics_text)
   end
 
+  def test_it_can_pass_options_to_gauge
+    name = 'test_name'
+    help = 'test_help'
+    collector = PrometheusExporter::Server::Collector.new
+    json = {
+      type: :gauge,
+      help: help,
+      name: name,
+      keys: { key1: 'test1' },
+      opts: { prefix: 'custom_pfx_' },
+      value: 8
+    }
+    collector.process(json.to_json)
+
+    text = <<~TXT
+      # HELP custom_pfx_test_name test_help
+      # TYPE custom_pfx_test_name gauge
+      custom_pfx_test_name{key1=\"test1\"} 8
+    TXT
+
+    assert_equal(text, collector.prometheus_metrics_text)
+  end
+
+  def test_it_can_pass_options_to_counter
+    name = 'test_name'
+    help = 'test_help'
+    collector = PrometheusExporter::Server::Collector.new
+    json = {
+      type: :counter,
+      help: help,
+      name: name,
+      keys: { key1: 'test1' },
+      opts: { prefix: 'custom_pfx_' },
+      value: 18
+    }
+    collector.process(json.to_json)
+
+    text = <<~TXT
+      # HELP custom_pfx_test_name test_help
+      # TYPE custom_pfx_test_name counter
+      custom_pfx_test_name{key1=\"test1\"} 18
+    TXT
+
+    assert_equal(text, collector.prometheus_metrics_text)
+  end
+
   def test_it_can_collect_sidekiq_metrics
     collector = PrometheusExporter::Server::Collector.new
     client = PipedClient.new(collector)

@@ -4,7 +4,7 @@ module PrometheusExporter::Metric
   class Counter < Base
     attr_reader :data
 
-    def initialize(name, help)
+    def initialize(name, help, opts = {})
       super
       reset!
     end
