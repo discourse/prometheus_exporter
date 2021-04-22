@@ -48,8 +48,8 @@ module PrometheusExporter::Instrumentation
         duration: duration,
         attempts: attempts,
         max_attempts: max_attempts,
-        failed_count: failed_count,
-        max_failed_count: max_failed_count,
+        failed: failed_count,
+        max_failed: max_failed_count,
         enqueued: enqueued_count,
         pending: pending_count
       )
