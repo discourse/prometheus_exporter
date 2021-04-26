@@ -69,4 +69,40 @@ class PrometheusActiveRecordCollectorTest < Minitest::Test
     assert_equal 6, metrics.size
     assert(metrics.first.metric_text.include?('active_record_connection_pool_connections{service="service1",pid="1000",environment="test"} 50'))
   end
+
+  def test_collecting_metrics_for_multiple_pools
+    collector.collect(
+      "type" => "active_record",
+      "hostname" => "localhost",
+      "pid" => "1000",
+      "connections" => 50,
+      "busy" => 20,
+      "dead" => 10,
+      "idle" => 20,
+      "waiting" => 0,
+      "size" => 120,
+      "metric_labels" => {
+        "pool_name" => "primary"
+      }
+    )
+    collector.collect(
+      "type" => "active_record",
+      "hostname" => "localhost",
+      "pid" => "1000",
+      "connections" => 5,
+      "busy" => 2,
+      "dead" => 1,
+      "idle" => 2,
+      "waiting" => 0,
+      "size" => 12,
+      "metric_labels" => {
+        "pool_name" => "other"
+      }
+    )
+
+    metrics = collector.metrics
+    assert_equal 6, metrics.size
+    assert(metrics.first.metric_text.include?('active_record_connection_pool_connections{pool_name="primary",pid="1000"} 50'))
+    assert(metrics.first.metric_text.include?('active_record_connection_pool_connections{pool_name="other",pid="1000"} 5'))
+  end
 end
