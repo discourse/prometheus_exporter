@@ -5,6 +5,7 @@ module PrometheusExporter::Instrumentation; end
 
 class PrometheusExporter::Instrumentation::MethodProfiler
   def self.patch(klass, methods, name)
+    patch_source_line = __LINE__ + 3
     patches = methods.map do |method_name|
       <<~RUBY
       unless defined?(#{method_name}__mp_unpatched)
@@ -26,7 +27,7 @@ class PrometheusExporter::Instrumentation::MethodProfiler
       RUBY
     end.join("\n")
 
-    klass.class_eval patches
+    klass.class_eval patches, __FILE__, patch_source_line
   end
 
   def self.transfer
