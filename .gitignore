@@ -8,6 +8,7 @@
 /tmp/
 Gemfile.lock
 /gemfiles/*.gemfile.lock
+/.idea
 
 
 .rubocop-https---raw-githubusercontent-com-discourse-discourse-master--rubocop-yml
