@@ -17,12 +17,13 @@ module PrometheusExporter::Server
       @verbose = opts[:verbose] || false
       @auth = opts[:auth]
       @realm = opts[:realm] || PrometheusExporter::DEFAULT_REALM
+      @route = opts[:route] || false
 
-      @metrics_total = PrometheusExporter::Metric::Counter.new("collector_metrics_total", "Total metrics processed by exporter web.")
+      @metrics_total = PrometheusExporter::Metric::Counter.new('collector_metrics_total', 'Total metrics processed by exporter web.')
 
-      @sessions_total = PrometheusExporter::Metric::Counter.new("collector_sessions_total", "Total send_metric sessions processed by exporter web.")
+      @sessions_total = PrometheusExporter::Metric::Counter.new('collector_sessions_total', 'Total send_metric sessions processed by exporter web.')
 
-      @bad_metrics_total = PrometheusExporter::Metric::Counter.new("collector_bad_metrics_total", "Total mis-handled metrics by collector.")
+      @bad_metrics_total = PrometheusExporter::Metric::Counter.new('collector_bad_metrics_total', 'Total mis-handled metrics by collector.')
 
       @metrics_total.observe(0)
       @sessions_total.observe(0)
@@ -38,17 +39,17 @@ module PrometheusExporter::Server
         @logger = WEBrick::Log.new($stderr)
       else
         @access_log = []
-        @logger = WEBrick::Log.new("/dev/null")
+        @logger = WEBrick::Log.new('/dev/null')
       end
 
       @logger.info "Using Basic Authentication via #{@auth}" if @verbose && @auth
 
       @server = WEBrick::HTTPServer.new(
-        Port: @port,
+        Port:        @port,
         BindAddress: @bind,
-        Logger: @logger,
-        AccessLog: @access_log,
-      )
+        Logger:      @logger,
+        AccessLog:   @access_log,
+        )
 
       @server.mount_proc '/' do |req, res|
         res['Content-Type'] = 'text/plain; charset=utf-8'
@@ -56,7 +57,7 @@ module PrometheusExporter::Server
           authenticate(req, res) if @auth
 
           res.status = 200
-          if req.header["accept-encoding"].to_s.include?("gzip")
+          if req.header['accept-encoding'].to_s.include?('gzip')
             sio = StringIO.new
             collected_metrics = metrics
             begin
@@ -66,15 +67,23 @@ module PrometheusExporter::Server
               writer.close
             end
             res.body = sio.string
-            res.header["content-encoding"] = "gzip"
+            res.header['content-encoding'] = 'gzip'
           else
             res.body = metrics
           end
         elsif req.path == '/send-metrics'
           handle_metrics(req, res)
+        elsif  @route && req.path == "/#{@route}"
+          if dead_workers?.positive?
+            res.status = 404
+            res.body = "Dead :  #{@dead_workers}"
+          else
+            res.status = 200
+            res.body = 'It\'s alive'
+          end
         else
           res.status = 404
-          res.body = "Not Found! The Prometheus Ruby Exporter only listens on /metrics and /send-metrics"
+          res.body = 'Not Found! The Prometheus Ruby Exporter only listens on /metrics and /send-metrics'
         end
       end
     end
@@ -169,6 +178,25 @@ module PrometheusExporter::Server
       basic_auth = WEBrick::HTTPAuth::BasicAuth.new({ Realm: @realm, UserDB: htpasswd, Logger: @logger })
 
       basic_auth.authenticate(req, res)
+    end
+
+    def dead_workers?
+      dead = 0
+      workers = 0
+      @dead_workers = []
+      Thread.list.each do | t |
+        next if t[:worker_implementation].nil?
+        next if t[:worker_implementation][:last_beat].nil?
+        workers += 1
+        diff = (Time.now.utc  - t[:worker_implementation][:last_beat] )
+        next unless diff > ENV.fetch('ALIVE_TIMEOUT', 30)
+        dead += 1
+        @dead_workers << [ "worker: #{workers}",
+                           t[:worker_implementation][:uuid],
+                           t[:worker_implementation][:last_beat] ]
+      end
+      return workers if workers.zero?
+      dead
     end
 
   end
