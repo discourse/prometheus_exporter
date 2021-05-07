@@ -489,4 +489,28 @@ class PrometheusCollectorTest < Minitest::Test
     assert(result.include?('puma_thread_pool_capacity_total{phase="0",service="service1"} 32'), "has pool capacity")
     mock_puma.verify
   end
+
+  def test_it_can_collect_resque_metrics
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector, custom_labels: { service: 'service1' })
+
+    mock_resque = Minitest::Mock.new
+    mock_resque.expect(
+      :info,
+      { processed: 12, failed: 2, pending: 42, queues: 2, workers: 1, working: 1 }
+    )
+
+    instrument = PrometheusExporter::Instrumentation::Resque.new
+
+    Object.stub_const(:Resque, mock_resque) do
+      metric = instrument.collect
+      client.send_json metric
+    end
+
+    result = collector.prometheus_metrics_text
+    assert(result.include?('resque_processed_jobs_total{service="service1"} 12'), "has processed jobs")
+    assert(result.include?('resque_failed_jobs_total{service="service1"} 2'), "has failed jobs")
+    assert(result.include?('resque_pending_jobs_total{service="service1"} 42'), "has pending jobs")
+    mock_resque.verify
+  end
 end

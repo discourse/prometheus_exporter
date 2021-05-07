@@ -19,6 +19,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
     * [Hutch metrics](#hutch-message-processing-tracer)
   * [Puma metrics](#puma-metrics)
   * [Unicorn metrics](#unicorn-process-metrics)
+  * [Resque metrics](#resque-metrics)
   * [Custom type collectors](#custom-type-collectors)
   * [Multi process mode with custom collector](#multi-process-mode-with-custom-collector)
   * [GraphQL support](#graphql-support)
@@ -538,6 +539,28 @@ end
 | Gauge | `puma_max_threads_total`          | Number of puma threads at available at max scale            |
 
 All metrics may have a `phase` label.
+
+### Resque metrics
+
+The resque metrics are using the `Resque.info` method, which queries Redis internally. To start monitoring your resque
+installation, you'll need to start the instrumentation:
+
+```ruby
+# e.g. config/initializers/resque.rb
+require 'prometheus_exporter/instrumentation'
+PrometheusExporter::Instrumentation::Resque.start
+```
+
+#### Metrics collected by Resque Instrumentation
+
+| Type  | Name                   | Description                            |
+| ---   | ---                    | ---                                    |
+| Gauge | `processed_jobs_total` | Total number of processed Resque jobs  |
+| Gauge | `failed_jobs_total`    | Total number of failed Resque jobs     |
+| Gauge | `pending_jobs_total`   | Total number of pending Resque jobs    |
+| Gauge | `queues_total`         | Total number of Resque queues          |
+| Gauge | `workers_total`        | Total number of Resque workers running |
+| Gauge | `working_total`        | Total number of Resque workers working |
 
 ### Unicorn process metrics
 
