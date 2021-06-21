@@ -34,6 +34,9 @@ module PrometheusExporter::Server
         if m["custom_labels"]
           labels.merge!(m["custom_labels"])
         end
+        if m["metric_labels"]
+          labels.merge!(m["metric_labels"])
+        end
 
         PUMA_GAUGES.map do |k, help|
           k = k.to_s
