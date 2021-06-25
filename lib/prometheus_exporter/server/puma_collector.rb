@@ -51,7 +51,12 @@ module PrometheusExporter::Server
       now = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
 
       obj["created_at"] = now
-      @puma_metrics.delete_if { |m| m["created_at"] + MAX_PUMA_METRIC_AGE < now }
+
+      @puma_metrics.delete_if do |current|
+        (obj["pid"] == current["pid"] && obj["hostname"] == current["hostname"]) ||
+          (current["created_at"] + MAX_PUMA_METRIC_AGE < now)
+      end
+
       @puma_metrics << obj
     end
   end

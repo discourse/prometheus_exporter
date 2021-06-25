@@ -23,10 +23,17 @@ module PrometheusExporter::Instrumentation
     end
 
     def collect
-      metric = {}
-      metric[:type] = "puma"
+      metric = {
+        pid: pid,
+        type: "puma",
+        hostname: ::PrometheusExporter.hostname
+      }
       collect_puma_stats(metric)
       metric
+    end
+
+    def pid
+      @pid = ::Process.pid
     end
 
     def collect_puma_stats(metric)
