@@ -538,7 +538,7 @@ end
 | Gauge | `puma_thread_pool_capacity_total` | Number of puma threads available at current scale           |
 | Gauge | `puma_max_threads_total`          | Number of puma threads at available at max scale            |
 
-All metrics may have a `phase` label.
+All metrics may have a `phase` label and all custom labels provided with the `labels` option.
 
 ### Resque metrics
 

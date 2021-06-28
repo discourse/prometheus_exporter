@@ -2,6 +2,7 @@ Unreleased
 
 - FEATURE: add job_name and queue_name labels to delayed job metrics
 - FEATURE: always scope puma metrics on hostname in collector
+- FEATURE: add customizable labels option to puma collector
 
 0.7.0 - 29-12-2020
 
