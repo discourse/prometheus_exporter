@@ -184,6 +184,9 @@ module PrometheusExporter
           end
         end
       end
+    rescue ThreadError => e
+      raise unless e.message =~ /can't alloc thread/
+      STDERR.puts "Prometheus Exporter, failed to send message ThreadError #{e}"
     end
 
     def close_socket!
