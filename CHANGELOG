@@ -4,7 +4,7 @@
 - FEATURE: add job_name and queue_name labels to delayed job metrics
 - FEATURE: always scope puma metrics on hostname in collector
 - FEATURE: add customizable labels option to puma collector
-- FEATURE: support for Rescue
+- FEATURE: support for Resque
 - DEV: Remove support for EOL ruby 2.5
 - FIX: Add source location to MethodProfiler patches
 - FEATURE: Improve Active Record instrumentation
