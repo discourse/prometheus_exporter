@@ -1,8 +1,14 @@
-Unreleased
+0.8.0 - 05-07-2021
 
+- FIX: handle ThreadError more gracefully in cases where process shuts down
 - FEATURE: add job_name and queue_name labels to delayed job metrics
 - FEATURE: always scope puma metrics on hostname in collector
 - FEATURE: add customizable labels option to puma collector
+- FEATURE: support for Rescue
+- DEV: Remove support for EOL ruby 2.5
+- FIX: Add source location to MethodProfiler patches
+- FEATURE: Improve Active Record instrumentation
+- FEATURE: Support HTTP_X_AMZN_TRACE_ID when supplied
 
 0.7.0 - 29-12-2020
 
