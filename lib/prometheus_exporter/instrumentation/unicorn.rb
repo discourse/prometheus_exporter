@@ -18,7 +18,7 @@ module PrometheusExporter::Instrumentation
             metric = unicorn_collector.collect
             client.send_json metric
           rescue StandardError => e
-            STDERR.puts("Prometheus Exporter Failed To Collect Unicorn Stats #{e}")
+            client.logger.error("Prometheus Exporter Failed To Collect Unicorn Stats #{e}")
           ensure
             sleep frequency
           end

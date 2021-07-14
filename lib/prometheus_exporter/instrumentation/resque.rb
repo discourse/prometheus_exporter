@@ -11,7 +11,7 @@ module PrometheusExporter::Instrumentation
           begin
             client.send_json(resque_collector.collect)
           rescue => e
-            STDERR.puts("Prometheus Exporter Failed To Collect Resque Stats #{e}")
+            client.logger.error("Prometheus Exporter Failed To Collect Resque Stats #{e}")
           ensure
             sleep frequency
           end
