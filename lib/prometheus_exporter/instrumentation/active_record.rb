@@ -7,11 +7,6 @@ module PrometheusExporter::Instrumentation
 
     def self.start(client: nil, frequency: 30, custom_labels: {}, config_labels: [])
 
-      config_labels.map!(&:to_sym)
-      validate_config_labels(config_labels)
-
-      active_record_collector = new(custom_labels, config_labels)
-
       client ||= PrometheusExporter::Client.default
 
       # Not all rails versions support connection pool stats
@@ -19,6 +14,11 @@ module PrometheusExporter::Instrumentation
         client.logger.error("ActiveRecord connection pool stats not supported in your rails version")
         return
       end
+
+      config_labels.map!(&:to_sym)
+      validate_config_labels(config_labels)
+
+      active_record_collector = new(custom_labels, config_labels)
 
       stop if @thread
 
