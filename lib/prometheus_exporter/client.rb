@@ -79,7 +79,7 @@ module PrometheusExporter
       max_queue_size ||= MAX_QUEUE_SIZE
       max_queue_size = max_queue_size.to_i
 
-      if max_queue_size.to_i <= 0
+      if max_queue_size <= 0
         raise ArgumentError, "max_queue_size must be larger than 0"
       end
 

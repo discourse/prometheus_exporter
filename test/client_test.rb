@@ -57,8 +57,7 @@ class PrometheusExporterTest < Minitest::Test
     mock_logger.expect :level=, nil, [Logger::WARN]
     mock_logger.expect :warn, nil, ["Prometheus Exporter client is dropping message cause queue is full"]
 
-    client = PrometheusExporter::Client.new(logger: mock_logger)
-    client.instance_variable_set(:@max_queue_size, 1)
+    client = PrometheusExporter::Client.new(logger: mock_logger, max_queue_size: 1)
     client.send("put a message in the queue")
     client.send("put a second message in the queue to trigger the logger")
 
