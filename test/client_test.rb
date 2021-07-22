@@ -51,4 +51,16 @@ class PrometheusExporterTest < Minitest::Test
     summary_metric = client.register(:summary, 'summary_metric', 'helping', expected_quantiles)
     assert_equal(expected_quantiles, summary_metric.standard_values('value', 'key')[:opts])
   end
+
+  def test_overriding_logger
+    mock_logger = Minitest::Mock.new
+    mock_logger.expect :level=, nil, [Logger::WARN]
+    mock_logger.expect :warn, nil, ["Prometheus Exporter client is dropping message cause queue is full"]
+
+    client = PrometheusExporter::Client.new(logger: mock_logger, max_queue_size: 1)
+    client.send("put a message in the queue")
+    client.send("put a second message in the queue to trigger the logger")
+
+    mock_logger.verify
+  end
 end

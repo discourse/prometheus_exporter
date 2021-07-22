@@ -2,6 +2,7 @@
 
 require 'socket'
 require 'thread'
+require 'logger'
 
 module PrometheusExporter
   class Client
@@ -53,14 +54,20 @@ module PrometheusExporter
     MAX_SOCKET_AGE = 25
     MAX_QUEUE_SIZE = 10_000
 
+    attr_reader :logger
+
     def initialize(
       host: ENV.fetch('PROMETHEUS_EXPORTER_HOST', 'localhost'),
       port: ENV.fetch('PROMETHEUS_EXPORTER_PORT', PrometheusExporter::DEFAULT_PORT),
       max_queue_size: nil,
       thread_sleep: 0.5,
       json_serializer: nil,
-      custom_labels: nil
+      custom_labels: nil,
+      logger: Logger.new(STDERR),
+      log_level: Logger::WARN
     )
+      @logger = logger
+      @logger.level = log_level
       @metrics = []
 
       @queue = Queue.new
@@ -72,7 +79,7 @@ module PrometheusExporter
       max_queue_size ||= MAX_QUEUE_SIZE
       max_queue_size = max_queue_size.to_i
 
-      if max_queue_size.to_i <= 0
+      if max_queue_size <= 0
         raise ArgumentError, "max_queue_size must be larger than 0"
       end
 
@@ -125,7 +132,7 @@ module PrometheusExporter
     def send(str)
       @queue << str
       if @queue.length > @max_queue_size
-        STDERR.puts "Prometheus Exporter client is dropping message cause queue is full"
+        logger.warn "Prometheus Exporter client is dropping message cause queue is full"
         @queue.pop
       end
 
@@ -143,7 +150,7 @@ module PrometheusExporter
           @socket.write(message)
           @socket.write("\r\n")
         rescue => e
-          STDERR.puts "Prometheus Exporter is dropping a message: #{e}"
+          logger.warn "Prometheus Exporter is dropping a message: #{e}"
           @socket = nil
           raise
         end
@@ -168,7 +175,7 @@ module PrometheusExporter
       close_socket_if_old!
       process_queue
     rescue => e
-      STDERR.puts "Prometheus Exporter, failed to send message #{e}"
+      logger.error "Prometheus Exporter, failed to send message #{e}"
     end
 
     def ensure_worker_thread!
@@ -186,7 +193,7 @@ module PrometheusExporter
       end
     rescue ThreadError => e
       raise unless e.message =~ /can't alloc thread/
-      STDERR.puts "Prometheus Exporter, failed to send message ThreadError #{e}"
+      logger.error "Prometheus Exporter, failed to send message ThreadError #{e}"
     end
 
     def close_socket!

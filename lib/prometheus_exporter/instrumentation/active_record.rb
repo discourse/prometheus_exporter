@@ -7,9 +7,11 @@ module PrometheusExporter::Instrumentation
 
     def self.start(client: nil, frequency: 30, custom_labels: {}, config_labels: [])
 
-      # Not all rails versions support coonection pool stats
+      client ||= PrometheusExporter::Client.default
+
+      # Not all rails versions support connection pool stats
       unless ::ActiveRecord::Base.connection_pool.respond_to?(:stat)
-        STDERR.puts("ActiveRecord connection pool stats not supported in your rails version")
+        client.logger.error("ActiveRecord connection pool stats not supported in your rails version")
         return
       end
 
@@ -17,8 +19,6 @@ module PrometheusExporter::Instrumentation
       validate_config_labels(config_labels)
 
       active_record_collector = new(custom_labels, config_labels)
-
-      client ||= PrometheusExporter::Client.default
 
       stop if @thread
 
@@ -28,7 +28,7 @@ module PrometheusExporter::Instrumentation
             metrics = active_record_collector.collect
             metrics.each { |metric| client.send_json metric }
           rescue => e
-            STDERR.puts("Prometheus Exporter Failed To Collect Process Stats #{e}")
+            client.logger.error("Prometheus Exporter Failed To Collect Process Stats #{e}")
           ensure
             sleep frequency
           end

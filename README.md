@@ -28,6 +28,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
   * [Client default host](#client-default-host)
 * [Transport concerns](#transport-concerns)
 * [JSON generation and parsing](#json-generation-and-parsing)
+* [Logging](#logging)
 * [Contributing](#contributing)
 * [License](#license)
 * [Code of Conduct](#code-of-conduct)
@@ -849,6 +850,19 @@ The `/bench` directory has simple benchmark, which is able to send through 10k m
 The `PrometheusExporter::Client` class has the method `#send-json`. This method, by default, will call `JSON.dump` on the Object it recieves. You may opt in for `oj` mode where it can use the faster `Oj.dump(obj, mode: :compat)` for JSON serialization. But be warned that if you have custom objects that implement own `to_json` methods this may not work as expected. You can opt for oj serialization with `json_serializer: :oj`.
 
 When `PrometheusExporter::Server::Collector` parses your JSON, by default it will use the faster Oj deserializer if available. This happens cause it only expects a simple Hash out of the box. You can opt in for the default JSON deserializer with `json_serializer: :json`.
+
+## Logging
+
+`PrometheusExporter::Client.default` will export to `STDERR`. To change this, you can pass your own logger:
+```ruby
+PrometheusExporter::Client.new(logger: Rails.logger)
+PrometheusExporter::Client.new(logger: Logger.new(STDOUT))
+```
+
+You can also pass a log level (default is [`Logger::WARN`](https://ruby-doc.org/stdlib-3.0.1/libdoc/logger/rdoc/Logger.html)):
+```ruby
+PrometheusExporter::Client.new(log_level: Logger::DEBUG)
+```
 
 ## Contributing
 
