@@ -53,14 +53,15 @@ class PrometheusExporterTest < Minitest::Test
   end
 
   def test_overriding_logger
-    mock_logger = Minitest::Mock.new
-    mock_logger.expect :level=, nil, [Logger::WARN]
-    mock_logger.expect :warn, nil, ["Prometheus Exporter client is dropping message cause queue is full"]
 
-    client = PrometheusExporter::Client.new(logger: mock_logger, max_queue_size: 1)
+    logs = StringIO.new
+    logger = Logger.new(logs)
+    logger.level = :warn
+
+    client = PrometheusExporter::Client.new(logger: logger, max_queue_size: 1)
     client.send("put a message in the queue")
     client.send("put a second message in the queue to trigger the logger")
 
-    mock_logger.verify
+    assert_includes(logs.string, "dropping message cause queue is full")
   end
 end
