@@ -31,7 +31,7 @@ jobs:
         run: |
           # for Ruby <= 2.6 , details https://github.com/rubygems/rubygems/issues/3284
           gem update --system 3.0.8 && gem update --system
-        if: ${{ matrix.ruby == '2.6' || matrix.ruby == "2.7" }}
+        if: ${{ matrix.ruby == '2.6' || matrix.ruby == '2.7' }}
       - name: Setup gems
         run: |
           gem install bundler
