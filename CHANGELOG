@@ -1,3 +1,7 @@
+0.8.1 - 04-08-2021
+
+- FEATURE: swap from hardcoded STDERR to logger pattern (see README for details)
+
 0.8.0 - 05-07-2021
 
 - FIX: handle ThreadError more gracefully in cases where process shuts down
