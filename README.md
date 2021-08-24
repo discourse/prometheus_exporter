@@ -5,6 +5,7 @@ Prometheus Exporter allows you to aggregate custom metrics from multiple process
 To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/archive/2018/02/02/instrumenting-rails-with-prometheus) (it has pretty pictures!)
 
 * [Requirements](#requirements)
+* [Migrating from v0.x](#migrating-from-v0.x)
 * [Installation](#installation)
 * [Usage](#usage)
   * [Single process mode](#single-process-mode)
@@ -36,6 +37,12 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
 ## Requirements
 
 Minimum Ruby of version 2.5.0 is required, Ruby 2.4.0 is EOL as of 2020-04-05
+
+## Migrating from v0.x
+
+There are some major changes in v1.x from v0.x.
+
+- Some of metrics are renamed to match [prometheus official guide for metric names](https://prometheus.io/docs/practices/naming/#metric-names). (#184)
 
 ## Installation
 
