@@ -6,9 +6,9 @@ class PrometheusExporter::Server::UnicornCollector < PrometheusExporter::Server:
   MAX_UNICORN_METRIC_AGE = 60
 
   UNICORN_GAUGES = {
-    workers_total: 'Number of unicorn workers.',
-    active_workers_total: 'Number of active unicorn workers',
-    request_backlog_total: 'Number of requests waiting to be processed by a unicorn worker.'
+    workers: 'Number of unicorn workers.',
+    active_workers: 'Number of active unicorn workers',
+    request_backlog: 'Number of requests waiting to be processed by a unicorn worker.'
   }.freeze
 
   def initialize

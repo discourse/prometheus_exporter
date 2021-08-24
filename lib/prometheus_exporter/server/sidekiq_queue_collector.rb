@@ -4,7 +4,7 @@ module PrometheusExporter::Server
     MAX_SIDEKIQ_METRIC_AGE = 60
 
     SIDEKIQ_QUEUE_GAUGES = {
-      'backlog_total' => 'Size of the sidekiq queue.',
+      'backlog' => 'Size of the sidekiq queue.',
       'latency_seconds' => 'Latency of the sidekiq queue.',
     }.freeze
 

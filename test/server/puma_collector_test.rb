@@ -21,13 +21,13 @@ class PrometheusPumaCollectorTest < Minitest::Test
       "pid" => "1000",
       "hostname" => "test1.example.com",
       "phase" => 0,
-      "workers_total" => 2,
-      "booted_workers_total" => 2,
-      "old_workers_total" => 0,
-      "request_backlog_total" => 0,
-      "running_threads_total" => 4,
-      "thread_pool_capacity_total" => 10,
-      "max_threads_total" => 10
+      "workers" => 2,
+      "booted_workers" => 2,
+      "old_workers" => 0,
+      "request_backlog" => 0,
+      "running_threads" => 4,
+      "thread_pool_capacity" => 10,
+      "max_threads" => 10
     )
 
     collector.collect(
@@ -35,13 +35,13 @@ class PrometheusPumaCollectorTest < Minitest::Test
       "pid" => "1000",
       "hostname" => "test2.example.com",
       "phase" => 0,
-      "workers_total" => 4,
-      "booted_workers_total" => 4,
-      "old_workers_total" => 0,
-      "request_backlog_total" => 1,
-      "running_threads_total" => 9,
-      "thread_pool_capacity_total" => 10,
-      "max_threads_total" => 10
+      "workers" => 4,
+      "booted_workers" => 4,
+      "old_workers" => 0,
+      "request_backlog" => 1,
+      "running_threads" => 9,
+      "thread_pool_capacity" => 10,
+      "max_threads" => 10
     )
 
     # overwriting previous metrics from first host
@@ -50,18 +50,18 @@ class PrometheusPumaCollectorTest < Minitest::Test
       "pid" => "1000",
       "hostname" => "test1.example.com",
       "phase" => 0,
-      "workers_total" => 3,
-      "booted_workers_total" => 3,
-      "old_workers_total" => 0,
-      "request_backlog_total" => 2,
-      "running_threads_total" => 8,
-      "thread_pool_capacity_total" => 10,
-      "max_threads_total" => 10
+      "workers" => 3,
+      "booted_workers" => 3,
+      "old_workers" => 0,
+      "request_backlog" => 2,
+      "running_threads" => 8,
+      "thread_pool_capacity" => 10,
+      "max_threads" => 10
     )
 
     metrics = collector.metrics
     assert_equal 7, metrics.size
-    assert_equal "puma_workers_total{phase=\"0\"} 3",
+    assert_equal "puma_workers{phase=\"0\"} 3",
                  metrics.first.metric_text
   end
 
@@ -71,13 +71,13 @@ class PrometheusPumaCollectorTest < Minitest::Test
       "pid" => "1000",
       "hostname" => "test1.example.com",
       "phase" => 0,
-      "workers_total" => 2,
-      "booted_workers_total" => 2,
-      "old_workers_total" => 0,
-      "request_backlog_total" => 0,
-      "running_threads_total" => 4,
-      "thread_pool_capacity_total" => 10,
-      "max_threads_total" => 10,
+      "workers" => 2,
+      "booted_workers" => 2,
+      "old_workers" => 0,
+      "request_backlog" => 0,
+      "running_threads" => 4,
+      "thread_pool_capacity" => 10,
+      "max_threads" => 10,
       "custom_labels" => {
         "hostname" => "test1.example.com"
       }
@@ -88,13 +88,13 @@ class PrometheusPumaCollectorTest < Minitest::Test
       "pid" => "1000",
       "hostname" => "test2.example.com",
       "phase" => 0,
-      "workers_total" => 4,
-      "booted_workers_total" => 4,
-      "old_workers_total" => 0,
-      "request_backlog_total" => 1,
-      "running_threads_total" => 9,
-      "thread_pool_capacity_total" => 10,
-      "max_threads_total" => 10,
+      "workers" => 4,
+      "booted_workers" => 4,
+      "old_workers" => 0,
+      "request_backlog" => 1,
+      "running_threads" => 9,
+      "thread_pool_capacity" => 10,
+      "max_threads" => 10,
       "custom_labels" => {
         "hostname" => "test2.example.com"
       }
@@ -106,13 +106,13 @@ class PrometheusPumaCollectorTest < Minitest::Test
       "pid" => "1000",
       "hostname" => "test1.example.com",
       "phase" => 0,
-      "workers_total" => 3,
-      "booted_workers_total" => 3,
-      "old_workers_total" => 0,
-      "request_backlog_total" => 2,
-      "running_threads_total" => 8,
-      "thread_pool_capacity_total" => 10,
-      "max_threads_total" => 10,
+      "workers" => 3,
+      "booted_workers" => 3,
+      "old_workers" => 0,
+      "request_backlog" => 2,
+      "running_threads" => 8,
+      "thread_pool_capacity" => 10,
+      "max_threads" => 10,
       "custom_labels" => {
         "hostname" => "test1.example.com"
       }
@@ -120,8 +120,8 @@ class PrometheusPumaCollectorTest < Minitest::Test
 
     metrics = collector.metrics
     assert_equal 7, metrics.size
-    assert_equal "puma_workers_total{phase=\"0\",hostname=\"test2.example.com\"} 4\n" \
-                 "puma_workers_total{phase=\"0\",hostname=\"test1.example.com\"} 3",
+    assert_equal "puma_workers{phase=\"0\",hostname=\"test2.example.com\"} 4\n" \
+                 "puma_workers{phase=\"0\",hostname=\"test1.example.com\"} 3",
                  metrics.first.metric_text
   end
 

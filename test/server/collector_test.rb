@@ -484,9 +484,9 @@ class PrometheusCollectorTest < Minitest::Test
     end
 
     result = collector.prometheus_metrics_text
-    assert(result.include?('puma_booted_workers_total{phase="0",service="service1"} 1'), "has booted workers")
-    assert(result.include?('puma_request_backlog_total{phase="0",service="service1"} 0'), "has total backlog")
-    assert(result.include?('puma_thread_pool_capacity_total{phase="0",service="service1"} 32'), "has pool capacity")
+    assert(result.include?('puma_booted_workers{phase="0",service="service1"} 1'), "has booted workers")
+    assert(result.include?('puma_request_backlog{phase="0",service="service1"} 0'), "has total backlog")
+    assert(result.include?('puma_thread_pool_capacity{phase="0",service="service1"} 32'), "has pool capacity")
     mock_puma.verify
   end
 
@@ -508,9 +508,9 @@ class PrometheusCollectorTest < Minitest::Test
     end
 
     result = collector.prometheus_metrics_text
-    assert(result.include?('puma_booted_workers_total{phase="0",service="service1",foo="bar"} 1'), "has booted workers")
-    assert(result.include?('puma_request_backlog_total{phase="0",service="service1",foo="bar"} 0'), "has total backlog")
-    assert(result.include?('puma_thread_pool_capacity_total{phase="0",service="service1",foo="bar"} 32'), "has pool capacity")
+    assert(result.include?('puma_booted_workers{phase="0",service="service1",foo="bar"} 1'), "has booted workers")
+    assert(result.include?('puma_request_backlog{phase="0",service="service1",foo="bar"} 0'), "has total backlog")
+    assert(result.include?('puma_thread_pool_capacity{phase="0",service="service1",foo="bar"} 32'), "has pool capacity")
     mock_puma.verify
   end
 
@@ -532,9 +532,9 @@ class PrometheusCollectorTest < Minitest::Test
     end
 
     result = collector.prometheus_metrics_text
-    assert(result.include?('resque_processed_jobs_total{service="service1"} 12'), "has processed jobs")
-    assert(result.include?('resque_failed_jobs_total{service="service1"} 2'), "has failed jobs")
-    assert(result.include?('resque_pending_jobs_total{service="service1"} 42'), "has pending jobs")
+    assert(result.include?('resque_processed_jobs{service="service1"} 12'), "has processed jobs")
+    assert(result.include?('resque_failed_jobs{service="service1"} 2'), "has failed jobs")
+    assert(result.include?('resque_pending_jobs{service="service1"} 42'), "has pending jobs")
     mock_resque.verify
   end
 end

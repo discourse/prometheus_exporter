@@ -425,7 +425,7 @@ This metric has a `job_name` label and a `queue` label.
 **PrometheusExporter::Instrumentation::SidekiqQueue**
 | Type  | Name                            | Description                  |
 | ---   | ---                             | ---                          |
-| Gauge | `sidekiq_queue_backlog_total`   | Size of the sidekiq queue    |
+| Gauge | `sidekiq_queue_backlog`         | Size of the sidekiq queue    |
 | Gauge | `sidekiq_queue_latency_seconds` | Latency of the sidekiq queue |
 
 Both metrics will have a `queue` label with the name of the queue.
@@ -529,15 +529,15 @@ end
 
 #### Metrics collected by Puma Instrumentation
 
-| Type  | Name                              | Description                                                 |
-| ---   | ---                               | ---                                                         |
-| Gauge | `puma_workers_total`              | Number of puma workers                                      |
-| Gauge | `puma_booted_workers_total`       | Number of puma workers booted                               |
-| Gauge | `puma_old_workers_total`          | Number of old puma workers                                  |
-| Gauge | `puma_running_threads_total`      | Number of puma threads currently running                    |
-| Gauge | `puma_request_backlog_total`      | Number of requests waiting to be processed by a puma thread |
-| Gauge | `puma_thread_pool_capacity_total` | Number of puma threads available at current scale           |
-| Gauge | `puma_max_threads_total`          | Number of puma threads at available at max scale            |
+| Type  | Name                        | Description                                                 |
+| ---   | ---                         | ---                                                         |
+| Gauge | `puma_workers`              | Number of puma workers                                      |
+| Gauge | `puma_booted_workers`       | Number of puma workers booted                               |
+| Gauge | `puma_old_workers`          | Number of old puma workers                                  |
+| Gauge | `puma_running_threads`      | Number of puma threads currently running                    |
+| Gauge | `puma_request_backlog`      | Number of requests waiting to be processed by a puma thread |
+| Gauge | `puma_thread_pool_capacity` | Number of puma threads available at current scale           |
+| Gauge | `puma_max_threads`          | Number of puma threads at available at max scale            |
 
 All metrics may have a `phase` label and all custom labels provided with the `labels` option.
 
@@ -554,14 +554,14 @@ PrometheusExporter::Instrumentation::Resque.start
 
 #### Metrics collected by Resque Instrumentation
 
-| Type  | Name                   | Description                            |
-| ---   | ---                    | ---                                    |
-| Gauge | `processed_jobs_total` | Total number of processed Resque jobs  |
-| Gauge | `failed_jobs_total`    | Total number of failed Resque jobs     |
-| Gauge | `pending_jobs_total`   | Total number of pending Resque jobs    |
-| Gauge | `queues_total`         | Total number of Resque queues          |
-| Gauge | `workers_total`        | Total number of Resque workers running |
-| Gauge | `working_total`        | Total number of Resque workers working |
+| Type  | Name             | Description                            |
+| ---   | ---              | ---                                    |
+| Gauge | `processed_jobs` | Total number of processed Resque jobs  |
+| Gauge | `failed_jobs`    | Total number of failed Resque jobs     |
+| Gauge | `pending_jobs`   | Total number of pending Resque jobs    |
+| Gauge | `queues`         | Total number of Resque queues          |
+| Gauge | `workers`        | Total number of Resque workers running |
+| Gauge | `working`        | Total number of Resque workers working |
 
 ### Unicorn process metrics
 
@@ -580,11 +580,11 @@ Note: You must install the `raindrops` gem in your `Gemfile` or locally.
 
 #### Metrics collected by Unicorn Instrumentation
 
-| Type  | Name                            | Description                                                    |
-| ---   | ---                             | ---                                                            |
-| Gauge | `unicorn_workers_total`         | Number of unicorn workers                                      |
-| Gauge | `unicorn_active_workers_total`  | Number of active unicorn workers                               |
-| Gauge | `unicorn_request_backlog_total` | Number of requests waiting to be processed by a unicorn worker |
+| Type  | Name                      | Description                                                    |
+| ---   | ---                       | ---                                                            |
+| Gauge | `unicorn_workers`         | Number of unicorn workers                                      |
+| Gauge | `unicorn_active_workers`  | Number of active unicorn workers                               |
+| Gauge | `unicorn_request_backlog` | Number of requests waiting to be processed by a unicorn worker |
 
 ### Custom type collectors
 
