@@ -5,6 +5,10 @@ module PrometheusExporter::Metric
     attr_reader :data
 
     def initialize(name, help)
+      if name.end_with?("_total")
+        raise ArgumentError, "The metric name of gauge must not have _total suffix. Given: #{name}"
+      end
+
       super
       reset!
     end

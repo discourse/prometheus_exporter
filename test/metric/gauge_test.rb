@@ -9,6 +9,10 @@ module PrometheusExporter::Metric
       Gauge.new("a_gauge", "my amazing gauge")
     end
 
+    let :gauge_with_total_suffix do
+      Gauge.new("a_gauge_total", "my amazing gauge")
+    end
+
     before do
       Base.default_prefix = ''
     end
@@ -148,6 +152,12 @@ module PrometheusExporter::Metric
       gauge.observe(10, foo: "bar")
 
       assert_equal(gauge.to_h, { sam: "ham" } => 5, { foo: "bar" } => 10)
+    end
+
+    it "should not allow to create new instance with _total suffix" do
+      assert_raises ArgumentError do
+        gauge_with_total_suffix
+      end
     end
   end
 end
