@@ -40,7 +40,7 @@ module PrometheusExporter::Instrumentation
       ::Sidekiq::Queue.all.map do |queue|
         next unless queues.include? queue.name
         {
-          backlog_total: queue.size,
+          backlog: queue.size,
           latency_seconds: queue.latency.to_i,
           labels: { queue: queue.name }
         }
