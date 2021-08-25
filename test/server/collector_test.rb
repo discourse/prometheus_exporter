@@ -537,4 +537,31 @@ class PrometheusCollectorTest < Minitest::Test
     assert(result.include?('resque_pending_jobs{service="service1"} 42'), "has pending jobs")
     mock_resque.verify
   end
+
+  def test_it_can_collect_unicorn_metrics
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector, custom_labels: { service: 'service1' })
+
+    mock_unicorn_listener_address_stats = Minitest::Mock.new
+    mock_unicorn_listener_address_stats.expect(:active, 2)
+    mock_unicorn_listener_address_stats.expect(:queued, 10)
+
+    instrument = PrometheusExporter::Instrumentation::Unicorn.new(
+      pid_file: "/tmp/foo.pid",
+      listener_address: "localhost:22222",
+    )
+
+    instrument.stub(:worker_process_count, 4) do
+      instrument.stub(:listener_address_stats, mock_unicorn_listener_address_stats) do
+        metric = instrument.collect
+        client.send_json metric
+      end
+    end
+
+    result = collector.prometheus_metrics_text
+    assert(result.include?('unicorn_workers{service="service1"} 4'), "has the number of workers")
+    assert(result.include?('unicorn_active_workers{service="service1"} 2'), "has number of active workers")
+    assert(result.include?('unicorn_request_backlog{service="service1"} 10'), "has number of request baklogs")
+    mock_unicorn_listener_address_stats.verify
+  end
 end
