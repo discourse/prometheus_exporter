@@ -561,14 +561,14 @@ PrometheusExporter::Instrumentation::Resque.start
 
 #### Metrics collected by Resque Instrumentation
 
-| Type  | Name             | Description                            |
-| ---   | ---              | ---                                    |
-| Gauge | `processed_jobs` | Total number of processed Resque jobs  |
-| Gauge | `failed_jobs`    | Total number of failed Resque jobs     |
-| Gauge | `pending_jobs`   | Total number of pending Resque jobs    |
-| Gauge | `queues`         | Total number of Resque queues          |
-| Gauge | `workers`        | Total number of Resque workers running |
-| Gauge | `working`        | Total number of Resque workers working |
+| Type  | Name                    | Description                            |
+| ---   | ---                     | ---                                    |
+| Gauge | `resque_processed_jobs` | Total number of processed Resque jobs  |
+| Gauge | `resque_failed_jobs`    | Total number of failed Resque jobs     |
+| Gauge | `resque_pending_jobs`   | Total number of pending Resque jobs    |
+| Gauge | `resque_queues`         | Total number of Resque queues          |
+| Gauge | `resque_workers`        | Total number of Resque workers running |
+| Gauge | `resque_working`        | Total number of Resque workers working |
 
 ### Unicorn process metrics
 
