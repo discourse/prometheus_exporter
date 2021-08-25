@@ -320,6 +320,55 @@ class PrometheusCollectorTest < Minitest::Test
     assert(result.include?('sidekiq_jobs_total{job_name="Sidekiq::Extensions::DelayedClass",queue="default",service="service1"} 1'), "has sidekiq delayed class")
   end
 
+  def test_it_can_collect_sidekiq_queue_metrics
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector, custom_labels: { service: 'service1' })
+    instrument = PrometheusExporter::Instrumentation::SidekiqQueue.new
+
+    mocks_for_sidekiq_que_all = 2.times.map do |i|
+      mock = Minitest::Mock.new
+      mock.expect(
+        :name,
+        "que_#{i}",
+      )
+      mock.expect(
+        :size,
+        10 + i,
+      )
+      mock.expect(
+        :latency,
+        1.to_f + i,
+      )
+      mock.expect(
+        :name,
+        "que_#{i}",
+      )
+    end
+
+    mock_sidekiq_que = Minitest::Mock.new
+    mock_sidekiq_que.expect(
+      :all,
+      mocks_for_sidekiq_que_all,
+    )
+
+    Object.stub_const(:Sidekiq, Module) do
+      ::Sidekiq.stub_const(:Queue, mock_sidekiq_que) do
+        instrument.stub(:collect_current_process_queues, ["que_0", "que_1"]) do
+          metric = instrument.collect
+          client.send_json metric
+        end
+      end
+    end
+
+    result = collector.prometheus_metrics_text
+    assert(result.include?('sidekiq_queue_backlog{queue="que_0",service="service1"} 10'), "has number of backlog")
+    assert(result.include?('sidekiq_queue_backlog{queue="que_1",service="service1"} 11'), "has number of backlog")
+    assert(result.include?('sidekiq_queue_latency_seconds{queue="que_0",service="service1"} 1'), "has latency")
+    assert(result.include?('sidekiq_queue_latency_seconds{queue="que_1",service="service1"} 2'), "has latency")
+    mocks_for_sidekiq_que_all.each { |m| m.verify }
+    mock_sidekiq_que.verify
+  end
+
   def test_it_can_collect_shoryuken_metrics_with_custom_lables
     collector = PrometheusExporter::Server::Collector.new
     client = PipedClient.new(collector, custom_labels: { service: 'service1' })
