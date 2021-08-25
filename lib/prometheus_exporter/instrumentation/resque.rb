@@ -29,12 +29,12 @@ module PrometheusExporter::Instrumentation
     def collect_resque_stats(metric)
       info = ::Resque.info
 
-      metric[:processed_jobs_total] = info[:processed]
-      metric[:failed_jobs_total] = info[:failed]
-      metric[:pending_jobs_total] = info[:pending]
-      metric[:queues_total] = info[:queues]
-      metric[:worker_total] = info[:workers]
-      metric[:working_total] = info[:working]
+      metric[:processed_jobs] = info[:processed]
+      metric[:failed_jobs] = info[:failed]
+      metric[:pending_jobs] = info[:pending]
+      metric[:queues] = info[:queues]
+      metric[:worker] = info[:workers]
+      metric[:working] = info[:working]
     end
   end
 end

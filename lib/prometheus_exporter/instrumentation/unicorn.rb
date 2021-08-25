@@ -42,9 +42,9 @@ module PrometheusExporter::Instrumentation
     def collect_unicorn_stats(metric)
       stats = listener_address_stats
 
-      metric[:active_workers_total] = stats.active
-      metric[:request_backlog_total] = stats.queued
-      metric[:workers_total] = worker_process_count
+      metric[:active_workers] = stats.active
+      metric[:request_backlog] = stats.queued
+      metric[:workers] = worker_process_count
     end
 
     private
