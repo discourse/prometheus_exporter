@@ -11,7 +11,7 @@ module PrometheusExporter::Instrumentation
           begin
             client.send_json(sidekiq_queue_collector.collect)
           rescue StandardError => e
-            STDERR.puts("Prometheus Exporter Failed To Collect Sidekiq Queue metrics #{e}")
+            client.logger.error("Prometheus Exporter Failed To Collect Sidekiq Queue metrics #{e}")
           ensure
             sleep frequency
           end

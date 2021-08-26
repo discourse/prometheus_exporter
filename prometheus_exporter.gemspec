@@ -42,5 +42,5 @@ Gem::Specification.new do |spec|
   if !RUBY_ENGINE == 'jruby'
     spec.add_development_dependency "raindrops", "~> 0.19"
   end
-  spec.required_ruby_version = '>= 2.5.0'
+  spec.required_ruby_version = '>= 2.6.0'
 end

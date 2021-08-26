@@ -463,11 +463,11 @@ class PrometheusCollectorTest < Minitest::Test
 
     result = collector.prometheus_metrics_text
 
-    assert(result.include?("delayed_failed_jobs_total{job_name=\"Object\",queue_name=\"my_queue\"} 1"), "has failed job")
-    assert(result.include?("delayed_jobs_total{job_name=\"Class\",queue_name=\"my_queue\"} 1"), "has working job")
-    assert(result.include?("delayed_job_duration_seconds{job_name=\"Class\",queue_name=\"my_queue\"}"), "has duration")
-    assert(result.include?("delayed_jobs_enqueued{job_name=\"Class\",queue_name=\"my_queue\"} 10"), "has enqueued count")
-    assert(result.include?("delayed_jobs_pending{job_name=\"Class\",queue_name=\"my_queue\"} 0"), "has pending count")
+    assert(result.include?("delayed_failed_jobs_total{queue_name=\"my_queue\",job_name=\"Object\"} 1"), "has failed job")
+    assert(result.include?("delayed_jobs_total{queue_name=\"my_queue\",job_name=\"Class\"} 1"), "has working job")
+    assert(result.include?("delayed_job_duration_seconds{queue_name=\"my_queue\",job_name=\"Class\"}"), "has duration")
+    assert(result.include?("delayed_jobs_enqueued{queue_name=\"my_queue\"} 10"), "has enqueued count")
+    assert(result.include?("delayed_jobs_pending{queue_name=\"my_queue\"} 0"), "has pending count")
     job.verify
     failed_job.verify
   end
@@ -501,11 +501,11 @@ class PrometheusCollectorTest < Minitest::Test
 
     result = collector.prometheus_metrics_text
 
-    assert(result.include?('delayed_failed_jobs_total{job_name="Object",queue_name="my_queue",service="service1"} 1'), "has failed job")
-    assert(result.include?('delayed_jobs_total{job_name="Class",queue_name="my_queue",service="service1"} 1'), "has working job")
-    assert(result.include?('delayed_job_duration_seconds{job_name="Class",queue_name="my_queue",service="service1"}'), "has duration")
-    assert(result.include?('delayed_jobs_enqueued{job_name="Class",queue_name="my_queue",service="service1"} 10'), "has enqueued count")
-    assert(result.include?('delayed_jobs_pending{job_name="Class",queue_name="my_queue",service="service1"} 0'), "has pending count")
+    assert(result.include?('delayed_failed_jobs_total{queue_name="my_queue",service="service1",job_name="Object"} 1'), "has failed job")
+    assert(result.include?('delayed_jobs_total{queue_name="my_queue",service="service1",job_name="Class"} 1'), "has working job")
+    assert(result.include?('delayed_job_duration_seconds{queue_name="my_queue",service="service1",job_name="Class"}'), "has duration")
+    assert(result.include?('delayed_jobs_enqueued{queue_name="my_queue",service="service1"} 10'), "has enqueued count")
+    assert(result.include?('delayed_jobs_pending{queue_name="my_queue",service="service1"} 0'), "has pending count")
     job.verify
     failed_job.verify
   end
@@ -534,5 +534,53 @@ class PrometheusCollectorTest < Minitest::Test
     assert(result.include?('puma_request_backlog_total{phase="0",service="service1"} 0'), "has total backlog")
     assert(result.include?('puma_thread_pool_capacity_total{phase="0",service="service1"} 32'), "has pool capacity")
     mock_puma.verify
+  end
+
+  def test_it_can_collect_puma_metrics_with_metric_labels
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector, custom_labels: { service: 'service1' })
+
+    mock_puma = Minitest::Mock.new
+    mock_puma.expect(
+      :stats,
+      '{ "workers": 1, "phase": 0, "booted_workers": 1, "old_workers": 0, "worker_status": [{ "pid": 87819, "index": 0, "phase": 0, "booted": true, "last_checkin": "2018-10-16T11:50:31Z", "last_status": { "backlog":0, "running":8, "pool_capacity":32, "max_threads": 32 } }] }'
+    )
+
+    instrument = PrometheusExporter::Instrumentation::Puma.new({ foo: 'bar' })
+
+    Object.stub_const(:Puma, mock_puma) do
+      metric = instrument.collect
+      client.send_json metric
+    end
+
+    result = collector.prometheus_metrics_text
+    assert(result.include?('puma_booted_workers_total{phase="0",service="service1",foo="bar"} 1'), "has booted workers")
+    assert(result.include?('puma_request_backlog_total{phase="0",service="service1",foo="bar"} 0'), "has total backlog")
+    assert(result.include?('puma_thread_pool_capacity_total{phase="0",service="service1",foo="bar"} 32'), "has pool capacity")
+    mock_puma.verify
+  end
+
+  def test_it_can_collect_resque_metrics
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector, custom_labels: { service: 'service1' })
+
+    mock_resque = Minitest::Mock.new
+    mock_resque.expect(
+      :info,
+      { processed: 12, failed: 2, pending: 42, queues: 2, workers: 1, working: 1 }
+    )
+
+    instrument = PrometheusExporter::Instrumentation::Resque.new
+
+    Object.stub_const(:Resque, mock_resque) do
+      metric = instrument.collect
+      client.send_json metric
+    end
+
+    result = collector.prometheus_metrics_text
+    assert(result.include?('resque_processed_jobs_total{service="service1"} 12'), "has processed jobs")
+    assert(result.include?('resque_failed_jobs_total{service="service1"} 2'), "has failed jobs")
+    assert(result.include?('resque_pending_jobs_total{service="service1"} 42'), "has pending jobs")
+    mock_resque.verify
   end
 end

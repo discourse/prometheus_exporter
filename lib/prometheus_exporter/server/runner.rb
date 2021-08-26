@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'prometheus_exporter/client'
+require_relative '../client'
 require_relative '../instrumentation/unicorn'
 
 module PrometheusExporter::Server

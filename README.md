@@ -19,6 +19,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
     * [Hutch metrics](#hutch-message-processing-tracer)
   * [Puma metrics](#puma-metrics)
   * [Unicorn metrics](#unicorn-process-metrics)
+  * [Resque metrics](#resque-metrics)
   * [Custom type collectors](#custom-type-collectors)
   * [Multi process mode with custom collector](#multi-process-mode-with-custom-collector)
   * [GraphQL support](#graphql-support)
@@ -27,6 +28,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
   * [Client default host](#client-default-host)
 * [Transport concerns](#transport-concerns)
 * [JSON generation and parsing](#json-generation-and-parsing)
+* [Logging](#logging)
 * [Contributing](#contributing)
 * [License](#license)
 * [Code of Conduct](#code-of-conduct)
@@ -537,7 +539,29 @@ end
 | Gauge | `puma_thread_pool_capacity_total` | Number of puma threads available at current scale           |
 | Gauge | `puma_max_threads_total`          | Number of puma threads at available at max scale            |
 
-All metrics may have a `phase` label.
+All metrics may have a `phase` label and all custom labels provided with the `labels` option.
+
+### Resque metrics
+
+The resque metrics are using the `Resque.info` method, which queries Redis internally. To start monitoring your resque
+installation, you'll need to start the instrumentation:
+
+```ruby
+# e.g. config/initializers/resque.rb
+require 'prometheus_exporter/instrumentation'
+PrometheusExporter::Instrumentation::Resque.start
+```
+
+#### Metrics collected by Resque Instrumentation
+
+| Type  | Name                   | Description                            |
+| ---   | ---                    | ---                                    |
+| Gauge | `processed_jobs_total` | Total number of processed Resque jobs  |
+| Gauge | `failed_jobs_total`    | Total number of failed Resque jobs     |
+| Gauge | `pending_jobs_total`   | Total number of pending Resque jobs    |
+| Gauge | `queues_total`         | Total number of Resque queues          |
+| Gauge | `workers_total`        | Total number of Resque workers running |
+| Gauge | `working_total`        | Total number of Resque workers working |
 
 ### Unicorn process metrics
 
@@ -826,6 +850,19 @@ The `/bench` directory has simple benchmark, which is able to send through 10k m
 The `PrometheusExporter::Client` class has the method `#send-json`. This method, by default, will call `JSON.dump` on the Object it recieves. You may opt in for `oj` mode where it can use the faster `Oj.dump(obj, mode: :compat)` for JSON serialization. But be warned that if you have custom objects that implement own `to_json` methods this may not work as expected. You can opt for oj serialization with `json_serializer: :oj`.
 
 When `PrometheusExporter::Server::Collector` parses your JSON, by default it will use the faster Oj deserializer if available. This happens cause it only expects a simple Hash out of the box. You can opt in for the default JSON deserializer with `json_serializer: :json`.
+
+## Logging
+
+`PrometheusExporter::Client.default` will export to `STDERR`. To change this, you can pass your own logger:
+```ruby
+PrometheusExporter::Client.new(logger: Rails.logger)
+PrometheusExporter::Client.new(logger: Logger.new(STDOUT))
+```
+
+You can also pass a log level (default is [`Logger::WARN`](https://ruby-doc.org/stdlib-3.0.1/libdoc/logger/rdoc/Logger.html)):
+```ruby
+PrometheusExporter::Client.new(log_level: Logger::DEBUG)
+```
 
 ## Contributing
 
