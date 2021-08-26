@@ -48,6 +48,23 @@ module PrometheusExporter::Metric
       assert_equal(counter.to_prometheus_text, text)
     end
 
+    it "supports custom prefix" do
+      Base.default_prefix = 'notcustom_'
+      cp = Counter.new("a_counter", "my amazing counter", prefix: 'custom_prefix_')
+
+      cp.observe(2, baz: "bar")
+      cp.observe(223)
+
+      text = <<~TEXT
+        # HELP custom_prefix_a_counter my amazing counter
+        # TYPE custom_prefix_a_counter counter
+        custom_prefix_a_counter{baz="bar"} 2
+        custom_prefix_a_counter 223
+      TEXT
+
+      assert_equal(cp.to_prometheus_text, text)
+    end
+
     it "supports reset! for Gauge" do
 
       gauge = Gauge.new("test", "test")

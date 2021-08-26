@@ -9,7 +9,7 @@ module PrometheusExporter::Metric
     attr_reader :estimators, :count, :total
 
     def initialize(name, help, opts = {})
-      super(name, help)
+      super
       reset!
       @quantiles = opts[:quantiles] || DEFAULT_QUANTILES
     end

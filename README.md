@@ -754,6 +754,30 @@ ruby_web_requests{hostname="app-server-01",route="test/route"} 1
 ruby_web_requests{hostname="app-server-01"} 1
 ```
 
+It is also possible to add a custom prefix to each counter instance.
+Same as above but with a custom prefix overriding the global prefix.
+```ruby
+# Specify global prefix for metric names
+PrometheusExporter::Metric::Base.default_prefix = "ruby"
+
+# Specify default labels for metrics
+PrometheusExporter::Metric::Base.default_labels = { "hostname" => "app-server-01" }
+
+# Counter instance with custom prefix for this metric
+counter = PrometheusExporter::Metric::Counter.new("web_requests", "number of web requests", "my_custom_prefix")
+
+counter.observe(1, route: 'test/route')
+counter.observe
+```
+
+This will output these metrics
+```
+# HELP my_custom_prefix_web_requests number of web requests
+# TYPE my_custom_prefix_web_requests counter
+my_custom_prefix_web_requests{hostname="app-server-01",route="test/route"} 1
+my_custom_prefix_web_requests{hostname="app-server-01"} 1
+```
+
 ### Exporter Process Configuration
 
 When running the process for `prometheus_exporter` using `bin/prometheus_exporter`, there are several configurations that
