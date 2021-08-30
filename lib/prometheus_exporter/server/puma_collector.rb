@@ -4,13 +4,13 @@ module PrometheusExporter::Server
   class PumaCollector < TypeCollector
     MAX_PUMA_METRIC_AGE = 30
     PUMA_GAUGES = {
-      workers_total: "Number of puma workers.",
-      booted_workers_total: "Number of puma workers booted.",
-      old_workers_total: "Number of old puma workers.",
-      running_threads_total: "Number of puma threads currently running.",
-      request_backlog_total: "Number of requests waiting to be processed by a puma thread.",
-      thread_pool_capacity_total: "Number of puma threads available at current scale.",
-      max_threads_total: "Number of puma threads at available at max scale.",
+      workers: "Number of puma workers.",
+      booted_workers: "Number of puma workers booted.",
+      old_workers: "Number of old puma workers.",
+      running_threads: "Number of puma threads currently running.",
+      request_backlog: "Number of requests waiting to be processed by a puma thread.",
+      thread_pool_capacity: "Number of puma threads available at current scale.",
+      max_threads: "Number of puma threads at available at max scale.",
     }
 
     def initialize

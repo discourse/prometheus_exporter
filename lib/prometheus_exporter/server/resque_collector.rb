@@ -4,12 +4,12 @@ module PrometheusExporter::Server
   class ResqueCollector < TypeCollector
     MAX_RESQUE_METRIC_AGE = 30
     RESQUE_GAUGES = {
-      processed_jobs_total: "Total number of processed Resque jobs.",
-      failed_jobs_total: "Total number of failed Resque jobs.",
-      pending_jobs_total: "Total number of pending Resque jobs.",
-      queues_total: "Total number of Resque queues.",
-      workers_total: "Total number of Resque workers running.",
-      working_total: "Total number of Resque workers working."
+      processed_jobs: "Total number of processed Resque jobs.",
+      failed_jobs: "Total number of failed Resque jobs.",
+      pending_jobs: "Total number of pending Resque jobs.",
+      queues: "Total number of Resque queues.",
+      workers: "Total number of Resque workers running.",
+      working: "Total number of Resque workers working."
     }
 
     def initialize

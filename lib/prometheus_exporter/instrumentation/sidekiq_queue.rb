@@ -27,24 +27,30 @@ module PrometheusExporter::Instrumentation
     end
 
     def collect_queue_stats
-      hostname = Socket.gethostname
+      queues = collect_current_process_queues
+
+      ::Sidekiq::Queue.all.map do |queue|
+        next unless queues.include? queue.name
+        {
+          backlog: queue.size,
+          latency_seconds: queue.latency.to_i,
+          labels: { queue: queue.name }
+        }
+      end.compact
+    end
+
+    private
+
+    def collect_current_process_queues
       pid = ::Process.pid
       ps = ::Sidekiq::ProcessSet.new
+      hostname = Socket.gethostname
 
       process = ps.find do |sp|
         sp['hostname'] == hostname && sp['pid'] == pid
       end
 
-      queues = process.nil? ? [] : process['queues']
-
-      ::Sidekiq::Queue.all.map do |queue|
-        next unless queues.include? queue.name
-        {
-          backlog_total: queue.size,
-          latency_seconds: queue.latency.to_i,
-          labels: { queue: queue.name }
-        }
-      end.compact
+      process.nil? ? [] : process['queues']
     end
   end
 end

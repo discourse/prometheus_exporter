@@ -1,3 +1,7 @@
+1.0.0 - dd-mm-yyyy
+
+- Breaking change: rename metrics to match prometheus official naming conventions (See https://prometheus.io/docs/practices/naming/#metric-names)
+
 0.8.1 - 04-08-2021
 
 - FEATURE: swap from hardcoded STDERR to logger pattern (see README for details)

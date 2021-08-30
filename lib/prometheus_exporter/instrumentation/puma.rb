@@ -46,9 +46,9 @@ module PrometheusExporter::Instrumentation
 
       if stats.key?("workers")
         metric[:phase] = stats["phase"]
-        metric[:workers_total] = stats["workers"]
-        metric[:booted_workers_total] = stats["booted_workers"]
-        metric[:old_workers_total] = stats["old_workers"]
+        metric[:workers] = stats["workers"]
+        metric[:booted_workers] = stats["booted_workers"]
+        metric[:old_workers] = stats["old_workers"]
 
         stats["worker_status"].each do |worker|
           next if worker["last_status"].empty?
@@ -62,15 +62,15 @@ module PrometheusExporter::Instrumentation
     private
 
     def collect_worker_status(metric, status)
-      metric[:request_backlog_total] ||= 0
-      metric[:running_threads_total] ||= 0
-      metric[:thread_pool_capacity_total] ||= 0
-      metric[:max_threads_total] ||= 0
+      metric[:request_backlog] ||= 0
+      metric[:running_threads] ||= 0
+      metric[:thread_pool_capacity] ||= 0
+      metric[:max_threads] ||= 0
 
-      metric[:request_backlog_total] += status["backlog"]
-      metric[:running_threads_total] += status["running"]
-      metric[:thread_pool_capacity_total] += status["pool_capacity"]
-      metric[:max_threads_total] += status["max_threads"]
+      metric[:request_backlog] += status["backlog"]
+      metric[:running_threads] += status["running"]
+      metric[:thread_pool_capacity] += status["pool_capacity"]
+      metric[:max_threads] += status["max_threads"]
     end
   end
 end
