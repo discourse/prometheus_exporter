@@ -88,7 +88,7 @@ module PrometheusExporter::Server
           @collector.process(block)
         rescue => e
           if @verbose
-            logger.error "\n\n#{e.inspect}\n#{e.backtrace}\n\n"
+            @logger.error "\n\n#{e.inspect}\n#{e.backtrace}\n\n"
           end
           @bad_metrics_total.observe
           res.body = "Bad Metrics #{e}"
@@ -106,7 +106,7 @@ module PrometheusExporter::Server
         begin
           @server.start
         rescue => e
-          logger.error "Failed to start prometheus collector web on port #{@port}: #{e}"
+          @logger.error "Failed to start prometheus collector web on port #{@port}: #{e}"
         end
       end
     end
@@ -123,7 +123,7 @@ module PrometheusExporter::Server
         end
       rescue Timeout::Error
         # we timed out ... bummer
-        logger.error "Generating Prometheus metrics text timed out"
+        @logger.error "Generating Prometheus metrics text timed out"
       end
 
       metrics = []
