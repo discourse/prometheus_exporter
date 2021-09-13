@@ -6,6 +6,10 @@ require 'prometheus_exporter/server'
 require 'prometheus_exporter/instrumentation'
 
 class PrometheusWebCollectorTest < Minitest::Test
+  def setup
+    PrometheusExporter::Metric::Base.default_prefix = ''
+  end
+
   def collector
     @collector ||= PrometheusExporter::Server::WebCollector.new
   end
