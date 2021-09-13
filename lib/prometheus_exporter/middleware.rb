@@ -9,6 +9,7 @@ class PrometheusExporter::Middleware
   def initialize(app, config = { instrument: true, client: nil })
     @app = app
     @client = config[:client] || PrometheusExporter::Client.default
+    @mode = config.fetch(:mode, :summary)
 
     if config[:instrument]
       if defined? Redis::Client
@@ -41,7 +42,8 @@ class PrometheusExporter::Middleware
       type: "web",
       timings: info,
       queue_time: queue_time,
-      default_labels: default_labels(env, result)
+      default_labels: default_labels(env, result),
+      options: { mode: @mode }
     }
     labels = custom_labels(env)
     if labels

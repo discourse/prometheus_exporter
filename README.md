@@ -227,6 +227,16 @@ class MyMiddleware < PrometheusExporter::Middleware
 end
 ```
 
+If you need to aggregate web metrics, you can switch from a summary to a histogram:
+
+```ruby
+  Rails.application.middleware.unshift PrometheusExporter::Middleware, mode: :histogram
+```
+
+In histogram mode, the same metrics will be collected but will be reported as histograms rather than summaries. This sacrifices some precision but allows aggregating web metrics across actions and nodes using [`histogram_quantile`].
+
+[`histogram_quantile`]: https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile
+
 If you're not using Rails like framework, you can extend `PrometheusExporter::Middleware#default_labels` in a way to add more relevant labels.
 For example you can mimic [prometheus-client](https://github.com/prometheus/client_ruby) labels with code like this:
 ```ruby
