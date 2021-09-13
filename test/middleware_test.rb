@@ -31,7 +31,7 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
     @now = Process.clock_gettime(Process::CLOCK_REALTIME)
   end
 
-  def configure_middleware(overrides={})
+  def configure_middleware(overrides = {})
     config = { client: client, instrument: true }.merge(overrides)
     @app = PrometheusExporter::Middleware.new(inner_app, config)
     def @app.request_start
