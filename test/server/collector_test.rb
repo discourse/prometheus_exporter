@@ -564,7 +564,6 @@ class PrometheusCollectorTest < Minitest::Test
     job.verify
   end
 
-
   require 'minitest/stub_const'
 
   def test_it_can_collect_puma_metrics
