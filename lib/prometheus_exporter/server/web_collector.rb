@@ -4,7 +4,6 @@ module PrometheusExporter::Server
   class WebCollector < TypeCollector
     def initialize
       @metrics = {}
-      @aggregation = PrometheusExporter::Metric::Summary
       @http_requests_total = nil
       @http_duration_seconds = nil
       @http_redis_duration_seconds = nil
@@ -17,7 +16,6 @@ module PrometheusExporter::Server
     end
 
     def collect(obj)
-      parse_options(obj)
       ensure_metrics
       observe(obj)
     end
@@ -35,22 +33,22 @@ module PrometheusExporter::Server
           "Total HTTP requests from web app."
         )
 
-        @metrics["http_duration_seconds"] = @http_duration_seconds = @aggregation.new(
+        @metrics["http_duration_seconds"] = @http_duration_seconds = PrometheusExporter::Metric::Base.default_aggregation.new(
           "http_duration_seconds",
           "Time spent in HTTP reqs in seconds."
         )
 
-        @metrics["http_redis_duration_seconds"] = @http_redis_duration_seconds = @aggregation.new(
+        @metrics["http_redis_duration_seconds"] = @http_redis_duration_seconds = PrometheusExporter::Metric::Base.default_aggregation.new(
           "http_redis_duration_seconds",
           "Time spent in HTTP reqs in Redis, in seconds."
         )
 
-        @metrics["http_sql_duration_seconds"] = @http_sql_duration_seconds = @aggregation.new(
+        @metrics["http_sql_duration_seconds"] = @http_sql_duration_seconds = PrometheusExporter::Metric::Base.default_aggregation.new(
           "http_sql_duration_seconds",
           "Time spent in HTTP reqs in SQL in seconds."
         )
 
-        @metrics["http_queue_duration_seconds"] = @http_queue_duration_seconds = @aggregation.new(
+        @metrics["http_queue_duration_seconds"] = @http_queue_duration_seconds = PrometheusExporter::Metric::Base.default_aggregation.new(
           "http_queue_duration_seconds",
           "Time spent queueing the request in load balancer in seconds."
         )
@@ -75,12 +73,6 @@ module PrometheusExporter::Server
       end
       if queue_time = obj["queue_time"]
         @http_queue_duration_seconds.observe(queue_time, labels)
-      end
-    end
-
-    def parse_options(obj)
-      if obj.key?('options') && obj['options']['mode'] == 'histogram'
-        @aggregation = PrometheusExporter::Metric::Histogram
       end
     end
   end

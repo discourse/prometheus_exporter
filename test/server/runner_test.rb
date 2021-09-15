@@ -41,6 +41,10 @@ class PrometheusRunnerTest < Minitest::Test
     end
   end
 
+  def teardown
+    PrometheusExporter::Metric::Base.default_aggregation = nil
+  end
+
   def test_runner_defaults
     runner = PrometheusExporter::Server::Runner.new
 
@@ -65,7 +69,8 @@ class PrometheusRunnerTest < Minitest::Test
       verbose: true,
       label: { environment: 'integration' },
       auth: 'my_htpasswd_file',
-      realm: 'test realm'
+      realm: 'test realm',
+      histogram: true
     )
 
     assert_equal(runner.prefix, 'new_')
@@ -77,6 +82,7 @@ class PrometheusRunnerTest < Minitest::Test
     assert_equal(runner.label, { environment: 'integration' })
     assert_equal(runner.auth, 'my_htpasswd_file')
     assert_equal(runner.realm, 'test realm')
+    assert_equal(runner.histogram, true)
 
     reset_base_metric_label
   end
@@ -131,6 +137,16 @@ class PrometheusRunnerTest < Minitest::Test
 
     assert_equal(custom_collectors.size, 1)
     assert_instance_of(TypeCollectorMock, custom_collectors.first)
+  end
+
+  def test_runner_histogram_mode
+    runner = PrometheusExporter::Server::Runner.new(
+      server_class: MockerWebServer,
+      histogram: true
+    )
+    runner.start
+
+    assert_equal(PrometheusExporter::Metric::Base.default_aggregation, PrometheusExporter::Metric::Histogram)
   end
 
   def reset_base_metric_label

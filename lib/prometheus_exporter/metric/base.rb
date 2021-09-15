@@ -5,6 +5,7 @@ module PrometheusExporter::Metric
 
     @default_prefix = nil if !defined?(@default_prefix)
     @default_labels = nil if !defined?(@default_labels)
+    @default_aggregation = nil if !defined?(@default_aggregation)
 
     # prefix applied to all metrics
     def self.default_prefix=(name)
@@ -21,6 +22,14 @@ module PrometheusExporter::Metric
 
     def self.default_labels
       @default_labels || {}
+    end
+
+    def self.default_aggregation=(aggregation)
+      @default_aggregation = aggregation
+    end
+
+    def self.default_aggregation
+      @default_aggregation ||= Summary
     end
 
     attr_accessor :help, :name, :data

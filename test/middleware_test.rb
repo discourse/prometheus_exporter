@@ -89,13 +89,4 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
     assert_invalid_headers_response
   end
 
-  def test_collecting_metrics_in_histogram_mode
-    configure_middleware(mode: :histogram)
-    get '/'
-    assert last_response.ok?
-    refute_nil client.last_send
-    refute_nil client.last_send[:options]
-    assert_equal :histogram, client.last_send[:options][:mode]
-  end
-
 end

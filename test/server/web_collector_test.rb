@@ -8,6 +8,11 @@ require 'prometheus_exporter/instrumentation'
 class PrometheusWebCollectorTest < Minitest::Test
   def setup
     PrometheusExporter::Metric::Base.default_prefix = ''
+    PrometheusExporter::Metric::Base.default_aggregation = nil
+  end
+
+  def teardown
+    PrometheusExporter::Metric::Base.default_aggregation = nil
   end
 
   def collector
@@ -77,6 +82,8 @@ class PrometheusWebCollectorTest < Minitest::Test
   end
 
   def test_collecting_metrics_in_histogram_mode
+    PrometheusExporter::Metric::Base.default_aggregation = PrometheusExporter::Metric::Histogram
+
     collector.collect(
       'type' => 'web',
       "timings" => {
@@ -90,9 +97,6 @@ class PrometheusWebCollectorTest < Minitest::Test
         },
         "queue" => 0.03,
         "total_duration" => 1.0
-      },
-      'options' => {
-        'mode' => 'histogram',
       },
       'default_labels' => {
         'controller' => 'home',
