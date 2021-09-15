@@ -17,6 +17,7 @@ module PrometheusExporter::Metric
 
     after do
       Base.default_prefix = ''
+      Base.default_labels = {}
       Base.default_aggregation = nil
     end
 
