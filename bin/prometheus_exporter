@@ -50,6 +50,9 @@ def run
     opt.on('-v', '--verbose') do |o|
       options[:verbose] = true
     end
+    opt.on('-g', '--histogram', "Use histogram instead of summary for aggregations") do |o|
+      options[:histogram] = true
+    end
     opt.on('--auth FILE', String, "(optional) enable basic authentication using a htpasswd FILE") do |o|
       options[:auth] = o
     end

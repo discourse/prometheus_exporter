@@ -33,22 +33,22 @@ module PrometheusExporter::Server
           "Total HTTP requests from web app."
         )
 
-        @metrics["http_duration_seconds"] = @http_duration_seconds = PrometheusExporter::Metric::Summary.new(
+        @metrics["http_duration_seconds"] = @http_duration_seconds = PrometheusExporter::Metric::Base.default_aggregation.new(
           "http_duration_seconds",
           "Time spent in HTTP reqs in seconds."
         )
 
-        @metrics["http_redis_duration_seconds"] = @http_redis_duration_seconds = PrometheusExporter::Metric::Summary.new(
+        @metrics["http_redis_duration_seconds"] = @http_redis_duration_seconds = PrometheusExporter::Metric::Base.default_aggregation.new(
           "http_redis_duration_seconds",
           "Time spent in HTTP reqs in Redis, in seconds."
         )
 
-        @metrics["http_sql_duration_seconds"] = @http_sql_duration_seconds = PrometheusExporter::Metric::Summary.new(
+        @metrics["http_sql_duration_seconds"] = @http_sql_duration_seconds = PrometheusExporter::Metric::Base.default_aggregation.new(
           "http_sql_duration_seconds",
           "Time spent in HTTP reqs in SQL in seconds."
         )
 
-        @metrics["http_queue_duration_seconds"] = @http_queue_duration_seconds = PrometheusExporter::Metric::Summary.new(
+        @metrics["http_queue_duration_seconds"] = @http_queue_duration_seconds = PrometheusExporter::Metric::Base.default_aggregation.new(
           "http_queue_duration_seconds",
           "Time spent queueing the request in load balancer in seconds."
         )

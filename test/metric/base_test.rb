@@ -12,11 +12,13 @@ module PrometheusExporter::Metric
     before  do
       Base.default_prefix = ''
       Base.default_labels = {}
+      Base.default_aggregation = nil
     end
 
     after do
       Base.default_prefix = ''
       Base.default_labels = {}
+      Base.default_aggregation = nil
     end
 
     it "supports a dynamic prefix" do
@@ -110,6 +112,29 @@ module PrometheusExporter::Metric
       TEXT
 
       assert_equal(summary.to_prometheus_text.strip, text.strip)
+    end
+
+    it "creates a summary by default" do
+      aggregation = Base.default_aggregation.new("test", "test")
+
+      text = <<~TEXT
+        # HELP test test
+        # TYPE test summary
+      TEXT
+
+      assert_equal(aggregation.to_prometheus_text.strip, text.strip)
+    end
+
+    it "creates a histogram when configured" do
+      Base.default_aggregation = Histogram
+      aggregation = Base.default_aggregation.new("test", "test")
+
+      text = <<~TEXT
+        # HELP test test
+        # TYPE test histogram
+      TEXT
+
+      assert_equal(aggregation.to_prometheus_text.strip, text.strip)
     end
   end
 end

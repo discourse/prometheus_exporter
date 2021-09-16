@@ -76,12 +76,12 @@ module PrometheusExporter::Server
                 "delayed_jobs_max_attempts_reached_total", "Total number of delayed jobs that reached max attempts.")
 
         @delayed_job_duration_seconds_summary =
-            PrometheusExporter::Metric::Summary.new("delayed_job_duration_seconds_summary",
-                                                    "Summary of the time it takes jobs to execute.")
+            PrometheusExporter::Metric::Base.default_aggregation.new("delayed_job_duration_seconds_summary",
+                                                                     "Summary of the time it takes jobs to execute.")
 
         @delayed_job_attempts_summary =
-            PrometheusExporter::Metric::Summary.new("delayed_job_attempts_summary",
-                                                    "Summary of the amount of attempts it takes delayed jobs to succeed.")
+            PrometheusExporter::Metric::Base.default_aggregation.new("delayed_job_attempts_summary",
+                                                                     "Summary of the amount of attempts it takes delayed jobs to succeed.")
       end
     end
   end

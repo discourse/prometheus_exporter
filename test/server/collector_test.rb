@@ -10,6 +10,11 @@ class PrometheusCollectorTest < Minitest::Test
 
   def setup
     PrometheusExporter::Metric::Base.default_prefix = ''
+    PrometheusExporter::Metric::Base.default_aggregation = nil
+  end
+
+  def teardown
+    PrometheusExporter::Metric::Base.default_aggregation = nil
   end
 
   class PipedClient
@@ -369,6 +374,29 @@ class PrometheusCollectorTest < Minitest::Test
     mock_sidekiq_que.verify
   end
 
+  def test_it_can_collect_sidekiq_metrics_in_histogram_mode
+    PrometheusExporter::Metric::Base.default_aggregation = PrometheusExporter::Metric::Histogram
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector)
+
+    instrument = PrometheusExporter::Instrumentation::Sidekiq.new(client: client)
+
+    instrument.call("hello", nil, "default") do
+      # nothing
+    end
+
+    begin
+      instrument.call(false, nil, "default") do
+        boom
+      end
+    rescue
+    end
+
+    result = collector.prometheus_metrics_text
+
+    assert_includes(result, "sidekiq_job_duration_seconds histogram")
+  end
+
   def test_it_can_collect_shoryuken_metrics_with_custom_lables
     collector = PrometheusExporter::Server::Collector.new
     client = PipedClient.new(collector, custom_labels: { service: 'service1' })
@@ -511,6 +539,29 @@ class PrometheusCollectorTest < Minitest::Test
     assert(result.include?('delayed_jobs_pending{queue_name="my_queue",service="service1"} 0'), "has pending count")
     job.verify
     failed_job.verify
+  end
+
+  def test_it_can_collect_delayed_job_metrics_in_histogram_mode
+    PrometheusExporter::Metric::Base.default_aggregation = PrometheusExporter::Metric::Histogram
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector)
+
+    instrument = PrometheusExporter::Instrumentation::DelayedJob.new(client: client)
+
+    job = Minitest::Mock.new
+    job.expect(:handler, "job_class: Class")
+    job.expect(:queue, "my_queue")
+    job.expect(:attempts, 0)
+
+    instrument.call(job, 20, 10, 0, nil, "default") do
+      # nothing
+    end
+
+    result = collector.prometheus_metrics_text
+
+    assert_includes(result, "delayed_job_duration_seconds_summary histogram")
+    assert_includes(result, "delayed_job_attempts_summary histogram")
+    job.verify
   end
 
   require 'minitest/stub_const'

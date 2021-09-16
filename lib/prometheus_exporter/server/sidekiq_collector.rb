@@ -52,7 +52,7 @@ module PrometheusExporter::Server
       if !@sidekiq_jobs_total
 
         @sidekiq_job_duration_seconds =
-        PrometheusExporter::Metric::Summary.new(
+        PrometheusExporter::Metric::Base.default_aggregation.new(
           "sidekiq_job_duration_seconds", "Total time spent in sidekiq jobs.")
 
         @sidekiq_jobs_total =

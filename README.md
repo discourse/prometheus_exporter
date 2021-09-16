@@ -27,6 +27,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
   * [Metrics default prefix / labels](#metrics-default-prefix--labels)
   * [Client default labels](#client-default-labels)
   * [Client default host](#client-default-host)
+  * [Histogram mode](#histogram-mode)
 * [Transport concerns](#transport-concerns)
 * [JSON generation and parsing](#json-generation-and-parsing)
 * [Logging](#logging)
@@ -776,6 +777,7 @@ Usage: prometheus_exporter [options]
     -c, --collector FILE             (optional) Custom collector to run
     -a, --type-collector FILE        (optional) Custom type collectors to run in main collector
     -v, --verbose
+    -g, --histogram                  Use histogram instead of summary for aggregations
         --auth FILE                  (optional) enable basic authentication using a htpasswd FILE
         --realm REALM                (optional) Use REALM for basic authentication (default: "Prometheus Exporter")
         --unicorn-listen-address ADDRESS
@@ -845,6 +847,18 @@ http_requests_total{service="app-server-01",app_name="app-01"} 1
 ### Client default host
 
 By default, `PrometheusExporter::Client.default` connects to `localhost:9394`. If your setup requires this (e.g. when using `docker-compose`), you can change the default host and port by setting the environment variables `PROMETHEUS_EXPORTER_HOST` and `PROMETHEUS_EXPORTER_PORT`.
+
+### Histogram mode
+
+By default, the built-in collectors will report aggregations as summaries. If you need to aggregate metrics across labels, you can switch from summaries to histograms:
+
+```
+$ prometheus_exporter --histogram
+```
+
+In histogram mode, the same metrics will be collected but will be reported as histograms rather than summaries. This sacrifices some precision but allows aggregating metrics across actions and nodes using [`histogram_quantile`].
+
+[`histogram_quantile`]: https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile
 
 ## Transport concerns
 

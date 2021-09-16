@@ -6,6 +6,15 @@ require 'prometheus_exporter/server'
 require 'prometheus_exporter/instrumentation'
 
 class PrometheusWebCollectorTest < Minitest::Test
+  def setup
+    PrometheusExporter::Metric::Base.default_prefix = ''
+    PrometheusExporter::Metric::Base.default_aggregation = nil
+  end
+
+  def teardown
+    PrometheusExporter::Metric::Base.default_aggregation = nil
+  end
+
   def collector
     @collector ||= PrometheusExporter::Server::WebCollector.new
   end
@@ -70,5 +79,38 @@ class PrometheusWebCollectorTest < Minitest::Test
 
     assert_equal 5, metrics.size
     assert(metrics.first.metric_text.include?('http_requests_total{controller="home",action="index",status="200",service="service1"}'))
+  end
+
+  def test_collecting_metrics_in_histogram_mode
+    PrometheusExporter::Metric::Base.default_aggregation = PrometheusExporter::Metric::Histogram
+
+    collector.collect(
+      'type' => 'web',
+      "timings" => {
+        "sql" => {
+          duration: 0.5,
+          count: 40
+        },
+        "redis" => {
+          duration: 0.03,
+          count: 4
+        },
+        "queue" => 0.03,
+        "total_duration" => 1.0
+      },
+      'default_labels' => {
+        'controller' => 'home',
+        'action' => 'index',
+        'status' => 200,
+      },
+      'custom_labels' => {
+        'service' => 'service1'
+      }
+    )
+
+    metrics = collector.metrics
+
+    assert_equal 5, metrics.size
+    assert_includes(metrics.map(&:metric_text).flat_map(&:lines), "http_duration_seconds_bucket{controller=\"home\",action=\"index\",status=\"200\",service=\"service1\",le=\"+Inf\"} 1\n")
   end
 end
