@@ -87,7 +87,7 @@ module PrometheusExporter::Instrumentation
           .map { |k, v| [k.to_s.dup.prepend("dbconfig_"), v] }.to_h)
       else
         @metric_labels.merge(pool_name: pool.db_config.name).merge(
-          @config_labels.each_with_object({}) { |l, acc| acc["dbconfig_#{l}"] = pool.db_config.public_send(l) })
+          @config_labels.each_with_object({}) { |l, acc| acc["dbconfig_#{l}"] = pool.db_config.configuration_hash[l.to_sym] })
       end
     end
   end
