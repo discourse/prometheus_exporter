@@ -390,6 +390,8 @@ Sidekiq.configure_server do |config|
 end
 ```
 
+This will only monitor the queues that are consumed by the sidekiq process you are on.  You can pass an `all_queues` parameter to monitor metrics on all queues.
+
 To monitor Sidekiq process info:
 
 ```ruby
