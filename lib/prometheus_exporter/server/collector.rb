@@ -14,6 +14,7 @@ module PrometheusExporter::Server
       register_collector(ProcessCollector.new)
       register_collector(SidekiqCollector.new)
       register_collector(SidekiqQueueCollector.new)
+      register_collector(SidekiqProcessCollector.new)
       register_collector(DelayedJobCollector.new)
       register_collector(PumaCollector.new)
       register_collector(HutchCollector.new)

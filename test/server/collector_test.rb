@@ -472,6 +472,42 @@ class PrometheusCollectorTest < Minitest::Test
     mock_sidekiq_que.verify
   end
 
+  def test_it_can_collect_sidekiq_process_metrics
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector, custom_labels: { service: 'service1' })
+    instrument = PrometheusExporter::Instrumentation::SidekiqProcess.new
+
+    mock_sidekiq_process = Minitest::Mock.new
+    mock_sidekiq_process.expect(
+      :new,
+      2.times.map { |i|
+        {
+          'busy' => 1,
+          'concurrency' => 2,
+          'hostname' => PrometheusExporter.hostname,
+          'identity' => "hostname:#{i}",
+          'labels' => ['lab_2', 'lab_1'],
+          'pid' => Process.pid + i,
+          'queues' => ['queue_2', 'queue_1'],
+          'quiet' => false,
+          'tag' => 'default'
+        }
+      }
+    )
+
+    Object.stub_const(:Sidekiq, Module) do
+      ::Sidekiq.stub_const(:ProcessSet, mock_sidekiq_process) do
+        metric = instrument.collect
+        client.send_json metric
+      end
+    end
+
+    result = collector.prometheus_metrics_text
+    assert(result.include?(%Q[sidekiq_process_busy{labels="lab_1,lab_2",queues="queue_1,queue_2",quiet="false",tag="default",hostname="#{PrometheusExporter.hostname}",identity="hostname:0"} 1]), "has number of busy")
+    assert(result.include?(%Q[sidekiq_process_concurrency{labels="lab_1,lab_2",queues="queue_1,queue_2",quiet="false",tag="default",hostname="#{PrometheusExporter.hostname}",identity="hostname:0"} 2]), "has number of concurrency")
+    mock_sidekiq_process.verify
+  end
+
   def test_it_can_collect_sidekiq_metrics_in_histogram_mode
     PrometheusExporter::Metric::Base.default_aggregation = PrometheusExporter::Metric::Histogram
     collector = PrometheusExporter::Server::Collector.new
