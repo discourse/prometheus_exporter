@@ -399,6 +399,7 @@ Sidekiq.configure_server do |config|
   config.on :startup do
     require 'prometheus_exporter/instrumentation'
     PrometheusExporter::Instrumentation::Process.start type: 'sidekiq'
+    PrometheusExporter::Instrumentation::SidekiqProcess.start
   end
 end
 ```
@@ -439,6 +440,14 @@ This metric has a `job_name` label and a `queue` label.
 | Gauge | `sidekiq_queue_latency_seconds` | Latency of the sidekiq queue |
 
 Both metrics will have a `queue` label with the name of the queue.
+
+**PrometheusExporter::Instrumentation::SidekiqProcess**
+| Type  | Name                          | Description                             |
+| ---   | ---                           | ---                                     |
+| Gauge | `sidekiq_process_busy`        | Number of busy workers for this process |
+| Gauge | `sidekiq_process_concurrency` | Concurrency for this process            |
+
+Both metrics will include the labels `labels`, `queues`, `quiet`, `tag`, `hostname` and `identity`, as returned by the [Sidekiq API](https://github.com/mperham/sidekiq/wiki/API#processes).
 
 _See [Metrics collected by Process Instrumentation](#metrics-collected-by-process-instrumentation) for a list of metrics the Process instrumentation will produce._
 
