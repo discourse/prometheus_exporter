@@ -26,7 +26,7 @@ module PrometheusExporter::Server
         SIDEKIQ_PROCESS_GAUGES.map do |name, help|
           if (value = metric[name])
             gauge = gauges[name] ||= PrometheusExporter::Metric::Gauge.new("sidekiq_process_#{name}", help)
-            gauges[name].observe(value, labels)
+            gauge.observe(value, labels)
           end
         end
       end
