@@ -404,6 +404,18 @@ Sidekiq.configure_server do |config|
 end
 ```
 
+To monitor general Sidekiq stats:
+
+```ruby
+Sidekiq.configure_server do |config|
+  config.on :startup do
+    require 'prometheus_exporter/instrumentation'
+    PrometheusExporter::Instrumentation::Process.start type: 'sidekiq'
+    PrometheusExporter::Instrumentation::SidekiqStats.start
+  end
+end
+```
+
 Sometimes the Sidekiq server shuts down before it can send metrics, that were generated right before the shutdown, to the collector. Especially if you care about the `sidekiq_restarted_jobs_total` metric, it is a good idea to explicitly stop the client:
 
 ```ruby
@@ -447,7 +459,21 @@ Both metrics will have a `queue` label with the name of the queue.
 | Gauge | `sidekiq_process_busy`        | Number of busy workers for this process |
 | Gauge | `sidekiq_process_concurrency` | Concurrency for this process            |
 
-Both metrics will include the labels `labels`, `queues`, `quiet`, `tag`, `hostname` and `identity`, as returned by the [Sidekiq API](https://github.com/mperham/sidekiq/wiki/API#processes).
+Both metrics will include the labels `labels`, `queues`, `quiet`, `tag`, `hostname` and `identity`, as returned by the [Sidekiq Processes API](https://github.com/mperham/sidekiq/wiki/API#processes).
+
+**PrometheusExporter::Instrumentation::SidekiqStats**
+| Type  | Name                            | Description                     |
+| ---   | ---                             | ---                             |
+| Gauge | `sidekiq_stats_dead_size`       | Size of the dead queue          |
+| Gauge | `sidekiq_stats_enqueued`        | Number of enqueued jobs         |
+| Gauge | `sidekiq_stats_failed`          | Number of failed jobs           |
+| Gauge | `sidekiq_stats_processed`       | Total number of processed jobs  |
+| Gauge | `sidekiq_stats_processes_size`  | Number of processes             |
+| Gauge | `sidekiq_stats_retry_size`      | Size of the retries queue       |
+| Gauge | `sidekiq_stats_scheduled_size`  | Size of the scheduled queue     |
+| Gauge | `sidekiq_stats_workers_size`    | Number of jobs being worked     |
+
+Based on the [Sidekiq Stats API](https://github.com/mperham/sidekiq/wiki/API#stats).
 
 _See [Metrics collected by Process Instrumentation](#metrics-collected-by-process-instrumentation) for a list of metrics the Process instrumentation will produce._
 
