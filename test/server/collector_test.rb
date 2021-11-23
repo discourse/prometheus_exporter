@@ -332,25 +332,13 @@ class PrometheusCollectorTest < Minitest::Test
 
     mocks_for_sidekiq_que_all = 2.times.map do |i|
       mock = Minitest::Mock.new
-      mock.expect(
-        :name,
-        "que_#{i}",
-      )
-      mock.expect(
-        :size,
-        10 + i,
-      )
-      mock.expect(
-        :latency,
-        1.to_f + i,
-      )
+      mock.expect(:name, "que_#{i}")
+      mock.expect(:size, 10 + i)
+      mock.expect(:latency, 1.to_f + i)
     end
 
     mock_sidekiq_que = Minitest::Mock.new
-    mock_sidekiq_que.expect(
-      :all,
-      mocks_for_sidekiq_que_all,
-    )
+    mock_sidekiq_que.expect(:all, mocks_for_sidekiq_que_all)
 
     Object.stub_const(:Sidekiq, Module) do
       ::Sidekiq.stub_const(:Queue, mock_sidekiq_que) do
@@ -366,7 +354,7 @@ class PrometheusCollectorTest < Minitest::Test
     assert(result.include?('sidekiq_queue_backlog{queue="que_1",service="service1"} 11'), "has number of backlog")
     assert(result.include?('sidekiq_queue_latency_seconds{queue="que_0",service="service1"} 1'), "has latency")
     assert(result.include?('sidekiq_queue_latency_seconds{queue="que_1",service="service1"} 2'), "has latency")
-    mocks_for_sidekiq_que_all.each { |m| m.verify }
+    mocks_for_sidekiq_que_all.each(&:verify)
     mock_sidekiq_que.verify
   end
 
@@ -377,29 +365,14 @@ class PrometheusCollectorTest < Minitest::Test
 
     mocks_for_sidekiq_que_all = 2.times.map do |i|
       mock = Minitest::Mock.new
-      mock.expect(
-        :name,
-        "que_#{i}",
-      )
-      mock.expect(
-        :size,
-        10 + i,
-      )
-      mock.expect(
-        :latency,
-        1.to_f + i,
-      )
-      mock.expect(
-        :name,
-        "que_#{i}",
-      )
+      mock.expect(:name, "que_#{i}")
+      mock.expect(:size, 10 + i)
+      mock.expect(:latency, 1.to_f + i)
+      mock.expect(:name, "que_#{i}")
     end
 
     mock_sidekiq_que = Minitest::Mock.new
-    mock_sidekiq_que.expect(
-      :all,
-      mocks_for_sidekiq_que_all,
-    )
+    mock_sidekiq_que.expect(:all, mocks_for_sidekiq_que_all)
 
     Object.stub_const(:Sidekiq, Module) do
       ::Sidekiq.stub_const(:Queue, mock_sidekiq_que) do
@@ -415,7 +388,7 @@ class PrometheusCollectorTest < Minitest::Test
     refute(result.include?('sidekiq_queue_backlog{queue="que_1",service="service1"} 11'), "has number of backlog")
     assert(result.include?('sidekiq_queue_latency_seconds{queue="que_0",service="service1"} 1'), "has latency")
     refute(result.include?('sidekiq_queue_latency_seconds{queue="que_1",service="service1"} 2'), "has latency")
-    mocks_for_sidekiq_que_all.each { |m| m.verify }
+    mocks_for_sidekiq_que_all.each(&:verify)
     mock_sidekiq_que.verify
   end
 
