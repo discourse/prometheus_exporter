@@ -1,6 +1,10 @@
-1.0.0 - dd-mm-yyyy
+1.0.0 - 23-11-2021
 
-- Breaking change: rename metrics to match prometheus official naming conventions (See https://prometheus.io/docs/practices/naming/#metric-names)
+- BREAKING: rename metrics to match prometheus official naming conventions (See https://prometheus.io/docs/practices/naming/#metric-names)
+- FEATURE: Sidekiq process metrics
+- FEATURE: Allow collecting web metrics as histograms
+- FIX: logger improved for web server
+- FIX: Remove job labels from DelayedJob queues
 
 0.8.1 - 04-08-2021
 
