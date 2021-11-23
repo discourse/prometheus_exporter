@@ -55,7 +55,7 @@ class PrometheusSidekiqProcessCollectorTest < Minitest::Test
       )
     end
 
-    Process.stub(:clock_gettime, 2.0 + PrometheusExporter::Server::SidekiqQueueCollector::MAX_SIDEKIQ_METRIC_AGE) do
+    Process.stub(:clock_gettime, 2.0 + PrometheusExporter::Server::SidekiqProcessCollector::MAX_SIDEKIQ_METRIC_AGE) do
       collector.collect(
         'process' => {
           'busy' => 2,
