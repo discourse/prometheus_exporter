@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require_relative '../test_helper'
 require 'prometheus_exporter/server'
 require 'prometheus_exporter/client'
 require 'net/http'
@@ -96,7 +96,8 @@ class PrometheusExporterTest < Minitest::Test
   def test_it_can_collect_over_ipv6
     port = find_free_port
 
-    server = PrometheusExporter::Server::WebServer.new port: port
+    # for some reason on WSL it is not binding to v6 for localhost.
+    server = PrometheusExporter::Server::WebServer.new port: port, bind: "::1"
     collector = server.collector
     server.start
 

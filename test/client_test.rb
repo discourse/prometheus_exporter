@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require_relative "test_helper"
+require "prometheus_exporter/client"
 
 class PrometheusExporterTest < Minitest::Test
   def test_find_the_correct_registered_metric

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require_relative '../test_helper'
 require 'prometheus_exporter/server'
 
 class PrometheusRunnerTest < Minitest::Test
