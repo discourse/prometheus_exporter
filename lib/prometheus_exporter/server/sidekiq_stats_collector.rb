@@ -12,7 +12,7 @@ module PrometheusExporter::Server
       'processes_size' => 'Number of processes',
       'retry_size' => 'Size of the retries queue',
       'scheduled_size' => 'Size of the scheduled queue',
-      'workers_size' => 'Number of jobs being worked',
+      'workers_size' => 'Number of jobs actively being processed',
     }.freeze
 
     attr_reader :sidekiq_metrics, :gauges
