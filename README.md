@@ -367,54 +367,48 @@ Metrics collected by Process instrumentation include labels `type` (as given wit
 
 #### Sidekiq metrics
 
-Including Sidekiq metrics (how many jobs ran? how many failed? how long did they take? how many are dead? how many were restarted?)
+There are different kinds of Sidekiq metrics that can be collected. A recommended setup looks like this:
 
 ```ruby
 Sidekiq.configure_server do |config|
-   config.server_middleware do |chain|
-      require 'prometheus_exporter/instrumentation'
-      chain.add PrometheusExporter::Instrumentation::Sidekiq
-   end
-   config.death_handlers << PrometheusExporter::Instrumentation::Sidekiq.death_handler
-end
-```
-
-To monitor Queue size and latency:
-
-```ruby
-Sidekiq.configure_server do |config|
-  config.on :startup do
-    require 'prometheus_exporter/instrumentation'
-    PrometheusExporter::Instrumentation::SidekiqQueue.start
+  require 'prometheus_exporter/instrumentation'
+  config.server_middleware do |chain|
+    chain.add PrometheusExporter::Instrumentation::Sidekiq
   end
-end
-```
-
-This will only monitor the queues that are consumed by the sidekiq process you are on.  You can pass an `all_queues` parameter to monitor metrics on all queues.
-
-To monitor Sidekiq process info:
-
-```ruby
-Sidekiq.configure_server do |config|
+  config.death_handlers << PrometheusExporter::Instrumentation::Sidekiq.death_handler
   config.on :startup do
-    require 'prometheus_exporter/instrumentation'
     PrometheusExporter::Instrumentation::Process.start type: 'sidekiq'
     PrometheusExporter::Instrumentation::SidekiqProcess.start
-  end
-end
-```
-
-To monitor general Sidekiq stats:
-
-```ruby
-Sidekiq.configure_server do |config|
-  config.on :startup do
-    require 'prometheus_exporter/instrumentation'
-    PrometheusExporter::Instrumentation::Process.start type: 'sidekiq'
+    PrometheusExporter::Instrumentation::SidekiqQueue.start
     PrometheusExporter::Instrumentation::SidekiqStats.start
   end
 end
 ```
+
+* The middleware and death handler will generate job specific metrics (how many jobs ran? how many failed? how long did they take? how many are dead? how many were restarted?).
+* The [`Process`](#per-process-stats) metrics provide basic ruby metrics.
+* The `SidekiqProcess` metrics provide the concurrency and busy metrics for this process.
+* The `SidekiqQueue` metrics provides size and latency for the queues run by this process.
+* The `SidekiqStats` metrics provide general, global Sidekiq stats (size of Scheduled, Retries, Dead queues, total number of jobs, etc).
+
+For `SidekiqQueue`, if you run more than one process for the same queues, note that the same metrics will be exposed by all the processes, just like the `SidekiqStats` will if you run more than one process of any kind. You might want use `avg` or `max` when consuming their metrics.
+
+An alternative would be to expose these metrics in lone, long-lived process. Using a rake task, for example:
+
+```ruby
+task :sidekiq_metrics do
+  server = PrometheusExporter::Server::WebServer.new
+  server.start
+
+  PrometheusExporter::Client.default = PrometheusExporter::LocalClient.new(collector: server.collector)
+
+  PrometheusExporter::Instrumentation::SidekiqQueue.start(all_queues: true)
+  PrometheusExporter::Instrumentation::SidekiqStats.start
+  sleep
+end
+```
+
+The `all_queues` parameter for `SidekiqQueue` will expose metrics for all queues.
 
 Sometimes the Sidekiq server shuts down before it can send metrics, that were generated right before the shutdown, to the collector. Especially if you care about the `sidekiq_restarted_jobs_total` metric, it is a good idea to explicitly stop the client:
 
