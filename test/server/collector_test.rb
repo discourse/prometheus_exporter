@@ -428,6 +428,44 @@ class PrometheusCollectorTest < Minitest::Test
     mock_sidekiq_process.verify
   end
 
+  def test_it_can_collect_sidekiq_stats_metrics
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector, custom_labels: { service: 'service1' })
+    instrument = PrometheusExporter::Instrumentation::SidekiqStats.new
+
+    mock_sidekiq_stats_new = Minitest::Mock.new
+    mock_sidekiq_stats_new.expect(:dead_size, 1)
+    mock_sidekiq_stats_new.expect(:enqueued, 2)
+    mock_sidekiq_stats_new.expect(:failed, 3)
+    mock_sidekiq_stats_new.expect(:processed, 4)
+    mock_sidekiq_stats_new.expect(:processes_size, 5)
+    mock_sidekiq_stats_new.expect(:retry_size, 6)
+    mock_sidekiq_stats_new.expect(:scheduled_size, 7)
+    mock_sidekiq_stats_new.expect(:workers_size, 8)
+
+    mock_sidekiq_stats = Minitest::Mock.new
+    mock_sidekiq_stats.expect(:new, mock_sidekiq_stats_new)
+
+    Object.stub_const(:Sidekiq, Module) do
+      ::Sidekiq.stub_const(:Stats, mock_sidekiq_stats) do
+        metric = instrument.collect
+        client.send_json metric
+      end
+    end
+
+    result = collector.prometheus_metrics_text
+    assert_includes(result, "sidekiq_stats_dead_size 1")
+    assert_includes(result, "sidekiq_stats_enqueued 2")
+    assert_includes(result, "sidekiq_stats_failed 3")
+    assert_includes(result, "sidekiq_stats_processed 4")
+    assert_includes(result, "sidekiq_stats_processes_size 5")
+    assert_includes(result, "sidekiq_stats_retry_size 6")
+    assert_includes(result, "sidekiq_stats_scheduled_size 7")
+    assert_includes(result, "sidekiq_stats_workers_size 8")
+    mock_sidekiq_stats.verify
+    mock_sidekiq_stats_new.verify
+  end
+
   def test_it_can_collect_sidekiq_metrics_in_histogram_mode
     PrometheusExporter::Metric::Base.default_aggregation = PrometheusExporter::Metric::Histogram
     collector = PrometheusExporter::Server::Collector.new
