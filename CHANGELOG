@@ -1,4 +1,4 @@
-1.0.0 - 23-11-2021
+1.0.0 - 2021-11-23
 
 - BREAKING: rename metrics to match prometheus official naming conventions (See https://prometheus.io/docs/practices/naming/#metric-names)
 - FEATURE: Sidekiq process metrics
@@ -6,11 +6,11 @@
 - FIX: logger improved for web server
 - FIX: Remove job labels from DelayedJob queues
 
-0.8.1 - 04-08-2021
+0.8.1 - 2021-08-04
 
 - FEATURE: swap from hardcoded STDERR to logger pattern (see README for details)
 
-0.8.0 - 05-07-2021
+0.8.0 - 2021-07-05
 
 - FIX: handle ThreadError more gracefully in cases where process shuts down
 - FEATURE: add job_name and queue_name labels to delayed job metrics
@@ -22,7 +22,7 @@
 - FEATURE: Improve Active Record instrumentation
 - FEATURE: Support HTTP_X_AMZN_TRACE_ID when supplied
 
-0.7.0 - 29-12-2020
+0.7.0 - 2020-12-29
 
 - Dev: Removed support from EOL rubies, only 2.5, 2.6, 2.7 and 3.0 are supported now.
 - Dev: Better support for Ruby 3.0, explicitly depending on webrick
@@ -30,111 +30,111 @@
 - FEATURE: clean pattern for overriding middleware labels was introduced (in README)
 - Fix: Better support for forking
 
-0.6.0 - 17-11-2020
+0.6.0 - 2020-11-17
 
 - FEATURE: add support for basic-auth in the prometheus_exporter web server
 
-0.5.3 - 29-07-2020
+0.5.3 - 2020-07-29
 
 - FEATURE: added #remove to all metric types so users can remove specific labels if needed
 
-0.5.2 - 01-07-2020
+0.5.2 - 2020-07-01
 
 - FEATURE: expanded instrumentation for sidekiq
 - FEATURE: configurable default labels
 
-0.5.1 - 25-02-2020
+0.5.1 - 2020-02-25
 
 - FEATURE: Allow configuring the default client's host and port via environment variables
 
-0.5.0 - 14-02-2020
+0.5.0 - 2020-02-14
 
 - Breaking change: listen only to localhost by default to prevent unintended insecure configuration
 - FIX: Avoid calling `hostname` aggressively, instead cache it on the exporter instance
 
-0.4.17 - 13-01-2020
+0.4.17 - 2020-01-13
 
 - FEATURE: add support for `to_h` on all metrics which can be used to query existing key/values
 
-0.4.16 - 04-11-2019
+0.4.16 - 2019-11-04
 
 - FEATURE: Support #reset! on all metric types to reset a metric to default
 
-0.4.15 - 04-11-2019
+0.4.15 - 2019-11-04
 
 - FEATURE: Improve delayed job collector, add pending counts
 - FEATURE: New ActiveRecord collector (documented in readme)
 - FEATURE: Allow passing in histogram and summary options
 - FEATURE: Allow custom labels for unicorn collector
 
-0.4.14 - 10-09-2019
+0.4.14 - 2019-09-10
 
 - FEATURE: allow finding metrics by name RemoteMetric #find_registered_metric
 - FIX: guard socket closing
 
-0.4.13 - 09-07-2019
+0.4.13 - 2019-07-09
 
 - Fix: Memory leak in unicorn and puma collectors
 
-0.4.12 - 30-05-2019
+0.4.12 - 2019-05-30
 
 - Fix: unicorn collector reporting incorrect number of unicorn workers
 
-0.4.11 - 15-05-2019
+0.4.11 - 2019-05-15
 
 - Fix: Handle stopping nil worker_threads in Client
 - Dev: add frozen string literals
 
-0.4.10 - 29-04-2019
+0.4.10 - 2019-04-29
 
 - Fix: Custom label support for puma collector
 - Fix: Raindrops socket collector not working correctly
 
-0.4.9 - 11-04-2019
+0.4.9 - 2019-04-11
 
 - Fix: Gem was not working correctly in Ruby 2.4 and below due to a syntax error
 
-0.4.8 - 10-04-2019
+0.4.8 - 2019-04-10
 
 - Feature: added helpers for instrumenting unicorn using raindrops
 
-0.4.7 - 08-04-2019
+0.4.7 - 2019-04-08
 
 - Fix: collector was not escaping " \ and \n correctly. This could lead
   to a corrupt payload in some cases.
 
-0.4.6 - 02-04-2019
+0.4.6 - 2019-04-02
 
 - Feature: Allow resetting a counter
 - Feature: Add sidekiq metrics: restarted, dead jobs counters
 - Fix: Client shutting down before sending metrics to collector
 
-0.4.5 - 14-02-2019
+0.4.5 - 2019-02-14
 
 - Feature: Allow process collector to ship custom labels for all process metrics
 - Fix: Always scope process metrics on hostname in collector
 
-0.4.4 - 13-02-2019
+0.4.4 - 2019-02-13
 
 - Feature: add support for local metric collection without using HTTP
 
-0.4.3 - 11-02-2019
+0.4.3 - 2019-02-11
 
 - Feature: Add alias for Gauge #observe called #set, this makes it a bit easier to migrate from prom
 - Feature: Add increment and decrement to Counter
 
-0.4.2 - 30-11-2018
+0.4.2 - 2018-11-30
 
 - Fix/Feature: setting a Gauge to nil will remove Gauge (setting to non numeric will raise)
 
-0.4.0 - 23-10-2018
+0.4.0 - 2018-10-23
 
 - Feature: histogram support
 - Feature: custom quantile support for summary
 - Feature: Puma metrics
 - Fix: delayed job metrics
 
-0.3.4 - 02-10-2018
+0.3.4 - 2018-10-02
 
 - Fix: custom collector via CLI was not working correctly
 
