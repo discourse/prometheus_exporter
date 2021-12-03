@@ -11,10 +11,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Ruby ${{ matrix.ruby }}
+    name: Ruby ${{ matrix.ruby }} AR ${{ matrix.activerecord }}
     strategy:
       matrix:
         ruby: ['3.0', '2.7', '2.6']
+        activerecord: ['61', '60']
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/ar_${{ matrix.activerecord }}.gemfile
 
     steps:
       - uses: actions/checkout@v2
@@ -29,8 +32,5 @@ jobs:
       - name: Rubocop
         run: bundle exec rubocop
 
-      - name: Install gems
-        run: bundle exec appraisal bundle
-
       - name: Run tests
-        run: bundle exec appraisal rake
+        run: bundle exec rake
