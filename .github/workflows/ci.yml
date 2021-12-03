@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Ruby ${{ matrix.ruby }} AR ${{ matrix.activerecord }}
     strategy:
+      fail-fast: false
       matrix:
         ruby: ['3.0', '2.7', '2.6']
         activerecord: ['61', '60']
