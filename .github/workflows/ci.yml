@@ -2,6 +2,8 @@ name: Test Exporter
 
 on:
   push:
+    branches:
+      - main
   pull_request:
   schedule:
     - cron: '0 0 * * 0' # weekly
@@ -9,41 +11,27 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Ruby ${{ matrix.ruby }}
+    name: Ruby ${{ matrix.ruby }} AR ${{ matrix.activerecord }}
     strategy:
+      fail-fast: false
       matrix:
-        ruby: ["3.0", "2.7", "2.6"]
+        ruby: ['3.0', '2.7', '2.6']
+        activerecord: ['61', '60']
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/ar_${{ matrix.activerecord }}.gemfile
+
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
         with:
           fetch-depth: 1
-      - uses: actions/setup-ruby@v1
+
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-      - uses: actions/cache@v2
-        with:
-          path: vendor/bundle
-          key: ${{ runner.os }}-${{ matrix.ruby }}-gems-v2-${{ hashFiles('**/Gemfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.ruby }}-gems-v2-
+          bundler-cache: true
 
-      - name: Downgrade rubygems
-        run: |
-          # for Ruby <= 2.6 , details https://github.com/rubygems/rubygems/issues/3284
-          gem update --system 3.0.8
-        if: ${{ matrix.ruby == '2.6' || matrix.ruby == '2.7' }}
-      - name: Upgrade rubygems
-        run: |
-          gem update --system
-      - name: Setup gems
-        run: |
-          gem install bundler
-          bundle config path vendor/bundle
-          bundle install --jobs 4
-          bundle exec appraisal install
       - name: Rubocop
         run: bundle exec rubocop
-      - name: install gems
-        run: bundle exec appraisal bundle
+
       - name: Run tests
-        run: bundle exec appraisal rake
+        run: bundle exec rake

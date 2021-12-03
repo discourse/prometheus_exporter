@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "minitest", "~> 5.0"
   spec.add_development_dependency "guard", "~> 2.0"
-  spec.add_development_dependency "mini_racer", "~> 0.3.1"
+  spec.add_development_dependency "mini_racer", "~> 0.5.0"
   spec.add_development_dependency "guard-minitest", "~> 2.0"
   spec.add_development_dependency "oj", "~> 3.0"
   spec.add_development_dependency "rack-test", "~> 0.8.3"
