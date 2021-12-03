@@ -13,7 +13,7 @@ module PrometheusExporter::Instrumentation
   class Sidekiq
     def self.death_handler
       -> (job, ex) do
-        job_is_fire_and_forget = job["retry"] == false
+        job_is_fire_and_forget = job["dead"] == false || job["retry"] == false
 
         unless job_is_fire_and_forget
           PrometheusExporter::Client.default.send_json(
