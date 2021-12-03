@@ -73,7 +73,7 @@ module PrometheusExporter::Instrumentation
       # of the delayed extensions
       # https://github.com/mperham/sidekiq/blob/master/lib/sidekiq/extensions/class_methods.rb
       begin
-        (target, method_name, _args) = YAML.load(msg['args'].first)
+        (target, method_name, _args) = YAML.safe_load(msg['args'].first)
         if target.class == Class
           "#{target.name}##{method_name}"
         else
