@@ -88,7 +88,7 @@ def run
   end
 
   if custom_collector_filename
-    eval File.read(custom_collector_filename), nil, File.expand_path(custom_collector_filename)
+    require File.expand_path(custom_collector_filename)
     found = false
 
     base_klass = PrometheusExporter::Server::CollectorBase
@@ -108,7 +108,7 @@ def run
 
   if custom_type_collectors_filenames.length > 0
     custom_type_collectors_filenames.each do |t|
-      eval File.read(t), nil, File.expand_path(t)
+      require File.expand_path(t)
     end
 
     ObjectSpace.each_object(Class) do |klass|
