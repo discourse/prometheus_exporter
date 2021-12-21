@@ -1,3 +1,9 @@
+1.0.1 - 2021-12-22
+
+- FEATURE: add labels to preflight requests
+- FEATURE: SidekiqStats metrics
+- FIX: mintor refactors to Sidekiq metrics
+
 1.0.0 - 2021-11-23
 
 - BREAKING: rename metrics to match prometheus official naming conventions (See https://prometheus.io/docs/practices/naming/#metric-names)
