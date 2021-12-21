@@ -54,18 +54,15 @@ class PrometheusExporter::Middleware
   def default_labels(env, result)
     status = (result && result[0]) || -1
     params = env["action_dispatch.request.parameters"]
-    cors = env["rack.cors"]
     action = controller = nil
     if params
       action = params["action"]
       controller = params["controller"]
-    elsif cors && cors.respond_to?(:preflight?) && cors.preflight?
+    elsif (cors = env["rack.cors"]) && cors.respond_to?(:preflight?) && cors.preflight?
       # if the Rack CORS Middleware identifies the request as a preflight request,
       # the stack doesn't get to the point where controllers/actions are defined
       action = "preflight"
       controller = "preflight"
-    end
-
     end
 
     {
