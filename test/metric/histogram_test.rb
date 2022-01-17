@@ -139,5 +139,19 @@ module PrometheusExporter::Metric
 
       assert_equal(histogram.to_h, { name: "bob", family: "skywalker" } => { "count" => 3, "sum" => 1.79 })
     end
+
+    it 'supports default buckets' do
+      assert_equal(Histogram::DEFAULT_BUCKETS, [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5.0, 10.0])
+      assert_equal(Histogram::DEFAULT_BUCKETS, Histogram.default_buckets)
+    end
+
+    it 'allows to change default buckets' do
+      custom_buckets = [0.005, 0.1, 1, 2, 5, 10]
+      Histogram.default_buckets = custom_buckets
+
+      assert_equal(Histogram.default_buckets, custom_buckets)
+
+      Histogram.default_buckets = Histogram::DEFAULT_BUCKETS
+    end
   end
 end
