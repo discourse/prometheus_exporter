@@ -15,14 +15,22 @@ module PrometheusExporter::Instrumentation
       -> (job, ex) do
         job_is_fire_and_forget = job["retry"] == false
 
+        worker_class = Object.const_get(job["class"])
+        worker_custom_labels = self.get_worker_custom_labels(worker_class)
+
         unless job_is_fire_and_forget
           PrometheusExporter::Client.default.send_json(
             type: "sidekiq",
             name: job["class"],
             dead: true,
+            custom_labels: worker_custom_labels
           )
         end
       end
+    end
+
+    def self.get_worker_custom_labels(worker_class)
+      worker_class.respond_to?(:custom_labels) ? worker_class.custom_labels : {}
     end
 
     def initialize(client: nil)
@@ -47,7 +55,8 @@ module PrometheusExporter::Instrumentation
         queue: queue,
         success: success,
         shutdown: shutdown,
-        duration: duration
+        duration: duration,
+        custom_labels: self.class.get_worker_custom_labels(worker.class)
       )
     end
 
