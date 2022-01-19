@@ -153,5 +153,25 @@ module PrometheusExporter::Metric
 
       Histogram.default_buckets = Histogram::DEFAULT_BUCKETS
     end
+
+    it 'uses the default buckets for instance' do
+      assert_equal(histogram.buckets.sort, Histogram::DEFAULT_BUCKETS)
+    end
+
+    it 'uses the the custom default buckets for instance' do
+      custom_buckets = [0.005, 0.1, 1, 2, 5, 10]
+      Histogram.default_buckets = custom_buckets
+
+      assert_equal(histogram.buckets.sort, custom_buckets)
+
+      Histogram.default_buckets = Histogram::DEFAULT_BUCKETS
+    end
+
+    it 'uses the specified buckets' do
+      buckets = [0.1, 0.2, 0.3]
+      histogram = Histogram.new('test_bucktets', 'I have specified buckets', buckets: buckets)
+
+      assert_equal(histogram.buckets.sort, buckets)
+    end
   end
 end

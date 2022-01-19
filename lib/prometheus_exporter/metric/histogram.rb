@@ -15,9 +15,11 @@ module PrometheusExporter::Metric
       @default_buckets = buckets
     end
 
+    attr_reader :buckets
+
     def initialize(name, help, opts = {})
       super(name, help)
-      @buckets = (opts[:buckets] || DEFAULT_BUCKETS).sort.reverse
+      @buckets = (opts[:buckets] || self.class.default_buckets).sort.reverse
       reset!
     end
 
