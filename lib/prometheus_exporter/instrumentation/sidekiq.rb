@@ -88,7 +88,7 @@ module PrometheusExporter::Instrumentation
         else
           "#{target.class.name}##{method_name}"
         end
-      rescue Psych::DisallowedClass => e
+      rescue Psych::DisallowedClass, ArgumentError
         parsed = Psych.parse(msg['args'].first)
         children = parsed.root.children
         target = (children[0].value || children[0].tag).sub('!', '')
@@ -100,7 +100,7 @@ module PrometheusExporter::Instrumentation
           class_name
         end
       end
-    rescue Exception => e
+    rescue
       class_name
     end
   end
