@@ -63,13 +63,10 @@ module PrometheusExporter::Instrumentation
     private
 
     def get_name(worker, msg)
-      puts "get name:"
       class_name = worker.class.to_s
       if class_name == JOB_WRAPPER_CLASS_NAME
-        puts "is a wrapper class"
         get_job_wrapper_name(msg)
       elsif DELAYED_CLASS_NAMES.include?(class_name)
-        puts "is a delayed class"
         get_delayed_name(msg, class_name)
       else
         class_name
@@ -77,7 +74,6 @@ module PrometheusExporter::Instrumentation
     end
 
     def get_job_wrapper_name(msg)
-      puts "class name: #{msg['wrapped']}"
       msg['wrapped']
     end
 
