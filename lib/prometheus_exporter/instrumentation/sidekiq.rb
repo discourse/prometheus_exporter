@@ -63,10 +63,13 @@ module PrometheusExporter::Instrumentation
     private
 
     def get_name(worker, msg)
+      puts "get name:"
       class_name = worker.class.to_s
       if class_name == JOB_WRAPPER_CLASS_NAME
+        puts "is a wrapper class"
         get_job_wrapper_name(msg)
       elsif DELAYED_CLASS_NAMES.include?(class_name)
+        puts "is a delayed class"
         get_delayed_name(msg, class_name)
       else
         class_name
@@ -74,23 +77,35 @@ module PrometheusExporter::Instrumentation
     end
 
     def get_job_wrapper_name(msg)
+      puts "class name: #{msg['wrapped']}"
       msg['wrapped']
     end
 
     def get_delayed_name(msg, class_name)
-      # fallback to class_name since we're relying on the internal implementation
-      # of the delayed extensions
-      # https://github.com/mperham/sidekiq/blob/master/lib/sidekiq/extensions/class_methods.rb
       begin
+        # fallback to class_name since we're relying on the internal implementation
+        # of the delayed extensions
+        # https://github.com/mperham/sidekiq/blob/master/lib/sidekiq/extensions/class_methods.rb
         (target, method_name, _args) = YAML.load(msg['args'].first) # rubocop:disable Security/YAMLLoad
         if target.class == Class
           "#{target.name}##{method_name}"
         else
           "#{target.class.name}##{method_name}"
         end
-      rescue
-        class_name
+      rescue Psych::DisallowedClass => e
+        parsed = Psych.parse(msg['args'].first)
+        children = parsed.root.children
+        target = (children[0].value || children[0].tag).sub('!', '')
+        method_name = (children[1].value || children[1].tag).sub(':', '')
+
+        if target && method_name
+          "#{target}##{method_name}"
+        else
+          class_name
+        end
       end
+    rescue Exception => e
+      class_name
     end
   end
 end

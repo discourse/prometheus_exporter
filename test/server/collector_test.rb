@@ -5,6 +5,7 @@ require 'mini_racer'
 require 'prometheus_exporter/server'
 require 'prometheus_exporter/client'
 require 'prometheus_exporter/instrumentation'
+require 'active_record'
 
 class PrometheusCollectorTest < Minitest::Test
 
@@ -35,6 +36,14 @@ class PrometheusCollectorTest < Minitest::Test
     end
 
     def perform; end
+  end
+
+  class DelayedAction
+    def foo; end
+  end
+
+  class DelayedModel < ::ActiveRecord::Base
+    def foo; end
   end
 
   def test_local_metric
@@ -301,13 +310,13 @@ class PrometheusCollectorTest < Minitest::Test
 
     delayed_worker = {}
     delayed_worker.stub(:class, "Sidekiq::Extensions::DelayedClass") do
-      instrument.call(delayed_worker, { 'args' => [ "---\n- !ruby/class 'String'\n- :foo\n- -" ] }, "default") do
+      instrument.call(delayed_worker, { 'args' => [ "---\n- !ruby/class 'DelayedAction'\n- :foo\n- -" ] }, "default") do
         # nothing
       end
     end
 
     delayed_worker.stub(:class, "Sidekiq::Extensions::DelayedModel") do
-      instrument.call(delayed_worker, { 'args' => [ "---\n- !ruby/object {}\n- :foo\n- -" ] }, "default") do
+      instrument.call(delayed_worker, { 'args' => [ "---\n- !ruby/class 'DelayedModel'\n- :foo\n- -" ] }, "default") do
         # nothing
       end
     end
@@ -328,8 +337,8 @@ class PrometheusCollectorTest < Minitest::Test
     assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",queue="default",service="service1",quantile="0.1"}'), "has duration quantile 0.1")
     assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",queue="default",service="service1",quantile="0.01"}'), "has duration quantile 0.01")
     assert(result.include?('sidekiq_jobs_total{job_name="WrappedClass",queue="default",service="service1"} 1'), "has sidekiq working job from ActiveJob")
-    assert(result.include?('sidekiq_jobs_total{job_name="String#foo",queue="default",service="service1"} 1'), "has sidekiq delayed class")
-    assert(result.include?('sidekiq_jobs_total{job_name="Object#foo",queue="default",service="service1"} 1'), "has sidekiq delayed class")
+    assert(result.include?('sidekiq_jobs_total{job_name="DelayedAction#foo",queue="default",service="service1"} 1'), "has sidekiq delayed class")
+    assert(result.include?('sidekiq_jobs_total{job_name="DelayedModel#foo",queue="default",service="service1"} 1'), "has sidekiq delayed class")
     assert(result.include?('sidekiq_jobs_total{job_name="Sidekiq::Extensions::DelayedClass",queue="default",service="service1"} 1'), "has sidekiq delayed class")
   end
 
