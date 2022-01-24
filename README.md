@@ -892,7 +892,7 @@ In histogram mode, the same metrics will be collected but will be reported as hi
 
 [`histogram_quantile`]: https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile
 
-### Histogram custom buckets
+### Histogram - custom buckets
 
 By default these buckets will be used:
 ```
