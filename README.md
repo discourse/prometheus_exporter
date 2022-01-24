@@ -28,6 +28,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
   * [Client default labels](#client-default-labels)
   * [Client default host](#client-default-host)
   * [Histogram mode](#histogram-mode)
+  * [Histogram custom buckets](#histogram-custom-buckets)
 * [Transport concerns](#transport-concerns)
 * [JSON generation and parsing](#json-generation-and-parsing)
 * [Logging](#logging)
@@ -890,6 +891,26 @@ $ prometheus_exporter --histogram
 In histogram mode, the same metrics will be collected but will be reported as histograms rather than summaries. This sacrifices some precision but allows aggregating metrics across actions and nodes using [`histogram_quantile`].
 
 [`histogram_quantile`]: https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile
+
+### Histogram custom buckets
+
+By default these buckets will be used:
+```
+[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5.0, 10.0].freeze
+```
+if this is not enough you can specify `default_buckets` like this:
+```
+Histogram.default_buckets = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 2.5, 3, 4, 5.0, 10.0, 12, 14, 15, 20, 25].freeze
+```
+
+Specfied buckets on the instance  takes precedence over default:
+
+```
+Histogram.default_buckets = [0.005, 0.01, 0,5].freeze
+buckets = [0.1, 0.2, 0.3]
+histogram = Histogram.new('test_bucktets', 'I have specified buckets', buckets: buckets)
+histogram.buckets => [0.1, 0.2, 0.3]
+```
 
 ## Transport concerns
 
