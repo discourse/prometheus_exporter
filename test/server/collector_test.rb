@@ -242,6 +242,14 @@ class PrometheusCollectorTest < Minitest::Test
     assert_equal(text, collector.prometheus_metrics_text)
   end
 
+  def test_it_does_not_raise_on_fail_to_register
+    collector = PrometheusExporter::Server::Collector.new
+    json = {
+      type: :something_with_no_registered_collector
+    }.to_json
+    collector.process(json) # Should not raise an exception; previously raised NoMethodError
+  end
+
   def test_it_can_collect_sidekiq_metrics
     collector = PrometheusExporter::Server::Collector.new
     client = PipedClient.new(collector)

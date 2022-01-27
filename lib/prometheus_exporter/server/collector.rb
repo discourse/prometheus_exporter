@@ -38,10 +38,8 @@ module PrometheusExporter::Server
         if collector = @collectors[obj["type"]]
           collector.collect(obj)
         else
-          metric = @metrics[obj["name"]]
-          if !metric
-            metric = register_metric_unsafe(obj)
-          end
+          metric = @metrics[obj["name"]] || register_metric_unsafe(obj) or
+            return
 
           keys = obj["keys"] || {}
           if obj["custom_labels"]
