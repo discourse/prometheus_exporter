@@ -1,3 +1,7 @@
+Unreleased
+
+- BREAKING: rename all `http_duration` metrics to `http_request_duration` to match prometheus official naming conventions (See https://prometheus.io/docs/practices/naming/#metric-names).
+
 1.0.1 - 2021-12-22
 
 - FEATURE: add labels to preflight requests
