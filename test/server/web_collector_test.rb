@@ -111,6 +111,6 @@ class PrometheusWebCollectorTest < Minitest::Test
     metrics = collector.metrics
 
     assert_equal 5, metrics.size
-    assert_includes(metrics.map(&:metric_text).flat_map(&:lines), "http_duration_seconds_bucket{controller=\"home\",action=\"index\",status=\"200\",service=\"service1\",le=\"+Inf\"} 1\n")
+    assert_includes(metrics.map(&:metric_text).flat_map(&:lines), "http_request_duration_seconds_bucket{controller=\"home\",action=\"index\",status=\"200\",service=\"service1\",le=\"+Inf\"} 1\n")
   end
 end
