@@ -62,17 +62,18 @@ module PrometheusExporter::Server
 
       @http_requests_total.observe(1, labels)
 
+      labels_except_status = labels.except("status")
       if timings = obj["timings"]
-        @http_request_duration_seconds.observe(timings["total_duration"], labels)
+        @http_request_duration_seconds.observe(timings["total_duration"], labels_except_status)
         if redis = timings["redis"]
-          @http_request_redis_duration_seconds.observe(redis["duration"], labels)
+          @http_request_redis_duration_seconds.observe(redis["duration"], labels_except_status)
         end
         if sql = timings["sql"]
-          @http_request_sql_duration_seconds.observe(sql["duration"], labels)
+          @http_request_sql_duration_seconds.observe(sql["duration"], labels_except_status)
         end
       end
       if queue_time = obj["queue_time"]
-        @http_request_queue_duration_seconds.observe(queue_time, labels)
+        @http_request_queue_duration_seconds.observe(queue_time, labels_except_status)
       end
     end
   end
