@@ -36,11 +36,12 @@ class PrometheusExporter::Middleware
 
     result
   ensure
-
+    status = (result && result[0]) || -1
     obj = {
       type: "web",
       timings: info,
       queue_time: queue_time,
+      status: status,
       default_labels: default_labels(env, result)
     }
     labels = custom_labels(env)
@@ -52,7 +53,6 @@ class PrometheusExporter::Middleware
   end
 
   def default_labels(env, result)
-    status = (result && result[0]) || -1
     params = env["action_dispatch.request.parameters"]
     action = controller = nil
     if params
@@ -67,8 +67,7 @@ class PrometheusExporter::Middleware
 
     {
       action: action || "other",
-      controller: controller || "other",
-      status: status
+      controller: controller || "other"
     }
   end
 

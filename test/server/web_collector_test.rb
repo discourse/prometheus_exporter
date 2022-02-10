@@ -65,10 +65,10 @@ class PrometheusWebCollectorTest < Minitest::Test
     collector.collect(
       'type' => 'web',
       'timings' => nil,
+      'status' => 200,
       'default_labels' => {
         'controller' => 'home',
-        'action' => 'index',
-        'status' => 200,
+        'action' => 'index'
       },
       'custom_labels' => {
         'service' => 'service1'
@@ -78,7 +78,7 @@ class PrometheusWebCollectorTest < Minitest::Test
     metrics = collector.metrics
 
     assert_equal 5, metrics.size
-    assert(metrics.first.metric_text.include?('http_requests_total{controller="home",action="index",status="200",service="service1"}'))
+    assert(metrics.first.metric_text.include?('http_requests_total{controller="home",action="index",service="service1",status="200"} 1'))
   end
 
   def test_collecting_metrics_in_histogram_mode
@@ -86,6 +86,7 @@ class PrometheusWebCollectorTest < Minitest::Test
 
     collector.collect(
       'type' => 'web',
+      'status' => 200,
       "timings" => {
         "sql" => {
           duration: 0.5,
@@ -96,12 +97,11 @@ class PrometheusWebCollectorTest < Minitest::Test
           count: 4
         },
         "queue" => 0.03,
-        "total_duration" => 1.0
+        "total_duration" => 1.0,
       },
       'default_labels' => {
         'controller' => 'home',
-        'action' => 'index',
-        'status' => 200,
+        'action' => 'index'
       },
       'custom_labels' => {
         'service' => 'service1'
@@ -112,7 +112,7 @@ class PrometheusWebCollectorTest < Minitest::Test
     metrics_lines = metrics.map(&:metric_text).flat_map(&:lines)
 
     assert_equal 5, metrics.size
-    assert_includes(metrics_lines, "http_requests_total{controller=\"home\",action=\"index\",status=\"200\",service=\"service1\"} 1")
+    assert_includes(metrics_lines, "http_requests_total{controller=\"home\",action=\"index\",service=\"service1\",status=\"200\"} 1")
     assert_includes(metrics_lines, "http_request_duration_seconds_bucket{controller=\"home\",action=\"index\",service=\"service1\",le=\"+Inf\"} 1\n")
   end
 end
