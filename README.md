@@ -28,6 +28,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
   * [Client default labels](#client-default-labels)
   * [Client default host](#client-default-host)
   * [Histogram mode](#histogram-mode)
+  * [Histogram - custom buckets](#histogram-custom-buckets)
 * [Transport concerns](#transport-concerns)
 * [JSON generation and parsing](#json-generation-and-parsing)
 * [Logging](#logging)
@@ -202,13 +203,13 @@ $ bundle exec prometheus_exporter
 
 #### Metrics collected by Rails integration middleware
 
-| Type    | Name                            | Description                                                 |
-| ---     | ---                             | ---                                                         |
-| Counter | `http_requests_total`           | Total HTTP requests from web app                            |
-| Summary | `http_duration_seconds`         | Time spent in HTTP reqs in seconds                          |
-| Summary | `http_redis_duration_seconds`¹  | Time spent in HTTP reqs in Redis, in seconds                |
-| Summary | `http_sql_duration_seconds`²    | Time spent in HTTP reqs in SQL in seconds                   |
-| Summary | `http_queue_duration_seconds`³  | Time spent queueing the request in load balancer in seconds |
+| Type    | Name                                   | Description                                                 |
+| ---     | ---                                    | ---                                                         |
+| Counter | `http_requests_total`                  | Total HTTP requests from web app                            |
+| Summary | `http_request_duration_seconds`        | Time spent in HTTP reqs in seconds                          |
+| Summary | `http_request_redis_duration_seconds`¹ | Time spent in HTTP reqs in Redis, in seconds                |
+| Summary | `http_request_sql_duration_seconds`²   | Time spent in HTTP reqs in SQL in seconds                   |
+| Summary | `http_request_queue_duration_seconds`³ | Time spent queueing the request in load balancer in seconds |
 
 All metrics have a `controller` and an `action` label.
 `http_requests_total` additionally has a (HTTP response) `status` label.
@@ -251,7 +252,7 @@ end
 ```
 That way you won't have all metrics labeled with `controller=other` and `action=other`, but have labels such as
 ```
-ruby_http_duration_seconds{path="/api/v1/teams/:id",method="GET",status="200",quantile="0.99"} 0.009880661998977303
+ruby_http_request_duration_seconds{path="/api/v1/teams/:id",method="GET",status="200",quantile="0.99"} 0.009880661998977303
 ```
 
 ¹) Only available when Redis is used.
@@ -890,6 +891,26 @@ $ prometheus_exporter --histogram
 In histogram mode, the same metrics will be collected but will be reported as histograms rather than summaries. This sacrifices some precision but allows aggregating metrics across actions and nodes using [`histogram_quantile`].
 
 [`histogram_quantile`]: https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile
+
+### Histogram - custom buckets
+
+By default these buckets will be used:
+```
+[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5.0, 10.0].freeze
+```
+if this is not enough you can specify `default_buckets` like this:
+```
+Histogram.default_buckets = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 2.5, 3, 4, 5.0, 10.0, 12, 14, 15, 20, 25].freeze
+```
+
+Specfied buckets on the instance  takes precedence over default:
+
+```
+Histogram.default_buckets = [0.005, 0.01, 0,5].freeze
+buckets = [0.1, 0.2, 0.3]
+histogram = Histogram.new('test_bucktets', 'I have specified buckets', buckets: buckets)
+histogram.buckets => [0.1, 0.2, 0.3]
+```
 
 ## Transport concerns
 
