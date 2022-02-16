@@ -5,6 +5,7 @@ require 'mini_racer'
 require 'prometheus_exporter/server'
 require 'prometheus_exporter/client'
 require 'prometheus_exporter/instrumentation'
+require 'active_record'
 
 class PrometheusCollectorTest < Minitest::Test
 
@@ -27,6 +28,22 @@ class PrometheusCollectorTest < Minitest::Test
       payload = obj.merge(custom_labels: @custom_labels).to_json
       @collector.process(payload)
     end
+  end
+
+  class WorkerWithCustomLabels
+    def self.custom_labels
+      { test_label: 'one', other_label: 'two' }
+    end
+
+    def perform; end
+  end
+
+  class DelayedAction
+    def foo; end
+  end
+
+  class DelayedModel < ::ActiveRecord::Base
+    def foo; end
   end
 
   def test_local_metric
@@ -293,13 +310,13 @@ class PrometheusCollectorTest < Minitest::Test
 
     delayed_worker = {}
     delayed_worker.stub(:class, "Sidekiq::Extensions::DelayedClass") do
-      instrument.call(delayed_worker, { 'args' => [ "---\n- !ruby/class 'String'\n- :foo\n- -" ] }, "default") do
+      instrument.call(delayed_worker, { 'args' => [ "---\n- !ruby/class 'DelayedAction'\n- :foo\n- -" ] }, "default") do
         # nothing
       end
     end
 
     delayed_worker.stub(:class, "Sidekiq::Extensions::DelayedModel") do
-      instrument.call(delayed_worker, { 'args' => [ "---\n- !ruby/object {}\n- :foo\n- -" ] }, "default") do
+      instrument.call(delayed_worker, { 'args' => [ "---\n- !ruby/class 'DelayedModel'\n- :foo\n- -" ] }, "default") do
         # nothing
       end
     end
@@ -320,9 +337,103 @@ class PrometheusCollectorTest < Minitest::Test
     assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",queue="default",service="service1",quantile="0.1"}'), "has duration quantile 0.1")
     assert(result.include?('sidekiq_job_duration_seconds{job_name="FalseClass",queue="default",service="service1",quantile="0.01"}'), "has duration quantile 0.01")
     assert(result.include?('sidekiq_jobs_total{job_name="WrappedClass",queue="default",service="service1"} 1'), "has sidekiq working job from ActiveJob")
-    assert(result.include?('sidekiq_jobs_total{job_name="String#foo",queue="default",service="service1"} 1'), "has sidekiq delayed class")
-    assert(result.include?('sidekiq_jobs_total{job_name="Object#foo",queue="default",service="service1"} 1'), "has sidekiq delayed class")
+    assert(result.include?('sidekiq_jobs_total{job_name="DelayedAction#foo",queue="default",service="service1"} 1'), "has sidekiq delayed class")
+    assert(result.include?('sidekiq_jobs_total{job_name="DelayedModel#foo",queue="default",service="service1"} 1'), "has sidekiq delayed class")
     assert(result.include?('sidekiq_jobs_total{job_name="Sidekiq::Extensions::DelayedClass",queue="default",service="service1"} 1'), "has sidekiq delayed class")
+  end
+
+  def test_it_can_collect_sidekiq_metrics_with_custom_labels_from_worker_class
+    worker_class = 'WorkerWithCustomLabels'
+    msg = { 'wrapped' => worker_class }
+    queue = "default"
+
+    client = Minitest::Mock.new
+    client.expect(:send_json, '', [{
+      type: "sidekiq",
+      name: "PrometheusCollectorTest::#{worker_class}",
+      queue: queue,
+      success: true,
+      shutdown: false,
+      duration: 0,
+      custom_labels: WorkerWithCustomLabels.custom_labels
+    }])
+
+    ::Process.stub(:clock_gettime, 1, ::Process::CLOCK_MONOTONIC) do
+      instrument = PrometheusExporter::Instrumentation::Sidekiq.new(client: client)
+      collector = PrometheusExporter::Server::Collector.new
+      instrument.call(WorkerWithCustomLabels.new, msg, queue) {}
+      collector.prometheus_metrics_text
+    end
+
+    assert_mock client
+  end
+
+  def test_it_can_collect_sidekiq_metrics_on_job_death
+    job = {
+      "dead" => true,
+      "retry" => true,
+      "class" => "TestWorker"
+    }
+
+    worker = Minitest::Mock.new
+
+    client = Minitest::Mock.new
+    client.expect(:send_json, '', [{
+      type: "sidekiq",
+      name: job["class"],
+      dead: true,
+      custom_labels: {}
+    }])
+
+    Object.stub(:const_get, worker, [job['class']]) do
+      PrometheusExporter::Client.stub(:default, client) do
+        PrometheusExporter::Instrumentation::Sidekiq.death_handler.call(job, RuntimeError.new('bang'))
+      end
+    end
+
+    assert_mock client
+    assert_mock worker
+  end
+
+  def test_it_can_collect_sidekiq_metrics_on_job_death_with_custom_labels_from_worker_class
+    job = {
+      "dead" => true,
+      "retry" => true,
+      "class" => "WorkerWithCustomLabels"
+    }
+
+    client = Minitest::Mock.new
+    client.expect(:send_json, '', [{
+      type: "sidekiq",
+      name: job["class"],
+      dead: true,
+      custom_labels: WorkerWithCustomLabels.custom_labels
+    }])
+
+    Object.stub(:const_get, WorkerWithCustomLabels, [job['class']]) do
+      PrometheusExporter::Client.stub(:default, client) do
+        PrometheusExporter::Instrumentation::Sidekiq.death_handler.call(job, RuntimeError.new('bang'))
+      end
+    end
+
+    assert_mock client
+  end
+
+  def test_it_does_not_collect_sidekiq_metrics_on_fire_forget_job_death
+    job = {
+      "dead" => false,
+      "retry" => false,
+      "class" => "WorkerWithCustomLabels"
+    }
+    custom_labels = { from_worker: 'test1' }
+
+    client = Minitest::Mock.new
+
+    Object.stub(:const_get, WorkerWithCustomLabels, [job['class']]) do
+      PrometheusExporter::Client.stub(:default, client) do
+        PrometheusExporter::Instrumentation::Sidekiq.death_handler.call(job, RuntimeError.new('bang'))
+      end
+    end
   end
 
   def test_it_can_collect_sidekiq_queue_metrics_for_all_queues

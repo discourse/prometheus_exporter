@@ -421,6 +421,18 @@ Sometimes the Sidekiq server shuts down before it can send metrics, that were ge
   end
 ```
 
+Custom labels can be added for individual jobs by defining a class method on the job class. These labels will be added to all Sidekiq metrics written by the job:
+
+```ruby
+  class WorkerWithCustomLabels
+    def self.custom_labels
+      { my_label: 'value-here', other_label: 'second-val' }
+    end
+
+    def perform; end
+  end
+```
+
 ##### Metrics collected by Sidekiq Instrumentation
 
 **PrometheusExporter::Instrumentation::Sidekiq**
