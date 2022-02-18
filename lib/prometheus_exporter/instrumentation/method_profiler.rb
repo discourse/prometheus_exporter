@@ -4,30 +4,14 @@
 module PrometheusExporter::Instrumentation; end
 
 class PrometheusExporter::Instrumentation::MethodProfiler
-  def self.patch(klass, methods, name)
-    patch_source_line = __LINE__ + 3
-    patches = methods.map do |method_name|
-      <<~RUBY
-      unless defined?(#{method_name}__mp_unpatched)
-        alias_method :#{method_name}__mp_unpatched, :#{method_name}
-        def #{method_name}(*args, &blk)
-          unless prof = Thread.current[:_method_profiler]
-            return #{method_name}__mp_unpatched(*args, &blk)
-          end
-          begin
-            start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-            #{method_name}__mp_unpatched(*args, &blk)
-          ensure
-            data = (prof[:#{name}] ||= {duration: 0.0, calls: 0})
-            data[:duration] += Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
-            data[:calls] += 1
-          end
-        end
-      end
-      RUBY
-    end.join("\n")
-
-    klass.class_eval patches, __FILE__, patch_source_line
+  def self.patch(klass, methods, name, instrument:)
+    if instrument == :alias_method
+      patch_using_alias_method(klass, methods, name)
+    elsif instrument == :prepend
+      patch_using_prepend(klass, methods, name)
+    else
+      raise ArgumentError, "instrument must be :alias_method or :prepend"
+    end
   end
 
   def self.transfer
@@ -54,5 +38,58 @@ class PrometheusExporter::Instrumentation::MethodProfiler
       data[:total_duration] = finish - start
     end
     data
+  end
+
+private
+
+  def self.patch_using_prepend(klass, methods, name)
+    prepend_instument = Module.new
+    patch_source_line = __LINE__ + 3
+    patches = methods.map do |method_name|
+      <<~RUBY
+        def #{method_name}(*args, &blk)
+          unless prof = Thread.current[:_method_profiler]
+            return super
+          end
+          begin
+            start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+            super
+          ensure
+            data = (prof[:#{name}] ||= {duration: 0.0, calls: 0})
+            data[:duration] += Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+            data[:calls] += 1
+          end
+        end
+      RUBY
+    end.join("\n")
+
+    prepend_instument.module_eval patches, __FILE__, patch_source_line
+    klass.prepend(prepend_instument)
+  end
+
+  def self.patch_using_alias_method(klass, methods, name)
+    patch_source_line = __LINE__ + 3
+    patches = methods.map do |method_name|
+      <<~RUBY
+      unless defined?(#{method_name}__mp_unpatched)
+        alias_method :#{method_name}__mp_unpatched, :#{method_name}
+        def #{method_name}(*args, &blk)
+          unless prof = Thread.current[:_method_profiler]
+            return #{method_name}__mp_unpatched(*args, &blk)
+          end
+          begin
+            start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+            #{method_name}__mp_unpatched(*args, &blk)
+          ensure
+            data = (prof[:#{name}] ||= {duration: 0.0, calls: 0})
+            data[:duration] += Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+            data[:calls] += 1
+          end
+        end
+      end
+      RUBY
+    end.join("\n")
+
+    klass.class_eval patches, __FILE__, patch_source_line
   end
 end

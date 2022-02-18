@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'minitest/stub_const'
 require_relative 'test_helper'
 require 'rack/test'
 require 'prometheus_exporter/middleware'
@@ -32,7 +33,7 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
   end
 
   def configure_middleware(overrides = {})
-    config = { client: client, instrument: true }.merge(overrides)
+    config = { client: client, instrument: :alias_method }.merge(overrides)
     @app = PrometheusExporter::Middleware.new(inner_app, config)
     def @app.request_start
       1234567891.123
@@ -89,4 +90,77 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
     assert_invalid_headers_response
   end
 
+  def test_patch_called_with_prepend_instrument
+    Object.stub_const(:Redis, Module) do
+      ::Redis.stub_const(:Client) do
+        mock = Minitest::Mock.new
+        mock.expect :call, nil, [Redis::Client, Array, :redis, { instrument: :prepend }]
+        ::PrometheusExporter::Instrumentation::MethodProfiler.stub(:patch, mock) do
+          configure_middleware(instrument: :prepend)
+        end
+        mock.verify
+      end
+    end
+
+    Object.stub_const(:PG, Module) do
+      ::PG.stub_const(:Connection) do
+        mock = Minitest::Mock.new
+        mock.expect :call, nil, [PG::Connection, Array, :sql, { instrument: :prepend }]
+        ::PrometheusExporter::Instrumentation::MethodProfiler.stub(:patch, mock) do
+          configure_middleware(instrument: :prepend)
+        end
+        mock.verify
+      end
+    end
+
+    Object.stub_const(:Mysql2, Module) do
+      ::Mysql2.stub_consts({ Client: nil, Statement: nil, Result: nil }) do
+        mock = Minitest::Mock.new
+        mock.expect :call, nil, [Mysql2::Client, Array, :sql, { instrument: :prepend }]
+        mock.expect :call, nil, [Mysql2::Statement, Array, :sql, { instrument: :prepend }]
+        mock.expect :call, nil, [Mysql2::Result, Array, :sql, { instrument: :prepend }]
+        ::PrometheusExporter::Instrumentation::MethodProfiler.stub(:patch, mock) do
+          configure_middleware(instrument: :prepend)
+        end
+        mock.verify
+      end
+    end
+  end
+
+  def test_patch_called_with_alias_method_instrument
+    Object.stub_const(:Redis, Module) do
+      ::Redis.stub_const(:Client) do
+        mock = Minitest::Mock.new
+        mock.expect :call, nil, [Redis::Client, Array, :redis, { instrument: :alias_method }]
+        ::PrometheusExporter::Instrumentation::MethodProfiler.stub(:patch, mock) do
+          configure_middleware
+        end
+        mock.verify
+      end
+    end
+
+    Object.stub_const(:PG, Module) do
+      ::PG.stub_const(:Connection) do
+        mock = Minitest::Mock.new
+        mock.expect :call, nil, [PG::Connection, Array, :sql, { instrument: :alias_method }]
+        ::PrometheusExporter::Instrumentation::MethodProfiler.stub(:patch, mock) do
+          configure_middleware
+        end
+        mock.verify
+      end
+    end
+
+    Object.stub_const(:Mysql2, Module) do
+      ::Mysql2.stub_consts({ Client: nil, Statement: nil, Result: nil }) do
+        mock = Minitest::Mock.new
+        mock.expect :call, nil, [Mysql2::Client, Array, :sql, { instrument: :alias_method }]
+        mock.expect :call, nil, [Mysql2::Statement, Array, :sql, { instrument: :alias_method }]
+        mock.expect :call, nil, [Mysql2::Result, Array, :sql, { instrument: :alias_method }]
+        ::PrometheusExporter::Instrumentation::MethodProfiler.stub(:patch, mock) do
+          configure_middleware
+        end
+        mock.verify
+      end
+    end
+  end
 end
