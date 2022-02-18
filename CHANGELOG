@@ -1,5 +1,7 @@
-Unreleased
+2.0.0 - 2022-02-18
 
+- FEATURE: Add per worker custom labels 
+- FEATURE: support custom histogram buckets
 - FIX: all metrics are exposing status label, and not only `http_requests_total`
 - BREAKING: rename all `http_duration` metrics to `http_request_duration` to match prometheus official naming conventions (See https://prometheus.io/docs/practices/naming/#metric-names).
 
