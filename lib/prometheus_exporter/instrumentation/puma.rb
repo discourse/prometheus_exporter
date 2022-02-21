@@ -8,7 +8,10 @@ module PrometheusExporter::Instrumentation
     def self.start(client: nil, frequency: 30, labels: {})
       puma_collector = new(labels)
       client ||= PrometheusExporter::Client.default
-      Thread.new do
+
+      stop if @thread
+
+      @thread = Thread.new do
         while true
           begin
             metric = puma_collector.collect
@@ -19,6 +22,13 @@ module PrometheusExporter::Instrumentation
             sleep frequency
           end
         end
+      end
+    end
+
+    def self.stop
+      if t = @thread
+        t.kill
+        @thread = nil
       end
     end
 
