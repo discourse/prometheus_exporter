@@ -8,22 +8,17 @@ end
 
 module PrometheusExporter::Instrumentation
   # collects stats from unicorn
-  class Unicorn
+  class Unicorn < PeriodicStats
     def self.start(pid_file:, listener_address:, client: nil, frequency: 30)
       unicorn_collector = new(pid_file: pid_file, listener_address: listener_address)
       client ||= PrometheusExporter::Client.default
-      Thread.new do
-        loop do
-          begin
-            metric = unicorn_collector.collect
-            client.send_json metric
-          rescue StandardError => e
-            client.logger.error("Prometheus Exporter Failed To Collect Unicorn Stats #{e}")
-          ensure
-            sleep frequency
-          end
-        end
+
+      worker_loop do
+        metric = unicorn_collector.collect
+        client.send_json metric
       end
+
+      super
     end
 
     def initialize(pid_file:, listener_address:)

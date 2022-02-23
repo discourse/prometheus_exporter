@@ -1,22 +1,16 @@
 # frozen_string_literal: true
 
 module PrometheusExporter::Instrumentation
-  class SidekiqStats
+  class SidekiqStats < PeriodicStats
     def self.start(client: nil, frequency: 30)
       client ||= PrometheusExporter::Client.default
       sidekiq_stats_collector = new
 
-      Thread.new do
-        loop do
-          begin
-            client.send_json(sidekiq_stats_collector.collect)
-          rescue StandardError => e
-            STDERR.puts("Prometheus Exporter Failed To Collect Sidekiq Stats metrics #{e}")
-          ensure
-            sleep frequency
-          end
-        end
+      worker_loop do
+        client.send_json(sidekiq_stats_collector.collect)
       end
+
+      super
     end
 
     def collect

@@ -575,7 +575,10 @@ The easiest way to gather this metrics is to put the following in your `puma.rb`
 # puma.rb config
 after_worker_boot do
   require 'prometheus_exporter/instrumentation'
-  PrometheusExporter::Instrumentation::Puma.start
+  # optional check, avoids spinning up and down threads per worker
+  if !PrometheusExporter::Instrumentation::Puma.started?
+    PrometheusExporter::Instrumentation::Puma.start
+  end
 end
 ```
 

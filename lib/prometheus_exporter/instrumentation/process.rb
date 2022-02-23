@@ -2,8 +2,7 @@
 
 # collects stats from currently running process
 module PrometheusExporter::Instrumentation
-  class Process
-    @thread = nil if !defined?(@thread)
+  class Process < PeriodicStats
 
     def self.start(client: nil, type: "ruby", frequency: 30, labels: nil)
 
@@ -19,27 +18,12 @@ module PrometheusExporter::Instrumentation
       process_collector = new(metric_labels)
       client ||= PrometheusExporter::Client.default
 
-      stop if @thread
-
-      @thread = Thread.new do
-        while true
-          begin
-            metric = process_collector.collect
-            client.send_json metric
-          rescue => e
-            client.logger.error("Prometheus Exporter Failed To Collect Process Stats #{e}")
-          ensure
-            sleep frequency
-          end
-        end
+      worker_loop do
+        metric = process_collector.collect
+        client.send_json metric
       end
-    end
 
-    def self.stop
-      if t = @thread
-        t.kill
-        @thread = nil
-      end
+      super
     end
 
     def initialize(metric_labels)

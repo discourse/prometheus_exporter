@@ -2,11 +2,10 @@
 
 # collects stats from currently running process
 module PrometheusExporter::Instrumentation
-  class ActiveRecord
+  class ActiveRecord < PeriodicStats
     ALLOWED_CONFIG_LABELS = %i(database username host port)
 
     def self.start(client: nil, frequency: 30, custom_labels: {}, config_labels: [])
-
       client ||= PrometheusExporter::Client.default
 
       # Not all rails versions support connection pool stats
@@ -20,32 +19,17 @@ module PrometheusExporter::Instrumentation
 
       active_record_collector = new(custom_labels, config_labels)
 
-      stop if @thread
-
-      @thread = Thread.new do
-        while true
-          begin
-            metrics = active_record_collector.collect
-            metrics.each { |metric| client.send_json metric }
-          rescue => e
-            client.logger.error("Prometheus Exporter Failed To Collect Process Stats #{e}")
-          ensure
-            sleep frequency
-          end
-        end
+      worker_loop do
+        metrics = active_record_collector.collect
+        metrics.each { |metric| client.send_json metric }
       end
+
+      super
     end
 
     def self.validate_config_labels(config_labels)
       return if config_labels.size == 0
       raise "Invalid Config Labels, available options #{ALLOWED_CONFIG_LABELS}" if (config_labels - ALLOWED_CONFIG_LABELS).size > 0
-    end
-
-    def self.stop
-      if t = @thread
-        t.kill
-        @thread = nil
-      end
     end
 
     def initialize(metric_labels, config_labels)
