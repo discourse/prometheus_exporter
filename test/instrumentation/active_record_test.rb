@@ -12,8 +12,6 @@ class PrometheusInstrumentationActiveRecordTest < Minitest::Test
     # With this trick this variable with be accessible with ::ObjectSpace
     @pool = if active_record_version >= Gem::Version.create('6.1.0.rc1')
       active_record61_pool
-    elsif active_record_version >= Gem::Version.create('6.0.0')
-      active_record60_pool
     elsif active_record_version >= Gem::Version.create('5.2.0')
       active_record52_pool
     else
@@ -54,10 +52,6 @@ class PrometheusInstrumentationActiveRecordTest < Minitest::Test
   end
 
   def active_record52_pool
-    ::ActiveRecord::ConnectionAdapters::ConnectionPool.new(OpenStruct.new(config: {}))
-  end
-
-  def active_record60_pool
     ::ActiveRecord::ConnectionAdapters::ConnectionPool.new(OpenStruct.new(config: {}))
   end
 
