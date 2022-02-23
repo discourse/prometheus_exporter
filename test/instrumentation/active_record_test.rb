@@ -14,6 +14,8 @@ class PrometheusInstrumentationActiveRecordTest < Minitest::Test
       active_record61_pool
     elsif active_record_version >= Gem::Version.create('6.0.0')
       active_record60_pool
+    elsif active_record_version >= Gem::Version.create('5.2.0')
+      active_record52_pool
     else
       raise 'unsupported active_record version'
     end
@@ -49,6 +51,10 @@ class PrometheusInstrumentationActiveRecordTest < Minitest::Test
 
   def active_record_version
     Gem.loaded_specs["activerecord"].version
+  end
+
+  def active_record52_pool
+    ::ActiveRecord::ConnectionAdapters::ConnectionPool.new(OpenStruct.new(config: {}))
   end
 
   def active_record60_pool
