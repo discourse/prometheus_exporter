@@ -6,10 +6,6 @@ module PrometheusExporter::Instrumentation
     def self.start(*args, frequency:, client: nil, **kwargs)
       client ||= PrometheusExporter::Client.default
 
-      if !frequency
-        raise ArgumentError.new("Expected a value for frequency argument")
-      end
-
       if !(Numeric === frequency)
         raise ArgumentError.new("Expected frequency to be a number")
       end
