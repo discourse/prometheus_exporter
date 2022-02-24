@@ -1,3 +1,7 @@
+2.0.2 - 2022-02-24
+
+- FIX: Correctly require files
+
 2.0.1 - 2022-02-24
 
 - FIX: ensure threads do not leak when calling #start repeatedly on instrumentation classes, this is an urgent patch for Puma integration
@@ -13,7 +17,7 @@
 
 - FEATURE: add labels to preflight requests
 - FEATURE: SidekiqStats metrics
-- FIX: mintor refactors to Sidekiq metrics
+- FIX: minor refactors to Sidekiq metrics
 
 1.0.0 - 2021-11-23
 
@@ -161,7 +165,7 @@
 
 0.3.2
 
-- Feature: Add posibility to set custom_labels on multi process mode
+- Feature: Add possibility to set custom_labels on multi process mode
 
 0.3.1
 

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "periodic_stats"
+
 module PrometheusExporter::Instrumentation
   class SidekiqProcess < PeriodicStats
     def self.start(client: nil, frequency: 30)

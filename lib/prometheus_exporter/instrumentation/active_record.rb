@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "periodic_stats"
+
 # collects stats from currently running process
 module PrometheusExporter::Instrumentation
   class ActiveRecord < PeriodicStats

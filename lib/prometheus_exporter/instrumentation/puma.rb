@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "periodic_stats"
 
 # collects stats from puma
 module PrometheusExporter::Instrumentation

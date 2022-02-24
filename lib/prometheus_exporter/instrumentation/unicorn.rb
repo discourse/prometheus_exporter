@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+require_relative "periodic_stats"
+
 begin
   require 'raindrops'
 rescue LoadError
-  # No raindrops available, dont do anything
+  # No raindrops available, don't do anything
 end
 
 module PrometheusExporter::Instrumentation
