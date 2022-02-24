@@ -3,9 +3,8 @@
 module PrometheusExporter::Instrumentation
   class PeriodicStats
 
-    def self.start(*args, **kwargs)
-      frequency = kwargs[:frequency]
-      client = kwargs[:client] || PrometheusExporter::Client.default
+    def self.start(*args, frequency:, client: nil, **kwargs)
+      client ||= PrometheusExporter::Client.default
 
       if !frequency
         raise ArgumentError.new("Expected a value for frequency argument")
