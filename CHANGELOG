@@ -1,6 +1,6 @@
 2.0.1 - 2022-02-24
 
-- FIX: ensure threads do not leak when calling #start repeatadly on instrumentation classes, this is an urgent patch for Puma integration
+- FIX: ensure threads do not leak when calling #start repeatedly on instrumentation classes, this is an urgent patch for Puma integration
 
 2.0.0 - 2022-02-18
 
