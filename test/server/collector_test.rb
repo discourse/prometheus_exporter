@@ -58,7 +58,11 @@ class PrometheusCollectorTest < Minitest::Test
       metrics_text != ""
     end
 
+    assert_equal(true, PrometheusExporter::Instrumentation::Process.started?)
+
     PrometheusExporter::Instrumentation::Process.stop
+
+    assert_equal(false, PrometheusExporter::Instrumentation::Process.started?)
 
     assert_match(/heap_live_slots/, metrics_text)
     assert_match(/hello.*custom label/, metrics_text)
@@ -425,7 +429,6 @@ class PrometheusCollectorTest < Minitest::Test
       "retry" => false,
       "class" => "WorkerWithCustomLabels"
     }
-    custom_labels = { from_worker: 'test1' }
 
     client = Minitest::Mock.new
 

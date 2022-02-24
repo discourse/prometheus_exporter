@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "client"
+require_relative "instrumentation/periodic_stats"
 require_relative "instrumentation/process"
 require_relative "instrumentation/method_profiler"
 require_relative "instrumentation/sidekiq"

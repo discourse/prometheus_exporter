@@ -2,21 +2,16 @@
 
 # collects stats from resque
 module PrometheusExporter::Instrumentation
-  class Resque
+  class Resque < PeriodicStats
     def self.start(client: nil, frequency: 30)
       resque_collector = new
       client ||= PrometheusExporter::Client.default
-      Thread.new do
-        while true
-          begin
-            client.send_json(resque_collector.collect)
-          rescue => e
-            client.logger.error("Prometheus Exporter Failed To Collect Resque Stats #{e}")
-          ensure
-            sleep frequency
-          end
-        end
+
+      worker_loop do
+        client.send_json(resque_collector.collect)
       end
+
+      super
     end
 
     def collect

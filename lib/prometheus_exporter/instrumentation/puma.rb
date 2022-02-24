@@ -4,22 +4,17 @@ require "json"
 
 # collects stats from puma
 module PrometheusExporter::Instrumentation
-  class Puma
+  class Puma < PeriodicStats
     def self.start(client: nil, frequency: 30, labels: {})
       puma_collector = new(labels)
       client ||= PrometheusExporter::Client.default
-      Thread.new do
-        while true
-          begin
-            metric = puma_collector.collect
-            client.send_json metric
-          rescue => e
-            client.logger.error("Prometheus Exporter Failed To Collect Puma Stats #{e}")
-          ensure
-            sleep frequency
-          end
-        end
+
+      worker_loop do
+        metric = puma_collector.collect
+        client.send_json metric
       end
+
+      super
     end
 
     def initialize(metric_labels = {})
