@@ -952,6 +952,26 @@ You can also pass a log level (default is [`Logger::WARN`](https://ruby-doc.org/
 PrometheusExporter::Client.new(log_level: Logger::DEBUG)
 ```
 
+## Docker/Kubernetes Healthcheck
+
+A `/ping` endpoint which only returns `PONG` is available so you can run container healthchecks :
+
+Example:
+
+```yml
+services:
+  rails-exporter:
+    command:
+      - bin/prometheus_exporter
+      - -b
+      - 0.0.0.0
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--show-error", "--fail", "--max-time", "3", "http://0.0.0.0:9394/ping"]
+      timeout: 3s
+      interval: 10s
+      retries: 5
+```
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/discourse/prometheus_exporter. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.

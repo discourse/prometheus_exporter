@@ -255,4 +255,27 @@ class PrometheusExporterTest < Minitest::Test
     client.stop rescue nil
     server.stop rescue nil
   end
+
+  def test_it_responds_to_ping
+    collector = DemoCollector.new
+    port = find_free_port
+
+    server = PrometheusExporter::Server::WebServer.new port: port, collector: collector
+    server.start
+
+    client = PrometheusExporter::Client.new host: "localhost", port: port, thread_sleep: 0.001
+
+    Net::HTTP.new("localhost", port).start do |http|
+      request = Net::HTTP::Get.new "/ping"
+
+      http.request(request) do |response|
+        assert_equal("200", response.code)
+        assert_match(/PONG/, response.body)
+      end
+    end
+
+  ensure
+    client.stop rescue nil
+    server.stop rescue nil
+  end
 end

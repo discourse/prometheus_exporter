@@ -73,9 +73,11 @@ module PrometheusExporter::Server
           end
         elsif req.path == '/send-metrics'
           handle_metrics(req, res)
+        elsif req.path == '/ping'
+          res.body = 'PONG'
         else
           res.status = 404
-          res.body = "Not Found! The Prometheus Ruby Exporter only listens on /metrics and /send-metrics"
+          res.body = "Not Found! The Prometheus Ruby Exporter only listens on /ping, /metrics and /send-metrics"
         end
       end
     end
