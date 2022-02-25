@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative '../client'
-require_relative '../instrumentation/unicorn'
 
 module PrometheusExporter::Server
   class RunnerException < StandardError; end
