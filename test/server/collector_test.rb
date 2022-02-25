@@ -38,6 +38,14 @@ class PrometheusCollectorTest < Minitest::Test
     def perform; end
   end
 
+  class WorkerWithCustomLabelsFromJob
+    def self.custom_labels(job)
+      { first_job_arg: job["args"].first }
+    end
+
+    def perform; end
+  end
+
   class DelayedAction
     def foo; end
   end
@@ -362,6 +370,32 @@ class PrometheusCollectorTest < Minitest::Test
       instrument = PrometheusExporter::Instrumentation::Sidekiq.new(client: client)
       collector = PrometheusExporter::Server::Collector.new
       instrument.call(WorkerWithCustomLabels.new, msg, queue) {}
+      collector.prometheus_metrics_text
+    end
+
+    assert_mock client
+  end
+
+  def test_it_can_collect_sidekiq_metrics_with_custom_labels_from_job
+    worker_class = 'WorkerWithCustomLabelsFromJob'
+    msg = { 'wrapped' => worker_class, 'args' => ['arg_one', ] }
+    queue = "default"
+
+    client = Minitest::Mock.new
+    client.expect(:send_json, '', [{
+      type: "sidekiq",
+      name: "PrometheusCollectorTest::#{worker_class}",
+      queue: queue,
+      success: true,
+      shutdown: false,
+      duration: 0,
+      custom_labels: { first_job_arg: 'arg_one' }
+    }])
+
+    ::Process.stub(:clock_gettime, 1, ::Process::CLOCK_MONOTONIC) do
+      instrument = PrometheusExporter::Instrumentation::Sidekiq.new(client: client)
+      collector = PrometheusExporter::Server::Collector.new
+      instrument.call(WorkerWithCustomLabelsFromJob.new, msg, queue) {}
       collector.prometheus_metrics_text
     end
 
