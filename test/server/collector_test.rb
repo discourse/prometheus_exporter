@@ -378,7 +378,7 @@ class PrometheusCollectorTest < Minitest::Test
 
   def test_it_can_collect_sidekiq_metrics_with_custom_labels_from_job
     worker_class = 'WorkerWithCustomLabelsFromJob'
-    msg = { 'wrapped' => worker_class, 'args' => ['arg_one', ] }
+    msg = { 'wrapped' => worker_class, 'args' => ['arg_one'] }
     queue = "default"
 
     client = Minitest::Mock.new
