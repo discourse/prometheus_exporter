@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative '../client'
-require_relative '../instrumentation/unicorn'
 
 module PrometheusExporter::Server
   class RunnerException < StandardError; end
@@ -39,6 +38,9 @@ module PrometheusExporter::Server
       end
 
       if unicorn_listen_address && unicorn_pid_file
+
+        require_relative '../instrumentation'
+
         local_client = PrometheusExporter::LocalClient.new(collector: collector)
         PrometheusExporter::Instrumentation::Unicorn.start(
           pid_file: unicorn_pid_file,

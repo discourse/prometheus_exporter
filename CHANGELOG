@@ -1,3 +1,7 @@
+2.0.2 - 2022-02-25
+
+- FIX: runner was not requiring unicorn integration correctly leading to a crash
+
 2.0.1 - 2022-02-24
 
 - FIX: ensure threads do not leak when calling #start repeatedly on instrumentation classes, this is an urgent patch for Puma integration
