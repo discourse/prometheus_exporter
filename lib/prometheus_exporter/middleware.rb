@@ -6,23 +6,25 @@ require 'prometheus_exporter/client'
 class PrometheusExporter::Middleware
   MethodProfiler = PrometheusExporter::Instrumentation::MethodProfiler
 
-  def initialize(app, config = { instrument: true, client: nil })
+  def initialize(app, config = { instrument: :alias_method, client: nil })
     @app = app
     @client = config[:client] || PrometheusExporter::Client.default
 
     if config[:instrument]
       if defined? Redis::Client
-        MethodProfiler.patch(Redis::Client, [:call, :call_pipeline], :redis)
+        MethodProfiler.patch(Redis::Client, [
+          :call, :call_pipeline
+        ], :redis, instrument: config[:instrument])
       end
       if defined? PG::Connection
         MethodProfiler.patch(PG::Connection, [
           :exec, :async_exec, :exec_prepared, :send_query_prepared, :query
-        ], :sql)
+        ], :sql, instrument: config[:instrument])
       end
       if defined? Mysql2::Client
-        MethodProfiler.patch(Mysql2::Client, [:query], :sql)
-        MethodProfiler.patch(Mysql2::Statement, [:execute], :sql)
-        MethodProfiler.patch(Mysql2::Result, [:each], :sql)
+        MethodProfiler.patch(Mysql2::Client, [:query], :sql, instrument: config[:instrument])
+        MethodProfiler.patch(Mysql2::Statement, [:execute], :sql, instrument: config[:instrument])
+        MethodProfiler.patch(Mysql2::Result, [:each], :sql, instrument: config[:instrument])
       end
     end
   end

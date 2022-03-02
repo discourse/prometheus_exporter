@@ -201,6 +201,14 @@ Ensure you run the exporter in a monitored background process:
 $ bundle exec prometheus_exporter
 ```
 
+#### Choosing the style of method patching
+
+By default, `prometheus_exporter` uses `alias_method` to instrument methods used by SQL and Redis as it is the fastest approach (see [this article](https://samsaffron.com/archive/2017/10/18/fastest-way-to-profile-a-method-in-ruby)). You may desire to add additional instrumentation libraries beyond `prometheus_exporter` to your app. This can become problematic if these other libraries instead use `prepend` to instrument methods. To resolve this, you can tell the middleware to instrument using `prepend` by passing an `instrument` option like so:
+
+```ruby
+Rails.application.middleware.unshift PrometheusExporter::Middleware, instrument: :prepend
+```
+
 #### Metrics collected by Rails integration middleware
 
 | Type    | Name                                   | Description                                                 |
