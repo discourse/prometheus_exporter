@@ -33,8 +33,8 @@ module PrometheusExporter::Instrumentation
       worker_class.respond_to?(:custom_labels) ? worker_class.custom_labels : {}
     end
 
-    def initialize(client: nil)
-      @client = client || PrometheusExporter::Client.default
+    def initialize(options = { client: nil })
+      @client = options.fetch(:client, nil) || PrometheusExporter::Client.default
     end
 
     def call(worker, msg, queue)
