@@ -31,6 +31,8 @@ module PrometheusExporter::Instrumentation
 
     def self.get_worker_custom_labels(worker_class, msg)
       return {} unless worker_class.respond_to?(:custom_labels)
+
+      # TODO remove when version 3.0.0 is released
       method_arity = worker_class.method(:custom_labels).arity
 
       if method_arity > 0
