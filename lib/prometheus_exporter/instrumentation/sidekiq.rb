@@ -16,7 +16,7 @@ module PrometheusExporter::Instrumentation
         job_is_fire_and_forget = job["retry"] == false
 
         worker_class = Object.const_get(job["class"])
-        worker_custom_labels = self.get_worker_custom_labels(worker_class)
+        worker_custom_labels = self.get_worker_custom_labels(worker_class, job)
 
         unless job_is_fire_and_forget
           PrometheusExporter::Client.default.send_json(
@@ -29,8 +29,17 @@ module PrometheusExporter::Instrumentation
       end
     end
 
-    def self.get_worker_custom_labels(worker_class)
-      worker_class.respond_to?(:custom_labels) ? worker_class.custom_labels : {}
+    def self.get_worker_custom_labels(worker_class, msg)
+      return {} unless worker_class.respond_to?(:custom_labels)
+
+      # TODO remove when version 3.0.0 is released
+      method_arity = worker_class.method(:custom_labels).arity
+
+      if method_arity > 0
+        worker_class.custom_labels(msg)
+      else
+        worker_class.custom_labels
+      end
     end
 
     def initialize(options = { client: nil })
@@ -56,7 +65,7 @@ module PrometheusExporter::Instrumentation
         success: success,
         shutdown: shutdown,
         duration: duration,
-        custom_labels: self.class.get_worker_custom_labels(worker.class)
+        custom_labels: self.class.get_worker_custom_labels(worker.class, msg)
       )
     end
 
