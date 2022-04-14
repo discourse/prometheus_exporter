@@ -21,7 +21,7 @@ module PrometheusExporter::Instrumentation
         unless job_is_fire_and_forget
           PrometheusExporter::Client.default.send_json(
             type: "sidekiq",
-            name: job["class"],
+            name: get_name(job["class"], job),
             dead: true,
             custom_labels: worker_custom_labels
           )
@@ -60,7 +60,7 @@ module PrometheusExporter::Instrumentation
       duration = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC) - start
       @client.send_json(
         type: "sidekiq",
-        name: get_name(worker, msg),
+        name: self.class.get_name(worker.class.to_s, msg),
         queue: queue,
         success: success,
         shutdown: shutdown,
@@ -71,8 +71,7 @@ module PrometheusExporter::Instrumentation
 
     private
 
-    def get_name(worker, msg)
-      class_name = worker.class.to_s
+    def self.get_name(class_name, msg)
       if class_name == JOB_WRAPPER_CLASS_NAME
         get_job_wrapper_name(msg)
       elsif DELAYED_CLASS_NAMES.include?(class_name)
@@ -82,11 +81,11 @@ module PrometheusExporter::Instrumentation
       end
     end
 
-    def get_job_wrapper_name(msg)
+    def self.get_job_wrapper_name(msg)
       msg['wrapped']
     end
 
-    def get_delayed_name(msg, class_name)
+    def self.get_delayed_name(msg, class_name)
       begin
         # fallback to class_name since we're relying on the internal implementation
         # of the delayed extensions

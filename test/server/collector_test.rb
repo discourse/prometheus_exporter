@@ -433,6 +433,34 @@ class PrometheusCollectorTest < Minitest::Test
     assert_mock worker
   end
 
+  def test_it_can_collect_sidekiq_metrics_on_job_death_for_delayed
+    job = {
+      "dead" => true,
+      "retry" => true,
+      "class" => "Sidekiq::Extensions::DelayedClass",
+      "args" => [ "---\n- !ruby/class 'DelayedAction'\n- :foo\n- -" ]
+    }
+
+    worker = Minitest::Mock.new
+
+    client = Minitest::Mock.new
+    client.expect(:send_json, '', [{
+      type: "sidekiq",
+      name: "DelayedAction#foo",
+      dead: true,
+      custom_labels: {}
+    }])
+
+    Object.stub(:const_get, worker, [job['class']]) do
+      PrometheusExporter::Client.stub(:default, client) do
+        PrometheusExporter::Instrumentation::Sidekiq.death_handler.call(job, RuntimeError.new('bang'))
+      end
+    end
+
+    assert_mock client
+    assert_mock worker
+  end
+
   def test_it_can_collect_sidekiq_metrics_on_job_death_with_custom_labels_from_worker_class
     job = {
       "dead" => true,
