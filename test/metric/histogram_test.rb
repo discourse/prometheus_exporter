@@ -25,18 +25,18 @@ module PrometheusExporter::Metric
       expected = <<~TEXT
         # HELP a_histogram my amazing histogram
         # TYPE a_histogram histogram
-        a_histogram_bucket{le="+Inf"} 7
-        a_histogram_bucket{le="10.0"} 7
-        a_histogram_bucket{le="5.0"} 7
-        a_histogram_bucket{le="2.5"} 7
-        a_histogram_bucket{le="1"} 7
-        a_histogram_bucket{le="0.5"} 3
-        a_histogram_bucket{le="0.25"} 3
-        a_histogram_bucket{le="0.1"} 2
-        a_histogram_bucket{le="0.05"} 0
-        a_histogram_bucket{le="0.025"} 0
-        a_histogram_bucket{le="0.01"} 0
         a_histogram_bucket{le="0.005"} 0
+        a_histogram_bucket{le="0.01"} 0
+        a_histogram_bucket{le="0.025"} 0
+        a_histogram_bucket{le="0.05"} 0
+        a_histogram_bucket{le="0.1"} 2
+        a_histogram_bucket{le="0.25"} 3
+        a_histogram_bucket{le="0.5"} 3
+        a_histogram_bucket{le="1"} 7
+        a_histogram_bucket{le="2.5"} 7
+        a_histogram_bucket{le="5.0"} 7
+        a_histogram_bucket{le="10.0"} 7
+        a_histogram_bucket{le="+Inf"} 7
         a_histogram_count 7
         a_histogram_sum 3.1400040000000002
       TEXT
@@ -58,32 +58,32 @@ module PrometheusExporter::Metric
       expected = <<~TEXT
         # HELP a_histogram my amazing histogram
         # TYPE a_histogram histogram
-        a_histogram_bucket{le="+Inf"} 4
-        a_histogram_bucket{le="10.0"} 4
-        a_histogram_bucket{le="5.0"} 4
-        a_histogram_bucket{le="2.5"} 4
-        a_histogram_bucket{le="1"} 4
-        a_histogram_bucket{le="0.5"} 2
-        a_histogram_bucket{le="0.25"} 2
-        a_histogram_bucket{le="0.1"} 1
-        a_histogram_bucket{le="0.05"} 0
-        a_histogram_bucket{le="0.025"} 0
-        a_histogram_bucket{le="0.01"} 0
         a_histogram_bucket{le="0.005"} 0
+        a_histogram_bucket{le="0.01"} 0
+        a_histogram_bucket{le="0.025"} 0
+        a_histogram_bucket{le="0.05"} 0
+        a_histogram_bucket{le="0.1"} 1
+        a_histogram_bucket{le="0.25"} 2
+        a_histogram_bucket{le="0.5"} 2
+        a_histogram_bucket{le="1"} 4
+        a_histogram_bucket{le="2.5"} 4
+        a_histogram_bucket{le="5.0"} 4
+        a_histogram_bucket{le="10.0"} 4
+        a_histogram_bucket{le="+Inf"} 4
         a_histogram_count 4
         a_histogram_sum 1.520002
-        a_histogram_bucket{name="bob",family="skywalker",le="+Inf"} 3
-        a_histogram_bucket{name="bob",family="skywalker",le="10.0"} 3
-        a_histogram_bucket{name="bob",family="skywalker",le="5.0"} 3
-        a_histogram_bucket{name="bob",family="skywalker",le="2.5"} 3
-        a_histogram_bucket{name="bob",family="skywalker",le="1"} 3
-        a_histogram_bucket{name="bob",family="skywalker",le="0.5"} 1
-        a_histogram_bucket{name="bob",family="skywalker",le="0.25"} 1
-        a_histogram_bucket{name="bob",family="skywalker",le="0.1"} 1
-        a_histogram_bucket{name="bob",family="skywalker",le="0.05"} 0
-        a_histogram_bucket{name="bob",family="skywalker",le="0.025"} 0
-        a_histogram_bucket{name="bob",family="skywalker",le="0.01"} 0
         a_histogram_bucket{name="bob",family="skywalker",le="0.005"} 0
+        a_histogram_bucket{name="bob",family="skywalker",le="0.01"} 0
+        a_histogram_bucket{name="bob",family="skywalker",le="0.025"} 0
+        a_histogram_bucket{name="bob",family="skywalker",le="0.05"} 0
+        a_histogram_bucket{name="bob",family="skywalker",le="0.1"} 1
+        a_histogram_bucket{name="bob",family="skywalker",le="0.25"} 1
+        a_histogram_bucket{name="bob",family="skywalker",le="0.5"} 1
+        a_histogram_bucket{name="bob",family="skywalker",le="1"} 3
+        a_histogram_bucket{name="bob",family="skywalker",le="2.5"} 3
+        a_histogram_bucket{name="bob",family="skywalker",le="5.0"} 3
+        a_histogram_bucket{name="bob",family="skywalker",le="10.0"} 3
+        a_histogram_bucket{name="bob",family="skywalker",le="+Inf"} 3
         a_histogram_count{name="bob",family="skywalker"} 3
         a_histogram_sum{name="bob",family="skywalker"} 1.79
       TEXT
@@ -102,16 +102,16 @@ module PrometheusExporter::Metric
       expected = <<~TEXT
         # HELP a_histogram my amazing histogram
         # TYPE a_histogram histogram
-        a_histogram_bucket{le="+Inf"} 3
-        a_histogram_bucket{le="3"} 2
-        a_histogram_bucket{le="2"} 2
         a_histogram_bucket{le="1"} 1
+        a_histogram_bucket{le="2"} 2
+        a_histogram_bucket{le="3"} 2
+        a_histogram_bucket{le="+Inf"} 3
         a_histogram_count 3
         a_histogram_sum 6.0
-        a_histogram_bucket{name="gargamel",le="+Inf"} 1
-        a_histogram_bucket{name="gargamel",le="3"} 1
-        a_histogram_bucket{name="gargamel",le="2"} 1
         a_histogram_bucket{name="gargamel",le="1"} 0
+        a_histogram_bucket{name="gargamel",le="2"} 1
+        a_histogram_bucket{name="gargamel",le="3"} 1
+        a_histogram_bucket{name="gargamel",le="+Inf"} 1
         a_histogram_count{name="gargamel"} 1
         a_histogram_sum{name="gargamel"} 2.0
       TEXT
@@ -155,14 +155,14 @@ module PrometheusExporter::Metric
     end
 
     it 'uses the default buckets for instance' do
-      assert_equal(histogram.buckets, Histogram::DEFAULT_BUCKETS.sort.reverse)
+      assert_equal(histogram.buckets, Histogram::DEFAULT_BUCKETS)
     end
 
     it 'uses the the custom default buckets for instance' do
       custom_buckets = [0.005, 0.1, 1, 2, 5, 10]
       Histogram.default_buckets = custom_buckets
 
-      assert_equal(histogram.buckets, custom_buckets.sort.reverse)
+      assert_equal(histogram.buckets, custom_buckets)
 
       Histogram.default_buckets = Histogram::DEFAULT_BUCKETS
     end
@@ -171,7 +171,7 @@ module PrometheusExporter::Metric
       buckets = [0.1, 0.2, 0.3]
       histogram = Histogram.new('test_bucktets', 'I have specified buckets', buckets: buckets)
 
-      assert_equal(histogram.buckets, buckets.sort.reverse)
+      assert_equal(histogram.buckets, buckets)
     end
   end
 end

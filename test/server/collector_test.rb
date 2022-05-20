@@ -223,18 +223,18 @@ class PrometheusCollectorTest < Minitest::Test
     text = <<~TXT
       # HELP test_name test_help
       # TYPE test_name histogram
-      test_name_bucket{key1=\"test1\",le=\"+Inf\"} 2
-      test_name_bucket{key1=\"test1\",le=\"10.0\"} 2
-      test_name_bucket{key1=\"test1\",le=\"5.0\"} 0
-      test_name_bucket{key1=\"test1\",le=\"2.5\"} 0
-      test_name_bucket{key1=\"test1\",le=\"1\"} 0
-      test_name_bucket{key1=\"test1\",le=\"0.5\"} 0
-      test_name_bucket{key1=\"test1\",le=\"0.25\"} 0
-      test_name_bucket{key1=\"test1\",le=\"0.1\"} 0
-      test_name_bucket{key1=\"test1\",le=\"0.05\"} 0
-      test_name_bucket{key1=\"test1\",le=\"0.025\"} 0
-      test_name_bucket{key1=\"test1\",le=\"0.01\"} 0
       test_name_bucket{key1=\"test1\",le=\"0.005\"} 0
+      test_name_bucket{key1=\"test1\",le=\"0.01\"} 0
+      test_name_bucket{key1=\"test1\",le=\"0.025\"} 0
+      test_name_bucket{key1=\"test1\",le=\"0.05\"} 0
+      test_name_bucket{key1=\"test1\",le=\"0.1\"} 0
+      test_name_bucket{key1=\"test1\",le=\"0.25\"} 0
+      test_name_bucket{key1=\"test1\",le=\"0.5\"} 0
+      test_name_bucket{key1=\"test1\",le=\"1\"} 0
+      test_name_bucket{key1=\"test1\",le=\"2.5\"} 0
+      test_name_bucket{key1=\"test1\",le=\"5.0\"} 0
+      test_name_bucket{key1=\"test1\",le=\"10.0\"} 2
+      test_name_bucket{key1=\"test1\",le=\"+Inf\"} 2
       test_name_count{key1=\"test1\"} 2
       test_name_sum{key1=\"test1\"} 12.0
     TXT
@@ -260,10 +260,10 @@ class PrometheusCollectorTest < Minitest::Test
     text = <<~TXT
       # HELP test_name test_help
       # TYPE test_name histogram
-      test_name_bucket{key1=\"test1\",le=\"+Inf\"} 2
-      test_name_bucket{key1=\"test1\",le=\"7\"} 2
-      test_name_bucket{key1=\"test1\",le=\"6\"} 2
       test_name_bucket{key1=\"test1\",le=\"5\"} 0
+      test_name_bucket{key1=\"test1\",le=\"6\"} 2
+      test_name_bucket{key1=\"test1\",le=\"7\"} 2
+      test_name_bucket{key1=\"test1\",le=\"+Inf\"} 2
       test_name_count{key1=\"test1\"} 2
       test_name_sum{key1=\"test1\"} 12.0
     TXT
