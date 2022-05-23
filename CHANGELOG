@@ -1,3 +1,9 @@
+2.0.3 - 2022-05-23
+
+- FEATURE: new ping endpoint for keepalive checks
+- FIX: order histogram correctly for GCP support
+- FIX: improve sidekiq instrumentation
+
 2.0.2 - 2022-02-25
 
 - FIX: runner was not requiring unicorn integration correctly leading to a crash
