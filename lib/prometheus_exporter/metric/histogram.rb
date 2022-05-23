@@ -19,7 +19,7 @@ module PrometheusExporter::Metric
 
     def initialize(name, help, opts = {})
       super(name, help)
-      @buckets = (opts[:buckets] || self.class.default_buckets).sort.reverse
+      @buckets = (opts[:buckets] || self.class.default_buckets).sort
       reset!
     end
 
@@ -57,11 +57,11 @@ module PrometheusExporter::Metric
         first = false
         count = @counts[labels]
         sum = @sums[labels]
-        text << "#{prefix(@name)}_bucket#{labels_text(with_bucket(labels, "+Inf"))} #{count}\n"
         @buckets.each do |bucket|
           value = @observations[labels][bucket]
           text << "#{prefix(@name)}_bucket#{labels_text(with_bucket(labels, bucket.to_s))} #{value}\n"
         end
+        text << "#{prefix(@name)}_bucket#{labels_text(with_bucket(labels, "+Inf"))} #{count}\n"
         text << "#{prefix(@name)}_count#{labels_text(labels)} #{count}\n"
         text << "#{prefix(@name)}_sum#{labels_text(labels)} #{sum}"
       end
@@ -91,7 +91,7 @@ module PrometheusExporter::Metric
     end
 
     def fill_buckets(value, buckets)
-      @buckets.each do |b|
+      @buckets.reverse.each do |b|
         break if value > b
         buckets[b] += 1
       end
