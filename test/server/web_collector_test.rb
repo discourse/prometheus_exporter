@@ -81,6 +81,27 @@ class PrometheusWebCollectorTest < Minitest::Test
     assert(metrics.first.metric_text.include?('http_requests_total{controller="home",action="index",service="service1",status="200"} 1'))
   end
 
+  def test_collecting_metrics_merging_custom_labels_and_status
+    collector.collect(
+      'type' => 'web',
+      'timings' => nil,
+      'status' => 200,
+      'default_labels' => {
+        'controller' => 'home',
+        'action' => 'index'
+      },
+      'custom_labels' => {
+        'service' => 'service1',
+        'status' => 200
+      }
+    )
+
+    metrics = collector.metrics
+
+    assert_equal 5, metrics.size
+    assert(metrics.first.metric_text.include?('http_requests_total{controller="home",action="index",service="service1",status="200"} 1'))
+  end
+
   def test_collecting_metrics_in_histogram_mode
     PrometheusExporter::Metric::Base.default_aggregation = PrometheusExporter::Metric::Histogram
 
