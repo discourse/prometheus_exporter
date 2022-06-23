@@ -211,13 +211,13 @@ Rails.application.middleware.unshift PrometheusExporter::Middleware, instrument:
 
 #### Metrics collected by Rails integration middleware
 
-| Type    | Name                                   | Description                                                 |
-| ---     | ---                                    | ---                                                         |
-| Counter | `http_requests_total`                  | Total HTTP requests from web app                            |
-| Summary | `http_request_duration_seconds`        | Time spent in HTTP reqs in seconds                          |
-| Summary | `http_request_redis_duration_seconds`¹ | Time spent in HTTP reqs in Redis, in seconds                |
-| Summary | `http_request_sql_duration_seconds`²   | Time spent in HTTP reqs in SQL in seconds                   |
-| Summary | `http_request_queue_duration_seconds`³ | Time spent queueing the request in load balancer in seconds |
+| Type    | Name                            | Description                                                 |
+| ---     | ---                             | ---                                                         |
+| Counter | `http_requests_total`           | Total HTTP requests from web app                            |
+| Summary | `http_duration_seconds`         | Time spent in HTTP reqs in seconds                          |
+| Summary | `http_redis_duration_seconds`¹  | Time spent in HTTP reqs in Redis, in seconds                |
+| Summary | `http_sql_duration_seconds`²    | Time spent in HTTP reqs in SQL in seconds                   |
+| Summary | `http_queue_duration_seconds`³  | Time spent queueing the request in load balancer in seconds |
 
 All metrics have a `controller` and an `action` label.
 `http_requests_total` additionally has a (HTTP response) `status` label.
@@ -260,7 +260,7 @@ end
 ```
 That way you won't have all metrics labeled with `controller=other` and `action=other`, but have labels such as
 ```
-ruby_http_request_duration_seconds{path="/api/v1/teams/:id",method="GET",status="200",quantile="0.99"} 0.009880661998977303
+ruby_http_duration_seconds{path="/api/v1/teams/:id",method="GET",status="200",quantile="0.99"} 0.009880661998977303
 ```
 
 ¹) Only available when Redis is used.
