@@ -40,7 +40,7 @@ module PrometheusExporter::Instrumentation
 
       @client.send_json(
         type: "delayed_job",
-        name: job.handler.to_s.match(JOB_CLASS_REGEXP).to_a[1].to_s,
+        name: job.handler.to_s.match(self.class::JOB_CLASS_REGEXP).to_a[1].to_s,
         queue_name: job.queue,
         success: success,
         duration: duration,

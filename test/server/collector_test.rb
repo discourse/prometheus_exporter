@@ -832,6 +832,49 @@ class PrometheusCollectorTest < Minitest::Test
     job.verify
   end
 
+  def test_it_can_be_subclassed_to_override_the_regex
+    # Create a new class that extends DelayedJob and redefines JOB_CLASS_REGEXP
+    class MyDelayedJob < PrometheusExporter::Instrumentation::DelayedJob
+      JOB_CLASS_REGEXP = %r{ruby/(?:object|struct):\s*(\w+)}.freeze
+    end
+
+    collector = PrometheusExporter::Server::Collector.new
+    client = PipedClient.new(collector, custom_labels: { service: 'service1' })
+
+    instrument = MyDelayedJob.new(client: client)
+
+    job = Minitest::Mock.new
+    job.expect(:handler, "---\n!ruby/struct:MyStruct\nendpoint_id:\n")
+    job.expect(:queue, "my_queue")
+    job.expect(:attempts, 0)
+
+    instrument.call(job, 25, 10, 0, nil, "default") do
+      # nothing
+    end
+
+    failed_job = Minitest::Mock.new
+    failed_job.expect(:handler, "---\n!ruby/struct:MyOtherStruct\nendpoint_id:\n")
+    failed_job.expect(:queue, "my_queue")
+    failed_job.expect(:attempts, 1)
+
+    begin
+      instrument.call(failed_job, 25, 10, 0, nil, "default") do
+        boom
+      end
+    rescue
+    end
+
+    result = collector.prometheus_metrics_text
+
+    assert(result.include?('delayed_failed_jobs_total{queue_name="my_queue",service="service1",job_name="MyOtherStruct"} 1'), "has failed job")
+    assert(result.include?('delayed_jobs_total{queue_name="my_queue",service="service1",job_name="MyStruct"} 1'), "has working job")
+    assert(result.include?('delayed_job_duration_seconds{queue_name="my_queue",service="service1",job_name="MyStruct"}'), "has duration")
+    assert(result.include?('delayed_jobs_enqueued{queue_name="my_queue",service="service1"} 10'), "has enqueued count")
+    assert(result.include?('delayed_jobs_pending{queue_name="my_queue",service="service1"} 0'), "has pending count")
+    job.verify
+    failed_job.verify
+  end
+
   require 'minitest/stub_const'
 
   def test_it_can_collect_puma_metrics
