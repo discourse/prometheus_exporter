@@ -5,7 +5,7 @@ Prometheus Exporter allows you to aggregate custom metrics from multiple process
 To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/archive/2018/02/02/instrumenting-rails-with-prometheus) (it has pretty pictures!)
 
 * [Requirements](#requirements)
-* [Migrating from v0.x](#migrating-from-v0.x)
+* [Migrating from v0.x](#migrating-from-v0x)
 * [Installation](#installation)
 * [Usage](#usage)
   * [Single process mode](#single-process-mode)
