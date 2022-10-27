@@ -124,7 +124,10 @@ module PrometheusExporter::Metric
       histogram.observe(0.7, name: "bob", family: "skywalker")
       histogram.observe(0.99, name: "bob", family: "skywalker")
 
-      assert_equal(histogram.to_h, { name: "bob", family: "skywalker" } => { "count" => 3, "sum" => 1.79 })
+      key = { name: "bob", family: "skywalker" }
+      val = { "count" => 3, "sum" => 1.79 }
+
+      assert_equal(histogram.to_h, key => val)
     end
 
     it "can correctly remove histograms" do
@@ -137,7 +140,10 @@ module PrometheusExporter::Metric
       histogram.remove(name: "gandalf", family: "skywalker")
       histogram.remove(name: "jane", family: "skywalker")
 
-      assert_equal(histogram.to_h, { name: "bob", family: "skywalker" } => { "count" => 3, "sum" => 1.79 })
+      key = { name: "bob", family: "skywalker" }
+      val = { "count" => 3, "sum" => 1.79 }
+
+      assert_equal(histogram.to_h, key => val)
     end
 
     it 'supports default buckets' do
