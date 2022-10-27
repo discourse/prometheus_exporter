@@ -90,6 +90,19 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
     assert_invalid_headers_response
   end
 
+  def test_redis_5_patching
+    configure_middleware
+
+    redis_config = RedisClient.config(host: "127.0.0.1", port: 10)
+    redis = redis_config.new_pool(timeout: 0.5, size: 1)
+    PrometheusExporter::Instrumentation::MethodProfiler.start
+    redis.call("PING") # => "PONG"
+    redis.call("PING") # => "PONG"
+    results = PrometheusExporter::Instrumentation::MethodProfiler.stop
+    # redis client injects a HELLO preamble on reconnection, so we will see more than 2
+    assert(results[:redis][:calls] >= 2, "expecting at least 2 calls")
+  end
+
   def test_patch_called_with_prepend_instrument
     Object.stub_const(:Redis, Module) do
       ::Redis.stub_const(:Client) do
@@ -129,13 +142,16 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
 
   def test_patch_called_with_alias_method_instrument
     Object.stub_const(:Redis, Module) do
-      ::Redis.stub_const(:Client) do
-        mock = Minitest::Mock.new
-        mock.expect :call, nil, [Redis::Client, Array, :redis, { instrument: :alias_method }]
-        ::PrometheusExporter::Instrumentation::MethodProfiler.stub(:patch, mock) do
-          configure_middleware
+      # must be less than version 5 for this instrumentation
+      ::Redis.stub_const(:VERSION, '4.0.4') do
+        ::Redis.stub_const(:Client) do
+          mock = Minitest::Mock.new
+          mock.expect :call, nil, [Redis::Client, Array, :redis, { instrument: :alias_method }]
+          ::PrometheusExporter::Instrumentation::MethodProfiler.stub(:patch, mock) do
+            configure_middleware
+          end
+          mock.verify
         end
-        mock.verify
       end
     end
 

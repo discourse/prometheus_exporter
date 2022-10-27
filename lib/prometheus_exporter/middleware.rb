@@ -6,12 +6,38 @@ require 'prometheus_exporter/client'
 class PrometheusExporter::Middleware
   MethodProfiler = PrometheusExporter::Instrumentation::MethodProfiler
 
+  module RedisInstrumenter
+    def call(_command, _config)
+      unless prof = Thread.current[:_method_profiler]
+        super
+      end
+
+      start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      super
+    ensure
+      data = (prof[:redis] ||= { duration: 0.0, calls: 0 })
+      data[:duration] += Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+      data[:calls] += 1
+    end
+
+    alias_method :call_pipelined, :call
+  end
+
+  def apply_redis_client_middleware!
+    RedisClient.register(RedisInstrumenter)
+  end
+
   def initialize(app, config = { instrument: :alias_method, client: nil })
     @app = app
     @client = config[:client] || PrometheusExporter::Client.default
 
     if config[:instrument]
-      if defined? Redis::Client
+      if defined?(RedisClient)
+        apply_redis_client_middleware!
+      end
+      if defined?(Redis::VERSION) && (Gem::Version.new(Redis::VERSION) >= Gem::Version.new('5.0.0'))
+        # redis 5 support handled via RedisClient
+      elsif defined? Redis::Client
         MethodProfiler.patch(Redis::Client, [
           :call, :call_pipeline
         ], :redis, instrument: config[:instrument])

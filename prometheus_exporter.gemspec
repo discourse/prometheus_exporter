@@ -29,7 +29,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rubocop", ">= 0.69"
   spec.add_development_dependency "bundler", ">= 2.1.4"
   spec.add_development_dependency "rake", "~> 13.0"
-  spec.add_development_dependency "minitest", "~> 5.0"
+  spec.add_development_dependency "minitest", "~> 5.15.0" # https://github.com/qrush/m/issues/93
   spec.add_development_dependency "guard", "~> 2.0"
   spec.add_development_dependency "mini_racer", "~> 0.5.0"
   spec.add_development_dependency "guard-minitest", "~> 2.0"
@@ -39,6 +39,8 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rubocop-discourse", ">2"
   spec.add_development_dependency "appraisal", "~> 2.3"
   spec.add_development_dependency "activerecord", "~> 6.0.0"
+  spec.add_development_dependency "redis", "> 5"
+  spec.add_development_dependency "m"
   if !RUBY_ENGINE == 'jruby'
     spec.add_development_dependency "raindrops", "~> 0.19"
   end
