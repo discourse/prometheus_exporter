@@ -6,27 +6,6 @@ require 'prometheus_exporter/client'
 class PrometheusExporter::Middleware
   MethodProfiler = PrometheusExporter::Instrumentation::MethodProfiler
 
-  module RedisInstrumenter
-    def call(_command, _config)
-      unless prof = Thread.current[:_method_profiler]
-        super
-      end
-
-      start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      super
-    ensure
-      data = (prof[:redis] ||= { duration: 0.0, calls: 0 })
-      data[:duration] += Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
-      data[:calls] += 1
-    end
-
-    alias_method :call_pipelined, :call
-  end
-
-  def apply_redis_client_middleware!
-    RedisClient.register(RedisInstrumenter)
-  end
-
   def initialize(app, config = { instrument: :alias_method, client: nil })
     @app = app
     @client = config[:client] || PrometheusExporter::Client.default
@@ -140,6 +119,16 @@ class PrometheusExporter::Middleware
     value = env['HTTP_X_AMZN_TRACE_ID']
     value&.split('Root=')&.last&.split('-')&.fetch(1)&.to_i(16)
 
+  end
+
+  private
+
+  module RedisInstrumenter
+    MethodProfiler.define_methods_on_module(self, ["call", "call_pipelined"], "redis")
+  end
+
+  def apply_redis_client_middleware!
+    RedisClient.register(RedisInstrumenter)
   end
 
 end

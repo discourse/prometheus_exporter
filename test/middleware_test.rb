@@ -90,7 +90,8 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
     assert_invalid_headers_response
   end
 
-  def test_redis_5_patching
+  def test_redis_5_call_patching
+    RedisValidationMiddleware.reset!
     configure_middleware
 
     redis_config = RedisClient.config(host: "127.0.0.1", port: 10)
@@ -98,6 +99,28 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
     PrometheusExporter::Instrumentation::MethodProfiler.start
     redis.call("PING") # => "PONG"
     redis.call("PING") # => "PONG"
+    results = PrometheusExporter::Instrumentation::MethodProfiler.stop
+    # redis client injects a HELLO preamble on reconnection, so we will see more than 2
+    assert(results[:redis][:calls] >= 2, "expecting at least 2 calls")
+
+    assert_equal(2, RedisValidationMiddleware.call_calls)
+  end
+
+  def test_redis_5_call_pipelined_patching
+    RedisValidationMiddleware.reset!
+    configure_middleware
+
+    redis_config = RedisClient.config(host: "127.0.0.1", port: 10)
+    redis = redis_config.new_pool(timeout: 0.5, size: 1)
+    PrometheusExporter::Instrumentation::MethodProfiler.start
+    redis.pipelined do |pipeline|
+      pipeline.call("PING") # => "PONG"
+      pipeline.call("PING") # => "PONG"
+    end
+
+    assert_equal(0, RedisValidationMiddleware.call_calls)
+    assert(RedisValidationMiddleware.call_pipelined_calls >= 2, "expecting at least 2 call_pipelined calls")
+
     results = PrometheusExporter::Instrumentation::MethodProfiler.stop
     # redis client injects a HELLO preamble on reconnection, so we will see more than 2
     assert(results[:redis][:calls] >= 2, "expecting at least 2 calls")

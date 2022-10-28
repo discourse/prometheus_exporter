@@ -37,7 +37,35 @@ module TestingMod
   end
 end
 
+module RedisValidationMiddleware
+  def self.reset!
+    @@call_calls = 0
+    @@call_pipelined_calls = 0
+  end
+
+  def self.call_calls
+    @@call_calls || 0
+  end
+
+  def self.call_pipelined_calls
+    @@call_pipelined_calls || 0
+  end
+
+  def call(command, _config)
+    @@call_calls ||= 0
+    @@call_calls += 1
+    super
+  end
+
+  def call_pipelined(command, _config)
+    @@call_pipelined_calls ||= 0
+    @@call_pipelined_calls += 1
+    super
+  end
+end
+
 RedisClient::Middlewares.prepend(TestingMod)
+RedisClient.register(RedisValidationMiddleware)
 
 class TestHelper
   def self.wait_for(time, &blk)
