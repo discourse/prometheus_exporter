@@ -94,23 +94,28 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
     RedisValidationMiddleware.reset!
     configure_middleware
 
-    redis_config = RedisClient.config(host: "127.0.0.1", port: 10)
+    # protocol 2 is the old redis protocol, it uses no preamble so you don't leak HELLO
+    # calls
+    redis_config = RedisClient.config(host: "127.0.0.1", port: 10, protocol: 2)
     redis = redis_config.new_pool(timeout: 0.5, size: 1)
     PrometheusExporter::Instrumentation::MethodProfiler.start
     redis.call("PING") # => "PONG"
     redis.call("PING") # => "PONG"
     results = PrometheusExporter::Instrumentation::MethodProfiler.stop
     # redis client injects a HELLO preamble on reconnection, so we will see more than 2
-    assert(results[:redis][:calls] >= 2, "expecting at least 2 calls")
+    assert(2, results[:redis][:calls])
 
     assert_equal(2, RedisValidationMiddleware.call_calls)
+    assert_equal(0, RedisValidationMiddleware.call_pipelined_calls)
   end
 
   def test_redis_5_call_pipelined_patching
     RedisValidationMiddleware.reset!
     configure_middleware
 
-    redis_config = RedisClient.config(host: "127.0.0.1", port: 10)
+    # protocol 2 is the old redis protocol, it uses no preamble so you don't leak HELLO
+    # calls
+    redis_config = RedisClient.config(host: "127.0.0.1", port: 10, protocol: 2)
     redis = redis_config.new_pool(timeout: 0.5, size: 1)
     PrometheusExporter::Instrumentation::MethodProfiler.start
     redis.pipelined do |pipeline|
@@ -119,11 +124,11 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
     end
 
     assert_equal(0, RedisValidationMiddleware.call_calls)
-    assert(RedisValidationMiddleware.call_pipelined_calls >= 2, "expecting at least 2 call_pipelined calls")
+    assert_equal(1, RedisValidationMiddleware.call_pipelined_calls)
 
     results = PrometheusExporter::Instrumentation::MethodProfiler.stop
     # redis client injects a HELLO preamble on reconnection, so we will see more than 2
-    assert(results[:redis][:calls] >= 2, "expecting at least 2 calls")
+    assert_equal(1, results[:redis][:calls])
   end
 
   def test_patch_called_with_prepend_instrument
