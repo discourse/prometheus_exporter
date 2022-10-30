@@ -127,7 +127,10 @@ module PrometheusExporter::Metric
       summary.observe(0.7, name: "bob", family: "skywalker")
       summary.observe(0.99, name: "bob", family: "skywalker")
 
-      assert_equal(summary.to_h, { name: "bob", family: "skywalker" } => { "count" => 3, "sum" => 1.79 })
+      key = { name: "bob", family: "skywalker" }
+      val = { "count" => 3, "sum" => 1.79 }
+
+      assert_equal(summary.to_h, key => val)
     end
 
     it "can correctly remove data" do
@@ -140,7 +143,10 @@ module PrometheusExporter::Metric
 
       summary.remove(name: "jane", family: "skywalker")
 
-      assert_equal(summary.to_h, { name: "bob", family: "skywalker" } => { "count" => 3, "sum" => 1.79 })
+      key = { name: "bob", family: "skywalker" }
+      val = { "count" => 3, "sum" => 1.79 }
+
+      assert_equal(summary.to_h, key => val)
     end
   end
 end

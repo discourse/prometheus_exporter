@@ -11,7 +11,12 @@ class PrometheusExporter::Middleware
     @client = config[:client] || PrometheusExporter::Client.default
 
     if config[:instrument]
-      if defined? Redis::Client
+      if defined?(RedisClient)
+        apply_redis_client_middleware!
+      end
+      if defined?(Redis::VERSION) && (Gem::Version.new(Redis::VERSION) >= Gem::Version.new('5.0.0'))
+        # redis 5 support handled via RedisClient
+      elsif defined? Redis::Client
         MethodProfiler.patch(Redis::Client, [
           :call, :call_pipeline
         ], :redis, instrument: config[:instrument])
@@ -114,6 +119,16 @@ class PrometheusExporter::Middleware
     value = env['HTTP_X_AMZN_TRACE_ID']
     value&.split('Root=')&.last&.split('-')&.fetch(1)&.to_i(16)
 
+  end
+
+  private
+
+  module RedisInstrumenter
+    MethodProfiler.define_methods_on_module(self, ["call", "call_pipelined"], "redis")
+  end
+
+  def apply_redis_client_middleware!
+    RedisClient.register(RedisInstrumenter)
   end
 
 end

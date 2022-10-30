@@ -40,10 +40,7 @@ class PrometheusExporter::Instrumentation::MethodProfiler
     data
   end
 
-private
-
-  def self.patch_using_prepend(klass, methods, name)
-    prepend_instument = Module.new
+  def self.define_methods_on_module(klass, methods, name)
     patch_source_line = __LINE__ + 3
     patches = methods.map do |method_name|
       <<~RUBY
@@ -63,7 +60,12 @@ private
       RUBY
     end.join("\n")
 
-    prepend_instument.module_eval patches, __FILE__, patch_source_line
+    klass.module_eval patches, __FILE__, patch_source_line
+  end
+
+  def self.patch_using_prepend(klass, methods, name)
+    prepend_instument = Module.new
+    define_methods_on_module(klass, methods, name)
     klass.prepend(prepend_instument)
   end
 

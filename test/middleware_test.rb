@@ -90,6 +90,45 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
     assert_invalid_headers_response
   end
 
+  def test_redis_5_call_patching
+    RedisValidationMiddleware.reset!
+    configure_middleware
+
+    # protocol 2 is the old redis protocol, it uses no preamble so you don't leak HELLO
+    # calls
+    redis_config = RedisClient.config(host: "127.0.0.1", port: 10, protocol: 2)
+    redis = redis_config.new_pool(timeout: 0.5, size: 1)
+    PrometheusExporter::Instrumentation::MethodProfiler.start
+    redis.call("PING") # => "PONG"
+    redis.call("PING") # => "PONG"
+    results = PrometheusExporter::Instrumentation::MethodProfiler.stop
+    assert(2, results[:redis][:calls])
+
+    assert_equal(2, RedisValidationMiddleware.call_calls)
+    assert_equal(0, RedisValidationMiddleware.call_pipelined_calls)
+  end
+
+  def test_redis_5_call_pipelined_patching
+    RedisValidationMiddleware.reset!
+    configure_middleware
+
+    # protocol 2 is the old redis protocol, it uses no preamble so you don't leak HELLO
+    # calls
+    redis_config = RedisClient.config(host: "127.0.0.1", port: 10, protocol: 2)
+    redis = redis_config.new_pool(timeout: 0.5, size: 1)
+    PrometheusExporter::Instrumentation::MethodProfiler.start
+    redis.pipelined do |pipeline|
+      pipeline.call("PING") # => "PONG"
+      pipeline.call("PING") # => "PONG"
+    end
+
+    assert_equal(0, RedisValidationMiddleware.call_calls)
+    assert_equal(1, RedisValidationMiddleware.call_pipelined_calls)
+
+    results = PrometheusExporter::Instrumentation::MethodProfiler.stop
+    assert_equal(1, results[:redis][:calls])
+  end
+
   def test_patch_called_with_prepend_instrument
     Object.stub_const(:Redis, Module) do
       ::Redis.stub_const(:Client) do
@@ -129,13 +168,16 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
 
   def test_patch_called_with_alias_method_instrument
     Object.stub_const(:Redis, Module) do
-      ::Redis.stub_const(:Client) do
-        mock = Minitest::Mock.new
-        mock.expect :call, nil, [Redis::Client, Array, :redis, { instrument: :alias_method }]
-        ::PrometheusExporter::Instrumentation::MethodProfiler.stub(:patch, mock) do
-          configure_middleware
+      # must be less than version 5 for this instrumentation
+      ::Redis.stub_const(:VERSION, '4.0.4') do
+        ::Redis.stub_const(:Client) do
+          mock = Minitest::Mock.new
+          mock.expect :call, nil, [Redis::Client, Array, :redis, { instrument: :alias_method }]
+          ::PrometheusExporter::Instrumentation::MethodProfiler.stub(:patch, mock) do
+            configure_middleware
+          end
+          mock.verify
         end
-        mock.verify
       end
     end
 
