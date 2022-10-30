@@ -102,7 +102,6 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
     redis.call("PING") # => "PONG"
     redis.call("PING") # => "PONG"
     results = PrometheusExporter::Instrumentation::MethodProfiler.stop
-    # redis client injects a HELLO preamble on reconnection, so we will see more than 2
     assert(2, results[:redis][:calls])
 
     assert_equal(2, RedisValidationMiddleware.call_calls)
