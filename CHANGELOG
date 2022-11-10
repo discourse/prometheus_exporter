@@ -1,3 +1,7 @@
+2.0.4 - 2022-11-10
+
+- FIX/FEATURE: support for Redis 5 gem instrumentation
+
 2.0.3 - 2022-05-23
 
 - FEATURE: new ping endpoint for keepalive checks
