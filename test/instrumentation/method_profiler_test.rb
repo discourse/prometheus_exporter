@@ -16,10 +16,8 @@ class PrometheusInstrumentationMethodProfilerTest < Minitest::Test
     end
   end
 
-  def setup
-    PrometheusExporter::Instrumentation::MethodProfiler.patch SomeClassPatchedUsingAliasMethod, [:some_method], :test, instrument: :alias_method
-    PrometheusExporter::Instrumentation::MethodProfiler.patch SomeClassPatchedUsingPrepend, [:some_method], :test, instrument: :prepend
-  end
+  PrometheusExporter::Instrumentation::MethodProfiler.patch SomeClassPatchedUsingAliasMethod, [:some_method], :test, instrument: :alias_method
+  PrometheusExporter::Instrumentation::MethodProfiler.patch SomeClassPatchedUsingPrepend, [:some_method], :test, instrument: :prepend
 
   def test_alias_method_source_location
     file, line = SomeClassPatchedUsingAliasMethod.instance_method(:some_method).source_location
