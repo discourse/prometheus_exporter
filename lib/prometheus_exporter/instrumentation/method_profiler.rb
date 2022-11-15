@@ -64,9 +64,9 @@ class PrometheusExporter::Instrumentation::MethodProfiler
   end
 
   def self.patch_using_prepend(klass, methods, name)
-    prepend_instument = Module.new
-    define_methods_on_module(klass, methods, name)
-    klass.prepend(prepend_instument)
+    prepend_instrument = Module.new
+    define_methods_on_module(prepend_instrument, methods, name)
+    klass.prepend(prepend_instrument)
   end
 
   def self.patch_using_alias_method(klass, methods, name)

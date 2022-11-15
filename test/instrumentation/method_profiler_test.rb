@@ -16,10 +16,8 @@ class PrometheusInstrumentationMethodProfilerTest < Minitest::Test
     end
   end
 
-  def setup
-    PrometheusExporter::Instrumentation::MethodProfiler.patch SomeClassPatchedUsingAliasMethod, [:some_method], :test, instrument: :alias_method
-    PrometheusExporter::Instrumentation::MethodProfiler.patch SomeClassPatchedUsingPrepend, [:some_method], :test, instrument: :prepend
-  end
+  PrometheusExporter::Instrumentation::MethodProfiler.patch SomeClassPatchedUsingAliasMethod, [:some_method], :test, instrument: :alias_method
+  PrometheusExporter::Instrumentation::MethodProfiler.patch SomeClassPatchedUsingPrepend, [:some_method], :test, instrument: :prepend
 
   def test_alias_method_source_location
     file, line = SomeClassPatchedUsingAliasMethod.instance_method(:some_method).source_location
@@ -27,9 +25,17 @@ class PrometheusInstrumentationMethodProfilerTest < Minitest::Test
     assert_equal 'def #{method_name}(*args, &blk)', source
   end
 
+  def test_alias_method_preserves_behavior
+    assert_equal 'Hello, world', SomeClassPatchedUsingAliasMethod.new.some_method
+  end
+
   def test_prepend_source_location
     file, line = SomeClassPatchedUsingPrepend.instance_method(:some_method).source_location
     source = File.read(file).lines[line - 1].strip
     assert_equal 'def #{method_name}(*args, &blk)', source
+  end
+
+  def test_prepend_preserves_behavior
+    assert_equal 'Hello, world', SomeClassPatchedUsingPrepend.new.some_method
   end
 end
