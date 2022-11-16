@@ -40,6 +40,9 @@ module PrometheusExporter::Server
     end
 
     def collect(object)
+      now = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
+      object['created_at'] = now
+      sidekiq_metrics.delete_if { |metric| metric['created_at'] + MAX_SIDEKIQ_METRIC_AGE < now }
       sidekiq_metrics << object
     end
   end
