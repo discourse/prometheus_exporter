@@ -43,7 +43,23 @@ module PrometheusExporter::Metric
       text = <<~TEXT
         # HELP a_counter my amazing counter
         # TYPE a_counter counter
-        a_counter{baz="bar",foo="bar"} 2
+        a_counter{foo="bar",baz="bar"} 2
+        a_counter{foo="bar"} 1
+      TEXT
+
+      assert_equal(counter.to_prometheus_text, text)
+    end
+
+    it "uses specified labels over default labels when there is conflict" do
+      Base.default_labels = { foo: "bar" }
+
+      counter.observe(2, foo: "baz")
+      counter.observe
+
+      text = <<~TEXT
+        # HELP a_counter my amazing counter
+        # TYPE a_counter counter
+        a_counter{foo="baz"} 2
         a_counter{foo="bar"} 1
       TEXT
 

@@ -75,7 +75,7 @@ module PrometheusExporter::Metric
     end
 
     def labels_text(labels)
-      labels = (labels || {}).merge(Base.default_labels)
+      labels = Base.default_labels.merge(labels || {})
       if labels && labels.length > 0
         s = labels.map do |key, value|
           value = value.to_s
