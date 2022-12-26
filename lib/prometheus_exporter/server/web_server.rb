@@ -44,6 +44,11 @@ module PrometheusExporter::Server
 
       @logger.info "Using Basic Authentication via #{@auth}" if @verbose && @auth
 
+      if @bind == "ALL"
+        @logger.info "Listening on both 0.0.0.0/:: network interfaces"
+        @bind = nil
+      end
+
       @server = WEBrick::HTTPServer.new(
         Port: @port,
         BindAddress: @bind,
