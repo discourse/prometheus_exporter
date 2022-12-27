@@ -44,7 +44,7 @@ module PrometheusExporter::Server
 
       @logger.info "Using Basic Authentication via #{@auth}" if @verbose && @auth
 
-      if @bind == "ALL"
+      if %w(ALL ANY).include?(@bind)
         @logger.info "Listening on both 0.0.0.0/:: network interfaces"
         @bind = nil
       end
