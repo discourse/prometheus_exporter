@@ -857,6 +857,9 @@ prometheus_exporter -p 8080 \
                     --prefix 'foo_'
 ```
 
+You can use `-b` option to bind the `prometheus_exporter` web server to any IPv4 interface with `-b 0.0.0.0`, 
+any IPv6 interface with `-b ::`, or `-b ANY` to any IPv4/IPv6 interfaces available on your host system.
+
 #### Enabling Basic Authentication
 
 If you desire authentication on your `/metrics` route, you can enable basic authentication with the `--auth` option.
