@@ -21,6 +21,8 @@ module PrometheusExporter::Server
     end
 
     def metrics
+      clear_stale_metrics(reset_gauges: true)
+
       sidekiq_metrics.map do |metric|
         labels = metric.fetch('labels', {})
         SIDEKIQ_PROCESS_GAUGES.map do |name, help|
@@ -36,11 +38,22 @@ module PrometheusExporter::Server
 
     def collect(object)
       now = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
-      process = object['process']
+      clear_stale_metrics(time: now)
 
+      process = object['process']
       process["created_at"] = now
-      sidekiq_metrics.delete_if { |metric| metric['created_at'] + MAX_SIDEKIQ_METRIC_AGE < now }
       sidekiq_metrics << process
+    end
+
+    private
+
+    def clear_stale_metrics(time: nil, reset_gauges: false)
+      time ||= ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
+      sidekiq_metrics.delete_if { |metric| metric['created_at'] + MAX_SIDEKIQ_METRIC_AGE < time }
+
+      if reset_gauges
+        SIDEKIQ_PROCESS_GAUGES.each_key { |name| gauges[name]&.reset! }
+      end
     end
   end
 end
