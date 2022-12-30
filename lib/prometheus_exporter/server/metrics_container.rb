@@ -26,9 +26,17 @@ module PrometheusExporter::Server
       @data.tap { expire }[key]
     end
 
-    def size(&blk) ; wrap_expire(:size, &blk) ; end
-    def map(&blk)  ; wrap_expire(:map, &blk)  ; end
-    def each(&blk) ; wrap_expire(:each, &blk) ; end
+    def size(&blk)
+      wrap_expire(:size, &blk)
+    end
+
+    def map(&blk)
+      wrap_expire(:map, &blk)
+    end
+
+    def each(&blk)
+      wrap_expire(:each, &blk)
+    end
 
     def expire(time: nil)
       time ||= get_time
