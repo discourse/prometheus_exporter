@@ -11,7 +11,7 @@ module PrometheusExporter::Server
     attr_reader :sidekiq_metrics, :gauges
 
     def initialize
-      @sidekiq_metrics = []
+      @sidekiq_metrics = MetricsContainer.new
       @gauges = {}
     end
 
@@ -20,7 +20,7 @@ module PrometheusExporter::Server
     end
 
     def metrics
-      clear_stale_metrics(reset_gauges: true)
+      SIDEKIQ_QUEUE_GAUGES.each_key { |name| gauges[name]&.reset! }
 
       sidekiq_metrics.map do |metric|
         labels = metric.fetch("labels", {})
@@ -36,24 +36,9 @@ module PrometheusExporter::Server
     end
 
     def collect(object)
-      now = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
-      clear_stale_metrics(time: now)
-
       object['queues'].each do |queue|
-        queue["created_at"] = now
         queue["labels"].merge!(object['custom_labels']) if object['custom_labels']
-        sidekiq_metrics << queue
-      end
-    end
-
-    private
-
-    def clear_stale_metrics(time: nil, reset_gauges: false)
-      time ||= ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
-      sidekiq_metrics.delete_if { |metric| metric['created_at'] + MAX_SIDEKIQ_METRIC_AGE < time }
-
-      if reset_gauges
-        SIDEKIQ_QUEUE_GAUGES.each_key { |name| gauges[name]&.reset! }
+        @sidekiq_metrics << queue
       end
     end
   end
