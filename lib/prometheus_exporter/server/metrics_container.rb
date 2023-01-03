@@ -50,7 +50,8 @@ module PrometheusExporter::Server
     end
 
     def wrap_expire(method_name, &blk)
-      expire.send(method_name, &blk)
+      expire
+      @data.public_send(method_name, &blk)
     end
   end
 end
