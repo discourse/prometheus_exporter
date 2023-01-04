@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "prometheus_exporter/server/metrics_container"
+
 module PrometheusExporter::Server
   class TypeCollector
     def type
