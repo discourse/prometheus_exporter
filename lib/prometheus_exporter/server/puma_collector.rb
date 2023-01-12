@@ -14,7 +14,10 @@ module PrometheusExporter::Server
     }
 
     def initialize
-      @puma_metrics = []
+      @puma_metrics = MetricsContainer.new
+      @puma_metrics.filter = -> (new_metric, old_metric) do
+        new_metric["pid"] == old_metric["pid"] && new_metric["hostname"] == old_metric["hostname"]
+      end
     end
 
     def type
@@ -51,15 +54,6 @@ module PrometheusExporter::Server
     end
 
     def collect(obj)
-      now = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
-
-      obj["created_at"] = now
-
-      @puma_metrics.delete_if do |current|
-        (obj["pid"] == current["pid"] && obj["hostname"] == current["hostname"]) ||
-          (current["created_at"] + MAX_PUMA_METRIC_AGE < now)
-      end
-
       @puma_metrics << obj
     end
   end

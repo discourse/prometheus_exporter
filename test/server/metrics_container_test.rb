@@ -17,6 +17,7 @@ class PrometheusMetricsContainerTest < Minitest::Test
     stub_process_clock_time(1.0) do
       metrics << { key: "value" }
       assert_equal 1, metrics.size
+      assert_equal 1, metrics.length
       assert_equal 61.0, metrics[0]["_expire_at"]
     end
 
@@ -44,6 +45,27 @@ class PrometheusMetricsContainerTest < Minitest::Test
       metrics.each { |m| num += 1 }
       assert_equal 0, num
       assert_equal 0, metrics.size
+    end
+  end
+
+  def test_container_with_filter
+    metrics.filter = -> (new_metric, old_metric) do
+      new_metric[:hostname] == old_metric[:hostname]
+    end
+
+    stub_process_clock_time(1.0) do
+      metrics << { hostname: "host1", value: 100 }
+      metrics << { hostname: "host2", value: 200 }
+      metrics << { hostname: "host1", value: 200 }
+      assert_equal 2, metrics.size
+      assert_equal "host2", metrics[0][:hostname]
+      assert_equal "host1", metrics[1][:hostname]
+    end
+
+    stub_process_clock_time(62.0) do
+      metrics << { hostname: "host3", value: 300 }
+      assert_equal 1, metrics.size
+      assert_equal "host3", metrics[0][:hostname]
     end
   end
 end

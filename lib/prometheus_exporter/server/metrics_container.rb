@@ -6,19 +6,22 @@ module PrometheusExporter::Server
     METRIC_EXPIRE_ATTR = "_expire_at"
 
     attr_reader :data, :ttl
+    attr_accessor :filter
 
-    def initialize(ttl: METRIC_MAX_AGE, expire_attr: METRIC_EXPIRE_ATTR)
-      @data        = []
-      @ttl         = ttl
-      @expire_attr = expire_attr
+    def initialize(ttl: METRIC_MAX_AGE, expire_attr: METRIC_EXPIRE_ATTR, filter: nil)
+      @data          = []
+      @ttl           = ttl
+      @expire_attr   = expire_attr
+      @filter        = filter
     end
 
     def <<(obj)
       now = get_time
       obj[@expire_attr] = now + @ttl
 
+      expire(time: now, new_metric: obj)
+
       @data << obj
-      expire(time: now)
       @data
     end
 
@@ -29,6 +32,7 @@ module PrometheusExporter::Server
     def size(&blk)
       wrap_expire(:size, &blk)
     end
+    alias_method :length, :size
 
     def map(&blk)
       wrap_expire(:map, &blk)
@@ -38,9 +42,14 @@ module PrometheusExporter::Server
       wrap_expire(:each, &blk)
     end
 
-    def expire(time: nil)
+    def expire(time: nil, new_metric: nil)
       time ||= get_time
-      @data.delete_if { |metric| metric[@expire_attr] < time }
+
+      @data.delete_if do |metric|
+        expired = metric[@expire_attr] < time
+        expired ||= filter.call(new_metric, metric) if @filter && new_metric
+        expired
+      end
     end
 
     private
