@@ -11,7 +11,7 @@ module PrometheusExporter::Server
     attr_reader :sidekiq_metrics, :gauges
 
     def initialize
-      @sidekiq_metrics = MetricsContainer.new
+      @sidekiq_metrics = MetricsContainer.new(ttl: MAX_SIDEKIQ_METRIC_AGE)
       @gauges = {}
     end
 

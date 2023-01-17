@@ -13,7 +13,7 @@ module PrometheusExporter::Server
     }
 
     def initialize
-      @resque_metrics = []
+      @resque_metrics = MetricsContainer.new(ttl: MAX_RESQUE_METRIC_AGE)
       @gauges = {}
     end
 
@@ -40,11 +40,7 @@ module PrometheusExporter::Server
     end
 
     def collect(object)
-      now = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
-
-      object["created_at"] = now
-      resque_metrics.delete_if { |metric| metric["created_at"] + MAX_RESQUE_METRIC_AGE < now }
-      resque_metrics << object
+      @resque_metrics << object
     end
 
     private

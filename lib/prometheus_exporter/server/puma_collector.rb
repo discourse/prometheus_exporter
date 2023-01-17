@@ -14,7 +14,7 @@ module PrometheusExporter::Server
     }
 
     def initialize
-      @puma_metrics = MetricsContainer.new
+      @puma_metrics = MetricsContainer.new(ttl: MAX_PUMA_METRIC_AGE)
       @puma_metrics.filter = -> (new_metric, old_metric) do
         new_metric["pid"] == old_metric["pid"] && new_metric["hostname"] == old_metric["hostname"]
       end
