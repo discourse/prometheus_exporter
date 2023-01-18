@@ -6,7 +6,7 @@ on:
       - "v*"
 
 env:
-  DOCKER_REPO: sosedoff/prometheus_exporter
+  DOCKER_REPO: discourse/prometheus_exporter
 
 jobs:
   build-and-publish:
