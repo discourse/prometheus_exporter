@@ -1,9 +1,9 @@
 ARG RUBY_VERSION=3.1
-ARG GEM_VERSION=2.0.7
+ARG GEM_VERSION=
 
-FROM ruby:${RUBY_VERSION}
+FROM ruby:${RUBY_VERSION}-slim
 
-RUN gem install prometheus_exporter --version=${GEM_VERSION}
+RUN gem install --no-doc --version=${GEM_VERSION} prometheus_exporter
 
 EXPOSE 9394
 ENTRYPOINT ["prometheus_exporter", "-b", "ANY"]
