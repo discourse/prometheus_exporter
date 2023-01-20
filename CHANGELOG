@@ -1,3 +1,7 @@
+2.0.8 - 2023-01-20
+
+- FEATURE: attempting to make our first docker release
+
 2.0.7 - 2023-01-13
 
 - FEATURE: allow binding server to both ipv4 and v6
