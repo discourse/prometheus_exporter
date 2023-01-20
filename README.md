@@ -32,6 +32,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
 * [Transport concerns](#transport-concerns)
 * [JSON generation and parsing](#json-generation-and-parsing)
 * [Logging](#logging)
+* [Docker Usage](#docker-usage)
 * [Contributing](#contributing)
 * [License](#license)
 * [Code of Conduct](#code-of-conduct)
@@ -961,6 +962,28 @@ PrometheusExporter::Client.new(logger: Logger.new(STDOUT))
 You can also pass a log level (default is [`Logger::WARN`](https://ruby-doc.org/stdlib-3.0.1/libdoc/logger/rdoc/Logger.html)):
 ```ruby
 PrometheusExporter::Client.new(log_level: Logger::DEBUG)
+```
+
+## Docker Usage
+
+You can run `prometheus_exporter` project using an official Docker image:
+
+```bash
+docker pull discourse/prometheus_exporter:latest
+# or use specific version
+docker pull discourse/prometheus_exporter:x.x.x
+```
+
+The start the container:
+
+```bash
+docker run -p 9394:9394 discourse/prometheus_exporter
+```
+
+Additional flags could be included:
+
+```
+docker run -p 9394:9394 discourse/prometheus_exporter --verbose --prefix=myapp
 ```
 
 ## Docker/Kubernetes Healthcheck
