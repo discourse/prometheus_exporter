@@ -8,6 +8,13 @@ on:
   schedule:
     - cron: "0 0 * * 0" # weekly
 
+permissions:
+  contents: write
+  packages: write
+
+env:
+  DOCKER_REPO: ghcr.io/discourse/prometheus_exporter
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -51,3 +58,38 @@ jobs:
           RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
           GIT_EMAIL: team@discourse.org
           GIT_NAME: discoursebot
+
+  publish_docker:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/setup-qemu-action@v2
+      - uses: docker/setup-buildx-action@v2
+
+      - name: Set vars
+        id: vars
+        run: |
+          ruby -r ./lib/prometheus_exporter/version.rb -e 'print "version=#{PrometheusExporter::VERSION}"' >> $GITHUB_OUTPUT
+
+      - name: Login to Github Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push images
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            GEM_VERSION=${{ steps.vars.outputs.version }}
+          tags: |
+            ${{ env.DOCKER_REPO }}:${{ steps.vars.outputs.version }}
+            ${{ env.DOCKER_REPO }}:latest
