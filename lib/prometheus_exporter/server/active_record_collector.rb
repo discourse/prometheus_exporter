@@ -2,7 +2,8 @@
 
 module PrometheusExporter::Server
   class ActiveRecordCollector < TypeCollector
-    MAX_ACTIVERECORD_METRIC_AGE = 60
+    MAX_METRIC_AGE = 60
+
     ACTIVE_RECORD_GAUGES = {
       connections: "Total connections in pool",
       busy: "Connections in use in pool",
@@ -13,7 +14,7 @@ module PrometheusExporter::Server
     }
 
     def initialize
-      @active_record_metrics = MetricsContainer.new(ttl: MAX_ACTIVERECORD_METRIC_AGE)
+      @active_record_metrics = MetricsContainer.new(ttl: MAX_METRIC_AGE)
       @active_record_metrics.filter = -> (new_metric, old_metric) do
         new_metric["pid"] == old_metric["pid"] &&
         new_metric["hostname"] == old_metric["hostname"] &&

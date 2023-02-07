@@ -6,10 +6,7 @@ require 'prometheus_exporter/server'
 require 'prometheus_exporter/instrumentation'
 
 class PrometheusPumaCollectorTest < Minitest::Test
-
-  def setup
-    PrometheusExporter::Metric::Base.default_prefix = ''
-  end
+  include CollectorHelper
 
   def collector
     @collector ||= PrometheusExporter::Server::PumaCollector.new
@@ -124,5 +121,4 @@ class PrometheusPumaCollectorTest < Minitest::Test
                  "puma_workers{phase=\"0\",hostname=\"test1.example.com\"} 3",
                  metrics.first.metric_text
   end
-
 end

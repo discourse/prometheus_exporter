@@ -76,3 +76,32 @@ class TestHelper
     false
   end
 end
+
+module ClockHelper
+  def stub_monotonic_clock(at = 0.0, advance: nil, &blk)
+    Process.stub(:clock_gettime, at + advance.to_f, Process::CLOCK_MONOTONIC, &blk)
+  end
+end
+
+module CollectorHelper
+  def setup
+    PrometheusExporter::Metric::Base.default_prefix = ''
+  end
+
+  def max_metric_age
+    @_max_age ||= get_max_metric_age
+  end
+
+  private
+
+  def get_max_metric_age
+    klass = @collector.class
+    unless klass.const_defined?(:MAX_METRIC_AGE)
+      raise "Collector class #{@collector.class.name} must set MAX_METRIC_AGE constant!"
+    end
+    klass.const_get(:MAX_METRIC_AGE)
+  end
+end
+
+# Allow stubbing process monotonic clock from any class in the suite
+Minitest::Test.send(:include, ClockHelper)
