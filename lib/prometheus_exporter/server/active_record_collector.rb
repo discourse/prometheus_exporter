@@ -26,7 +26,7 @@ module PrometheusExporter::Server
       metrics = {}
 
       @active_record_metrics.map do |m|
-        metric_key = (m["metric_labels"] || {}).merge("pid" => m["pid"])
+        metric_key = (m["metric_labels"] || {}).merge("pid" => m["pid"], "hostname" => m["hostname"])
         metric_key.merge!(m["custom_labels"]) if m["custom_labels"]
 
         ACTIVE_RECORD_GAUGES.map do |k, help|
