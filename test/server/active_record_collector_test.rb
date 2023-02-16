@@ -14,6 +14,7 @@ class PrometheusActiveRecordCollectorTest < Minitest::Test
     collector.collect(
       "type" => "active_record",
       "pid" => "1000",
+      "hostname" => "localhost",
       "connections" => 50,
       "busy" => 20,
       "dead" => 10,
@@ -30,20 +31,21 @@ class PrometheusActiveRecordCollectorTest < Minitest::Test
     collector.collect(
       "type" => "active_record",
       "pid" => "1000",
+      "hostname" => "localhost",
       "connections" => 50,
       "busy" => 20,
       "dead" => 10,
       "idle" => 20,
       "waiting" => 0,
       "size" => 120,
-      'metric_labels' => {
-        'service' => 'service1'
+      "metric_labels" => {
+        "service" => "service1"
       }
     )
 
     metrics = collector.metrics
     assert_equal 6, metrics.size
-    assert(metrics.first.metric_text.include?('active_record_connection_pool_connections{service="service1",pid="1000"} 50'))
+    assert(metrics.first.metric_text.include?('active_record_connection_pool_connections{service="service1",pid="1000",hostname="localhost"} 50'))
   end
 
   def test_collecting_metrics_with_client_default_labels
@@ -51,6 +53,7 @@ class PrometheusActiveRecordCollectorTest < Minitest::Test
     collector.collect(
       "type" => "active_record",
       "pid" => "1000",
+      "hostname" => "localhost",
       "connections" => 50,
       "busy" => 20,
       "dead" => 10,
@@ -67,7 +70,7 @@ class PrometheusActiveRecordCollectorTest < Minitest::Test
 
     metrics = collector.metrics
     assert_equal 6, metrics.size
-    assert(metrics.first.metric_text.include?('active_record_connection_pool_connections{service="service1",pid="1000",environment="test"} 50'))
+    assert(metrics.first.metric_text.include?('active_record_connection_pool_connections{service="service1",pid="1000",hostname="localhost",environment="test"} 50'))
   end
 
   def test_collecting_metrics_for_multiple_pools
@@ -102,7 +105,7 @@ class PrometheusActiveRecordCollectorTest < Minitest::Test
 
     metrics = collector.metrics
     assert_equal 6, metrics.size
-    assert(metrics.first.metric_text.include?('active_record_connection_pool_connections{pool_name="primary",pid="1000"} 50'))
-    assert(metrics.first.metric_text.include?('active_record_connection_pool_connections{pool_name="other",pid="1000"} 5'))
+    assert(metrics.first.metric_text.include?('active_record_connection_pool_connections{pool_name="primary",pid="1000",hostname="localhost"} 50'))
+    assert(metrics.first.metric_text.include?('active_record_connection_pool_connections{pool_name="other",pid="1000",hostname="localhost"} 5'))
   end
 end
