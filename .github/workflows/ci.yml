@@ -49,10 +49,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
 
+    outputs:
+      new_version_published: ${{ steps.release.outputs.new_version_published }}
+
     steps:
       - uses: actions/checkout@v2
 
       - name: Release gem
+        id: release
         uses: discourse/publish-rubygems-action@v2
         env:
           RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
@@ -60,8 +64,8 @@ jobs:
           GIT_NAME: discoursebot
 
   publish_docker:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: publish
+    if: needs.publish.outputs.new_version_published == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
