@@ -188,7 +188,7 @@ gem 'prometheus_exporter'
 In an initializer:
 
 ```ruby
-unless Rails.env == "test"
+unless Rails.env.test?
   require 'prometheus_exporter/middleware'
 
   # This reports stats per request like HTTP status and timings
@@ -341,7 +341,7 @@ You may also be interested in per-process stats. This collects memory and GC sta
 
 ```ruby
 # in an initializer
-unless Rails.env == "test"
+unless Rails.env.test?
   require 'prometheus_exporter/instrumentation'
 
   # this reports basic process stats like RSS and GC info
@@ -522,7 +522,7 @@ All metrics have labels for `job_name` and `queue_name`.
 In an initializer:
 
 ```ruby
-unless Rails.env == "test"
+unless Rails.env.test?
   require 'prometheus_exporter/instrumentation'
   PrometheusExporter::Instrumentation::DelayedJob.register_plugin
 end
@@ -548,7 +548,7 @@ All metrics have labels for `job_name` and `queue_name`.
 Capture [Hutch](https://github.com/gocardless/hutch) metrics (how many jobs ran? how many failed? how long did they take?)
 
 ```ruby
-unless Rails.env == "test"
+unless Rails.env.test?
   require 'prometheus_exporter/instrumentation'
   Hutch::Config.set(:tracer, PrometheusExporter::Instrumentation::Hutch)
 end
