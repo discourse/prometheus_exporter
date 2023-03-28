@@ -128,9 +128,9 @@ class PrometheusActiveRecordCollectorTest < Minitest::Test
 
     assert_equal 1, metrics.size
     assert_equal [
-      'active_record_connection_pool_connections{pool_name="primary",pid="1000"} 200',
-      'active_record_connection_pool_connections{pool_name="primary",pid="2000"} 300',
-      'active_record_connection_pool_connections{pool_name="primary",pid="3000"} 400'
+      'active_record_connection_pool_connections{pool_name="primary",pid="1000",hostname="localhost"} 200',
+      'active_record_connection_pool_connections{pool_name="primary",pid="2000",hostname="localhost"} 300',
+      'active_record_connection_pool_connections{pool_name="primary",pid="3000",hostname="localhost2"} 400'
     ], metrics_lines
   end
 
