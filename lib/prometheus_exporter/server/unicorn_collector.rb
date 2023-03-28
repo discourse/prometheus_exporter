@@ -4,7 +4,7 @@
 # PrometheusExporter::Instrumentation::Unicorn
 module PrometheusExporter::Server
   class UnicornCollector < PrometheusExporter::Server::TypeCollector
-    MAX_UNICORN_METRIC_AGE = 60
+    MAX_METRIC_AGE = 60
 
     UNICORN_GAUGES = {
       workers: 'Number of unicorn workers.',
@@ -13,7 +13,7 @@ module PrometheusExporter::Server
     }.freeze
 
     def initialize
-      @unicorn_metrics = MetricsContainer.new(ttl: MAX_UNICORN_METRIC_AGE)
+      @unicorn_metrics = MetricsContainer.new(ttl: MAX_METRIC_AGE)
     end
 
     def type

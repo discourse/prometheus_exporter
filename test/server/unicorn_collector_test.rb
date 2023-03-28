@@ -6,10 +6,7 @@ require 'prometheus_exporter/server'
 require 'prometheus_exporter/instrumentation'
 
 class PrometheusUnicornCollectorTest < Minitest::Test
-
-  def setup
-    PrometheusExporter::Metric::Base.default_prefix = ''
-  end
+  include CollectorHelper
 
   def collector
     @collector ||= PrometheusExporter::Server::UnicornCollector.new
@@ -22,14 +19,11 @@ class PrometheusUnicornCollectorTest < Minitest::Test
       'request_backlog' => 0
     )
 
-    metrics = collector.metrics
-
-    expected = [
+    assert_collector_metric_lines [
       'unicorn_workers 4',
       'unicorn_active_workers 3',
       'unicorn_request_backlog 0'
     ]
-    assert_equal expected, metrics.map(&:metric_text)
   end
 
   def test_collecting_metrics_with_custom_labels
@@ -46,5 +40,23 @@ class PrometheusUnicornCollectorTest < Minitest::Test
     metrics = collector.metrics
 
     assert(metrics.first.metric_text.include?('unicorn_workers{hostname="a323d2f681e2"}'))
+  end
+
+  def test_metrics_deduplication
+    collector.collect('workers' => 4, 'active_workers' => 3, 'request_backlog' => 0)
+    collector.collect('workers' => 4, 'active_workers' => 3, 'request_backlog' => 0)
+    collector.collect('workers' => 4, 'active_workers' => 3, 'request_backlog' => 0, 'hostname' => 'localhost2')
+    assert_equal 3, collector_metric_lines.size
+  end
+
+  def test_metrics_expiration
+    stub_monotonic_clock(0) do
+      collector.collect('workers' => 4, 'active_workers' => 3, 'request_backlog' => 0)
+      assert_equal 3, collector.metrics.size
+    end
+
+    stub_monotonic_clock(max_metric_age + 1) do
+      assert_equal 0, collector.metrics.size
+    end
   end
 end

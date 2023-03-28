@@ -96,6 +96,10 @@ module CollectorHelper
     collector.metrics.map(&:metric_text).join("\n").split("\n")
   end
 
+  def assert_collector_metric_lines(expected)
+    assert_equal(expected, collector_metric_lines)
+  end
+
   private
 
   def get_max_metric_age
