@@ -727,7 +727,7 @@ class PrometheusCollectorTest < Minitest::Test
 
     text = collector.prometheus_metrics_text
 
-    v8_str = "v8_heap_count{type=\"web\",pid=\"#{collected[:pid]}\"} #{collected[:v8_heap_count]}"
+    v8_str = "v8_heap_count{type=\"web\",pid=\"#{collected[:pid]}\",hostname=\"#{PrometheusExporter.hostname}\"} #{collected[:v8_heap_count]}"
 
     assert(text.include?(v8_str), "must include v8 metric")
     assert(text.include?("minor_gc_ops_total"), "must include counters")

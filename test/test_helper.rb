@@ -92,6 +92,10 @@ module CollectorHelper
     @_max_age ||= get_max_metric_age
   end
 
+  def collector_metric_lines
+    collector.metrics.map(&:metric_text).join("\n").split("\n")
+  end
+
   private
 
   def get_max_metric_age
