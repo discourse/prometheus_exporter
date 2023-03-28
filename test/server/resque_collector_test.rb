@@ -5,10 +5,7 @@ require 'prometheus_exporter/server'
 require 'prometheus_exporter/instrumentation'
 
 class PrometheusResqueCollectorTest < Minitest::Test
-
-  def setup
-    PrometheusExporter::Metric::Base.default_prefix = ''
-  end
+  include CollectorHelper
 
   def collector
     @collector ||= PrometheusExporter::Server::ResqueCollector.new
@@ -43,7 +40,24 @@ class PrometheusResqueCollectorTest < Minitest::Test
     )
 
     metrics = collector.metrics
-
     assert(metrics.first.metric_text.include?('resque_processed_jobs{hostname="a323d2f681e2"}'))
+  end
+
+  def test_metrics_expiration
+    data = {
+      'type' => 'resque',
+      'pending_jobs' => 1,
+      'processed_jobs' => 2,
+      'failed_jobs' => 3
+    }
+
+    stub_monotonic_clock(0) do
+      collector.collect(data)
+      assert_equal 3, collector.metrics.size
+    end
+
+    stub_monotonic_clock(max_metric_age + 1) do
+      assert_equal 0, collector.metrics.size
+    end
   end
 end

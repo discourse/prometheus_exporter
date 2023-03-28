@@ -2,7 +2,7 @@
 
 module PrometheusExporter::Server
   class ResqueCollector < TypeCollector
-    MAX_RESQUE_METRIC_AGE = 30
+    MAX_METRIC_AGE = 30
     RESQUE_GAUGES = {
       processed_jobs: "Total number of processed Resque jobs.",
       failed_jobs: "Total number of failed Resque jobs.",
@@ -13,7 +13,7 @@ module PrometheusExporter::Server
     }
 
     def initialize
-      @resque_metrics = MetricsContainer.new(ttl: MAX_RESQUE_METRIC_AGE)
+      @resque_metrics = MetricsContainer.new(ttl: MAX_METRIC_AGE)
       @gauges = {}
     end
 
