@@ -57,7 +57,7 @@ class ProcessCollectorTest < Minitest::Test
     assert_equal 10, collector.metrics.size
     assert_equal 10, collector_metric_lines.size
 
-    collector.collect(base_data.merge({"hostname" => "localhost2"}))
+    collector.collect(base_data.merge({ "hostname" => "localhost2" }))
     assert_equal 10, collector.metrics.size
     assert_equal 20, collector_metric_lines.size
   end
