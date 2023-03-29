@@ -2,7 +2,7 @@
 
 module PrometheusExporter::Server
   class SidekiqStatsCollector < TypeCollector
-    MAX_SIDEKIQ_METRIC_AGE = 60
+    MAX_METRIC_AGE = 60
 
     SIDEKIQ_STATS_GAUGES = {
       'dead_size' => 'Size of dead the queue',
@@ -18,7 +18,7 @@ module PrometheusExporter::Server
     attr_reader :sidekiq_metrics, :gauges
 
     def initialize
-      @sidekiq_metrics = MetricsContainer.new(ttl: MAX_SIDEKIQ_METRIC_AGE)
+      @sidekiq_metrics = MetricsContainer.new(ttl: MAX_METRIC_AGE)
       @gauges = {}
     end
 

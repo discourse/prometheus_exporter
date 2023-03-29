@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 module PrometheusExporter::Server
   class SidekiqQueueCollector < TypeCollector
-    MAX_SIDEKIQ_METRIC_AGE = 60
+    MAX_METRIC_AGE = 60
 
     SIDEKIQ_QUEUE_GAUGES = {
       'backlog' => 'Size of the sidekiq queue.',
@@ -11,7 +11,7 @@ module PrometheusExporter::Server
     attr_reader :sidekiq_metrics, :gauges
 
     def initialize
-      @sidekiq_metrics = MetricsContainer.new
+      @sidekiq_metrics = MetricsContainer.new(ttl: MAX_METRIC_AGE)
       @gauges = {}
     end
 

@@ -5,9 +5,7 @@ require 'prometheus_exporter/server'
 require 'prometheus_exporter/instrumentation'
 
 class PrometheusSidekiqProcessCollectorTest < Minitest::Test
-  def setup
-    PrometheusExporter::Metric::Base.default_prefix = ''
-  end
+  include CollectorHelper
 
   def collector
     @collector ||= PrometheusExporter::Server::SidekiqProcessCollector.new
@@ -38,7 +36,7 @@ class PrometheusSidekiqProcessCollectorTest < Minitest::Test
   end
 
   def test_only_fresh_metrics_are_collected
-    Process.stub(:clock_gettime, 1.0) do
+    stub_monotonic_clock(1.0) do
       collector.collect(
         'process' => {
           'busy' => 1,
@@ -55,7 +53,7 @@ class PrometheusSidekiqProcessCollectorTest < Minitest::Test
       )
     end
 
-    Process.stub(:clock_gettime, 2.0 + PrometheusExporter::Server::SidekiqProcessCollector::MAX_SIDEKIQ_METRIC_AGE) do
+    stub_monotonic_clock(2.0, advance: max_metric_age) do
       collector.collect(
         'process' => {
           'busy' => 2,
