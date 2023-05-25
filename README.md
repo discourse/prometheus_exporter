@@ -21,6 +21,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
   * [Puma metrics](#puma-metrics)
   * [Unicorn metrics](#unicorn-process-metrics)
   * [Resque metrics](#resque-metrics)
+  * [GoodJob metrics](#goodjob-metrics)
   * [Custom type collectors](#custom-type-collectors)
   * [Multi process mode with custom collector](#multi-process-mode-with-custom-collector)
   * [GraphQL support](#graphql-support)
@@ -637,6 +638,18 @@ installation, you'll need to start the instrumentation:
 require 'prometheus_exporter/instrumentation'
 PrometheusExporter::Instrumentation::GoodJob.start
 ```
+
+#### Metrics collected by GoodJob Instrumentation
+
+| Type  | Name                 | Description                             |
+| ---   |----------------------|-----------------------------------------|
+| Gauge | `good_job_scheduled` | Total number of scheduled GoodJob jobs. |
+| Gauge | `good_job_retried`   | Total number of retried GoodJob jobs.   |
+| Gauge | `good_job_queued`    | Total number of queued GoodJob jobs.    |
+| Gauge | `good_job_running`   | Total number of running GoodJob jobs.   |
+| Gauge | `good_job_finished`  | Total number of finished GoodJob jobs.  |
+| Gauge | `good_job_succeeded` | Total number of succeeded GoodJob jobs. |
+| Gauge | `good_job_discarded` | Total number of discarded GoodJob jobs  |
 
 ### Unicorn process metrics
 
