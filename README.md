@@ -627,6 +627,17 @@ PrometheusExporter::Instrumentation::Resque.start
 | Gauge | `resque_workers`        | Total number of Resque workers running |
 | Gauge | `resque_working`        | Total number of Resque workers working |
 
+### GoodJob metrics
+
+The metrics are generated from the database using the relevant scopes. To start monitoring your GoodJob
+installation, you'll need to start the instrumentation:
+
+```ruby
+# e.g. config/initializers/good_job.rb
+require 'prometheus_exporter/instrumentation'
+PrometheusExporter::Instrumentation::GoodJob.start
+```
+
 ### Unicorn process metrics
 
 In order to gather metrics from unicorn processes, we use `rainbows`, which exposes `Rainbows::Linux.tcp_listener_stats` to gather information about active workers and queued requests. To start monitoring your unicorn processes, you'll need to know both the path to unicorn PID file and the listen address (`pid_file` and `listen` in your unicorn config file)
