@@ -23,6 +23,7 @@ module PrometheusExporter::Server
       register_collector(ActiveRecordCollector.new)
       register_collector(ShoryukenCollector.new)
       register_collector(ResqueCollector.new)
+      register_collector(GoodJobCollector.new)
     end
 
     def register_collector(collector)
