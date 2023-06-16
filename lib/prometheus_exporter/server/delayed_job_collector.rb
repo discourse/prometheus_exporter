@@ -21,22 +21,21 @@ module PrometheusExporter::Server
     end
 
     def collect(obj)
-      default_labels = { job_name: obj['name'], queue_name: obj['queue_name'] }
-      custom_labels = obj['custom_labels']
-
-      labels = custom_labels.nil? ? default_labels : default_labels.merge(custom_labels)
+      custom_labels = obj['custom_labels'] || {}
+      gauge_labels = { queue_name: obj['queue_name'] }.merge(custom_labels)
+      counter_labels = gauge_labels.merge(job_name: obj['name'])
 
       ensure_delayed_job_metrics
-      @delayed_job_duration_seconds.observe(obj["duration"], labels)
-      @delayed_jobs_total.observe(1, labels)
-      @delayed_failed_jobs_total.observe(1, labels) if !obj["success"]
-      @delayed_jobs_max_attempts_reached_total.observe(1, labels) if obj["attempts"] >= obj["max_attempts"]
-      @delayed_job_duration_seconds_summary.observe(obj["duration"], labels)
-      @delayed_job_duration_seconds_summary.observe(obj["duration"], labels.merge(status: "success")) if obj["success"]
-      @delayed_job_duration_seconds_summary.observe(obj["duration"], labels.merge(status: "failed"))  if !obj["success"]
-      @delayed_job_attempts_summary.observe(obj["attempts"], labels) if obj["success"]
-      @delayed_jobs_enqueued.observe(obj["enqueued"], labels)
-      @delayed_jobs_pending.observe(obj["pending"], labels)
+      @delayed_job_duration_seconds.observe(obj["duration"], counter_labels)
+      @delayed_jobs_total.observe(1, counter_labels)
+      @delayed_failed_jobs_total.observe(1, counter_labels) if !obj["success"]
+      @delayed_jobs_max_attempts_reached_total.observe(1, counter_labels) if obj["attempts"] >= obj["max_attempts"]
+      @delayed_job_duration_seconds_summary.observe(obj["duration"], counter_labels)
+      @delayed_job_duration_seconds_summary.observe(obj["duration"], counter_labels.merge(status: "success")) if obj["success"]
+      @delayed_job_duration_seconds_summary.observe(obj["duration"], counter_labels.merge(status: "failed"))  if !obj["success"]
+      @delayed_job_attempts_summary.observe(obj["attempts"], counter_labels) if obj["success"]
+      @delayed_jobs_enqueued.observe(obj["enqueued"], gauge_labels)
+      @delayed_jobs_pending.observe(obj["pending"], gauge_labels)
       @delayed_jobs_failed.observe(obj["failed"], labels)
       @delayed_jobs_max_failed.observe(obj["max_failed"], labels)
     end
@@ -89,12 +88,12 @@ module PrometheusExporter::Server
                 "delayed_jobs_max_attempts_reached_total", "Total number of delayed jobs that reached max attempts.")
 
         @delayed_job_duration_seconds_summary =
-            PrometheusExporter::Metric::Summary.new("delayed_job_duration_seconds_summary",
-                                                    "Summary of the time it takes jobs to execute.")
+            PrometheusExporter::Metric::Base.default_aggregation.new("delayed_job_duration_seconds_summary",
+                                                                     "Summary of the time it takes jobs to execute.")
 
         @delayed_job_attempts_summary =
-            PrometheusExporter::Metric::Summary.new("delayed_job_attempts_summary",
-                                                    "Summary of the amount of attempts it takes delayed jobs to succeed.")
+            PrometheusExporter::Metric::Base.default_aggregation.new("delayed_job_attempts_summary",
+                                                                     "Summary of the amount of attempts it takes delayed jobs to succeed.")
       end
     end
   end

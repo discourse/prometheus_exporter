@@ -1,22 +1,22 @@
 # frozen_string_literal: true
 
 module PrometheusExporter::Instrumentation
-  class SidekiqQueue
-    def self.start(client: nil, frequency: 30)
+  class SidekiqQueue < PeriodicStats
+    def self.start(client: nil, frequency: 30, all_queues: false)
       client ||= PrometheusExporter::Client.default
-      sidekiq_queue_collector = new
+      sidekiq_queue_collector = new(all_queues: all_queues)
 
-      Thread.new do
-        loop do
-          begin
-            client.send_json(sidekiq_queue_collector.collect)
-          rescue StandardError => e
-            STDERR.puts("Prometheus Exporter Failed To Collect Sidekiq Queue metrics #{e}")
-          ensure
-            sleep frequency
-          end
-        end
+      worker_loop do
+        client.send_json(sidekiq_queue_collector.collect)
       end
+
+      super
+    end
+
+    def initialize(all_queues: false)
+      @all_queues = all_queues
+      @pid = ::Process.pid
+      @hostname = Socket.gethostname
     end
 
     def collect
@@ -27,24 +27,32 @@ module PrometheusExporter::Instrumentation
     end
 
     def collect_queue_stats
-      hostname = Socket.gethostname
-      pid = ::Process.pid
-      ps = ::Sidekiq::ProcessSet.new
+      sidekiq_queues = ::Sidekiq::Queue.all
 
-      process = ps.find do |sp|
-        sp['hostname'] == hostname && sp['pid'] == pid
+      unless @all_queues
+        queues = collect_current_process_queues
+        sidekiq_queues.select! { |sidekiq_queue| queues.include?(sidekiq_queue.name) }
       end
 
-      queues = process.nil? ? [] : process['queues']
-
-      ::Sidekiq::Queue.all.map do |queue|
-        next unless queues.include? queue.name
+      sidekiq_queues.map do |queue|
         {
-          backlog_total: queue.size,
+          backlog: queue.size,
           latency_seconds: queue.latency.to_i,
           labels: { queue: queue.name }
         }
       end.compact
+    end
+
+    private
+
+    def collect_current_process_queues
+      ps = ::Sidekiq::ProcessSet.new
+
+      process = ps.find do |sp|
+        sp['hostname'] == @hostname && sp['pid'] == @pid
+      end
+
+      process.nil? ? [] : process['queues']
     end
   end
 end

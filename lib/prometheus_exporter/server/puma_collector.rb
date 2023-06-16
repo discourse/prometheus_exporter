@@ -4,17 +4,20 @@ module PrometheusExporter::Server
   class PumaCollector < TypeCollector
     MAX_PUMA_METRIC_AGE = 30
     PUMA_GAUGES = {
-      workers_total: "Number of puma workers.",
-      booted_workers_total: "Number of puma workers booted.",
-      old_workers_total: "Number of old puma workers.",
-      running_threads_total: "Number of puma threads currently running.",
-      request_backlog_total: "Number of requests waiting to be processed by a puma thread.",
-      thread_pool_capacity_total: "Number of puma threads available at current scale.",
-      max_threads_total: "Number of puma threads at available at max scale.",
+      workers: "Number of puma workers.",
+      booted_workers: "Number of puma workers booted.",
+      old_workers: "Number of old puma workers.",
+      running_threads: "Number of puma threads currently running.",
+      request_backlog: "Number of requests waiting to be processed by a puma thread.",
+      thread_pool_capacity: "Number of puma threads available at current scale.",
+      max_threads: "Number of puma threads at available at max scale.",
     }
 
     def initialize
-      @puma_metrics = []
+      @puma_metrics = MetricsContainer.new(ttl: MAX_PUMA_METRIC_AGE)
+      @puma_metrics.filter = -> (new_metric, old_metric) do
+        new_metric["pid"] == old_metric["pid"] && new_metric["hostname"] == old_metric["hostname"]
+      end
     end
 
     def type
@@ -34,6 +37,9 @@ module PrometheusExporter::Server
         if m["custom_labels"]
           labels.merge!(m["custom_labels"])
         end
+        if m["metric_labels"]
+          labels.merge!(m["metric_labels"])
+        end
 
         PUMA_GAUGES.map do |k, help|
           k = k.to_s
@@ -48,10 +54,6 @@ module PrometheusExporter::Server
     end
 
     def collect(obj)
-      now = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
-
-      obj["created_at"] = now
-      @puma_metrics.delete_if { |m| m["created_at"] + MAX_PUMA_METRIC_AGE < now }
       @puma_metrics << obj
     end
   end

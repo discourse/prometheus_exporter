@@ -5,6 +5,7 @@ module PrometheusExporter::Metric
 
     @default_prefix = nil if !defined?(@default_prefix)
     @default_labels = nil if !defined?(@default_labels)
+    @default_aggregation = nil if !defined?(@default_aggregation)
 
     # prefix applied to all metrics
     def self.default_prefix=(name)
@@ -21,6 +22,14 @@ module PrometheusExporter::Metric
 
     def self.default_labels
       @default_labels || {}
+    end
+
+    def self.default_aggregation=(aggregation)
+      @default_aggregation = aggregation
+    end
+
+    def self.default_aggregation
+      @default_aggregation ||= Summary
     end
 
     attr_accessor :help, :name, :data
@@ -66,7 +75,7 @@ module PrometheusExporter::Metric
     end
 
     def labels_text(labels)
-      labels = (labels || {}).merge(Base.default_labels)
+      labels = Base.default_labels.merge(labels || {})
       if labels && labels.length > 0
         s = labels.map do |key, value|
           value = value.to_s
@@ -97,15 +106,8 @@ module PrometheusExporter::Metric
       end
     end
 
-    # when we drop Ruby 2.3 we can drop this
-    if "".respond_to? :match?
-      def needs_escape?(str)
-        str.match?(/[\n"\\]/m)
-      end
-    else
-      def needs_escape?(str)
-        !!str.match(/[\n"\\]/m)
-      end
+    def needs_escape?(str)
+      str.match?(/[\n"\\]/m)
     end
 
   end

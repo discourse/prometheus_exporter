@@ -5,6 +5,7 @@ Prometheus Exporter allows you to aggregate custom metrics from multiple process
 To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/archive/2018/02/02/instrumenting-rails-with-prometheus) (it has pretty pictures!)
 
 * [Requirements](#requirements)
+* [Migrating from v0.x](#migrating-from-v0x)
 * [Installation](#installation)
 * [Usage](#usage)
   * [Single process mode](#single-process-mode)
@@ -19,21 +20,33 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
     * [Hutch metrics](#hutch-message-processing-tracer)
   * [Puma metrics](#puma-metrics)
   * [Unicorn metrics](#unicorn-process-metrics)
+  * [Resque metrics](#resque-metrics)
+  * [GoodJob metrics](#goodjob-metrics)
   * [Custom type collectors](#custom-type-collectors)
   * [Multi process mode with custom collector](#multi-process-mode-with-custom-collector)
   * [GraphQL support](#graphql-support)
   * [Metrics default prefix / labels](#metrics-default-prefix--labels)
   * [Client default labels](#client-default-labels)
   * [Client default host](#client-default-host)
+  * [Histogram mode](#histogram-mode)
+  * [Histogram - custom buckets](#histogram-custom-buckets)
 * [Transport concerns](#transport-concerns)
 * [JSON generation and parsing](#json-generation-and-parsing)
+* [Logging](#logging)
+* [Docker Usage](#docker-usage)
 * [Contributing](#contributing)
 * [License](#license)
 * [Code of Conduct](#code-of-conduct)
 
 ## Requirements
 
-Minimum Ruby of version 2.5.0 is required, Ruby 2.4.0 is EOL as of 2020-04-05
+Minimum Ruby of version 2.6.0 is required, Ruby 2.5.0 is EOL as of March 31st 2021.
+
+## Migrating from v0.x
+
+There are some major changes in v1.x from v0.x.
+
+- Some of metrics are renamed to match [prometheus official guide for metric names](https://prometheus.io/docs/practices/naming/#metric-names). (#184)
 
 ## Installation
 
@@ -176,7 +189,7 @@ gem 'prometheus_exporter'
 In an initializer:
 
 ```ruby
-unless Rails.env == "test"
+unless Rails.env.test?
   require 'prometheus_exporter/middleware'
 
   # This reports stats per request like HTTP status and timings
@@ -190,15 +203,23 @@ Ensure you run the exporter in a monitored background process:
 $ bundle exec prometheus_exporter
 ```
 
+#### Choosing the style of method patching
+
+By default, `prometheus_exporter` uses `alias_method` to instrument methods used by SQL and Redis as it is the fastest approach (see [this article](https://samsaffron.com/archive/2017/10/18/fastest-way-to-profile-a-method-in-ruby)). You may desire to add additional instrumentation libraries beyond `prometheus_exporter` to your app. This can become problematic if these other libraries instead use `prepend` to instrument methods. To resolve this, you can tell the middleware to instrument using `prepend` by passing an `instrument` option like so:
+
+```ruby
+Rails.application.middleware.unshift PrometheusExporter::Middleware, instrument: :prepend
+```
+
 #### Metrics collected by Rails integration middleware
 
-| Type    | Name                            | Description                                                 |
-| ---     | ---                             | ---                                                         |
-| Counter | `http_requests_total`           | Total HTTP requests from web app                            |
-| Summary | `http_duration_seconds`         | Time spent in HTTP reqs in seconds                          |
-| Summary | `http_redis_duration_seconds`¹  | Time spent in HTTP reqs in Redis, in seconds                |
-| Summary | `http_sql_duration_seconds`²    | Time spent in HTTP reqs in SQL in seconds                   |
-| Summary | `http_queue_duration_seconds`³  | Time spent queueing the request in load balancer in seconds |
+| Type    | Name                                   | Description                                                 |
+| ---     | ---                                    | ---                                                         |
+| Counter | `http_requests_total`                  | Total HTTP requests from web app                            |
+| Summary | `http_request_duration_seconds`        | Time spent in HTTP reqs in seconds                          |
+| Summary | `http_request_redis_duration_seconds`¹ | Time spent in HTTP reqs in Redis, in seconds                |
+| Summary | `http_request_sql_duration_seconds`²   | Time spent in HTTP reqs in SQL in seconds                   |
+| Summary | `http_request_queue_duration_seconds`³ | Time spent queueing the request in load balancer in seconds |
 
 All metrics have a `controller` and an `action` label.
 `http_requests_total` additionally has a (HTTP response) `status` label.
@@ -241,7 +262,7 @@ end
 ```
 That way you won't have all metrics labeled with `controller=other` and `action=other`, but have labels such as
 ```
-ruby_http_duration_seconds{path="/api/v1/teams/:id",method="GET",status="200",quantile="0.99"} 0.009880661998977303
+ruby_http_request_duration_seconds{path="/api/v1/teams/:id",method="GET",status="200",quantile="0.99"} 0.009880661998977303
 ```
 
 ¹) Only available when Redis is used.
@@ -321,7 +342,7 @@ You may also be interested in per-process stats. This collects memory and GC sta
 
 ```ruby
 # in an initializer
-unless Rails.env == "test"
+unless Rails.env.test?
   require 'prometheus_exporter/instrumentation'
 
   # this reports basic process stats like RSS and GC info
@@ -357,39 +378,48 @@ Metrics collected by Process instrumentation include labels `type` (as given wit
 
 #### Sidekiq metrics
 
-Including Sidekiq metrics (how many jobs ran? how many failed? how long did they take? how many are dead? how many were restarted?)
+There are different kinds of Sidekiq metrics that can be collected. A recommended setup looks like this:
 
 ```ruby
 Sidekiq.configure_server do |config|
-   config.server_middleware do |chain|
-      require 'prometheus_exporter/instrumentation'
-      chain.add PrometheusExporter::Instrumentation::Sidekiq
-   end
-   config.death_handlers << PrometheusExporter::Instrumentation::Sidekiq.death_handler
-end
-```
-
-To monitor Queue size and latency:
-
-```ruby
-Sidekiq.configure_server do |config|
-  config.on :startup do
-    require 'prometheus_exporter/instrumentation'
-    PrometheusExporter::Instrumentation::SidekiqQueue.start
+  require 'prometheus_exporter/instrumentation'
+  config.server_middleware do |chain|
+    chain.add PrometheusExporter::Instrumentation::Sidekiq
   end
-end
-```
-
-To monitor Sidekiq process info:
-
-```ruby
-Sidekiq.configure_server do |config|
+  config.death_handlers << PrometheusExporter::Instrumentation::Sidekiq.death_handler
   config.on :startup do
-    require 'prometheus_exporter/instrumentation'
     PrometheusExporter::Instrumentation::Process.start type: 'sidekiq'
+    PrometheusExporter::Instrumentation::SidekiqProcess.start
+    PrometheusExporter::Instrumentation::SidekiqQueue.start
+    PrometheusExporter::Instrumentation::SidekiqStats.start
   end
 end
 ```
+
+* The middleware and death handler will generate job specific metrics (how many jobs ran? how many failed? how long did they take? how many are dead? how many were restarted?).
+* The [`Process`](#per-process-stats) metrics provide basic ruby metrics.
+* The `SidekiqProcess` metrics provide the concurrency and busy metrics for this process.
+* The `SidekiqQueue` metrics provides size and latency for the queues run by this process.
+* The `SidekiqStats` metrics provide general, global Sidekiq stats (size of Scheduled, Retries, Dead queues, total number of jobs, etc).
+
+For `SidekiqQueue`, if you run more than one process for the same queues, note that the same metrics will be exposed by all the processes, just like the `SidekiqStats` will if you run more than one process of any kind. You might want use `avg` or `max` when consuming their metrics.
+
+An alternative would be to expose these metrics in lone, long-lived process. Using a rake task, for example:
+
+```ruby
+task :sidekiq_metrics do
+  server = PrometheusExporter::Server::WebServer.new
+  server.start
+
+  PrometheusExporter::Client.default = PrometheusExporter::LocalClient.new(collector: server.collector)
+
+  PrometheusExporter::Instrumentation::SidekiqQueue.start(all_queues: true)
+  PrometheusExporter::Instrumentation::SidekiqStats.start
+  sleep
+end
+```
+
+The `all_queues` parameter for `SidekiqQueue` will expose metrics for all queues.
 
 Sometimes the Sidekiq server shuts down before it can send metrics, that were generated right before the shutdown, to the collector. Especially if you care about the `sidekiq_restarted_jobs_total` metric, it is a good idea to explicitly stop the client:
 
@@ -398,6 +428,18 @@ Sometimes the Sidekiq server shuts down before it can send metrics, that were ge
     at_exit do
       PrometheusExporter::Client.default.stop(wait_timeout_seconds: 10)
     end
+  end
+```
+
+Custom labels can be added for individual jobs by defining a class method on the job class. These labels will be added to all Sidekiq metrics written by the job:
+
+```ruby
+  class WorkerWithCustomLabels
+    def self.custom_labels
+      { my_label: 'value-here', other_label: 'second-val' }
+    end
+
+    def perform; end
   end
 ```
 
@@ -423,10 +465,32 @@ This metric has a `job_name` label and a `queue` label.
 **PrometheusExporter::Instrumentation::SidekiqQueue**
 | Type  | Name                            | Description                  |
 | ---   | ---                             | ---                          |
-| Gauge | `sidekiq_queue_backlog_total`   | Size of the sidekiq queue    |
+| Gauge | `sidekiq_queue_backlog`         | Size of the sidekiq queue    |
 | Gauge | `sidekiq_queue_latency_seconds` | Latency of the sidekiq queue |
 
 Both metrics will have a `queue` label with the name of the queue.
+
+**PrometheusExporter::Instrumentation::SidekiqProcess**
+| Type  | Name                          | Description                             |
+| ---   | ---                           | ---                                     |
+| Gauge | `sidekiq_process_busy`        | Number of busy workers for this process |
+| Gauge | `sidekiq_process_concurrency` | Concurrency for this process            |
+
+Both metrics will include the labels `labels`, `queues`, `quiet`, `tag`, `hostname` and `identity`, as returned by the [Sidekiq Processes API](https://github.com/mperham/sidekiq/wiki/API#processes).
+
+**PrometheusExporter::Instrumentation::SidekiqStats**
+| Type  | Name                            | Description                             |
+| ---   | ---                             | ---                                     |
+| Gauge | `sidekiq_stats_dead_size`       | Size of the dead queue                  |
+| Gauge | `sidekiq_stats_enqueued`        | Number of enqueued jobs                 |
+| Gauge | `sidekiq_stats_failed`          | Number of failed jobs                   |
+| Gauge | `sidekiq_stats_processed`       | Total number of processed jobs          |
+| Gauge | `sidekiq_stats_processes_size`  | Number of processes                     |
+| Gauge | `sidekiq_stats_retry_size`      | Size of the retries queue               |
+| Gauge | `sidekiq_stats_scheduled_size`  | Size of the scheduled queue             |
+| Gauge | `sidekiq_stats_workers_size`    | Number of jobs actively being processed |
+
+Based on the [Sidekiq Stats API](https://github.com/mperham/sidekiq/wiki/API#stats).
 
 _See [Metrics collected by Process Instrumentation](#metrics-collected-by-process-instrumentation) for a list of metrics the Process instrumentation will produce._
 
@@ -459,7 +523,7 @@ All metrics have labels for `job_name` and `queue_name`.
 In an initializer:
 
 ```ruby
-unless Rails.env == "test"
+unless Rails.env.test?
   require 'prometheus_exporter/instrumentation'
   PrometheusExporter::Instrumentation::DelayedJob.register_plugin
 end
@@ -485,7 +549,7 @@ All metrics have labels for `job_name` and `queue_name`.
 Capture [Hutch](https://github.com/gocardless/hutch) metrics (how many jobs ran? how many failed? how long did they take?)
 
 ```ruby
-unless Rails.env == "test"
+unless Rails.env.test?
   require 'prometheus_exporter/instrumentation'
   Hutch::Config.set(:tracer, PrometheusExporter::Instrumentation::Hutch)
 end
@@ -507,7 +571,7 @@ Request Queueing is defined as the time it takes for a request to reach your app
 
 As this metric starts before `prometheus_exporter` can handle the request, you must add a specific HTTP header as early in your infrastructure as possible (we recommend your load balancer or reverse proxy).
 
-The Amazon Application Load Balancer [request tracing header](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-request-tracing.html) is natively supported. If you are using another upstream entrypoint, you may configure your HTTP server / load balancer to add a header `X-Request-Start: t=<MSEC>` when passing the request upstream. For more information, please consult your software manual.
+The Amazon Application Load Balancer [request tracing header](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-request-tracing.html) is natively supported. If you are using another upstream entrypoint, you may configure your HTTP server / load balancer to add a header `X-Request-Start: t=<MSEC>` when passing the request upstream. Please keep in mind request time start is reported as epoch time (in seconds) and lacks precision, which may introduce additional latency in reported metrics. For more information, please consult your software manual.
 
 Hint: we aim to be API-compatible with the big APM solutions, so if you've got requests queueing time configured for them, it should be expected to also work with `prometheus_exporter`.
 
@@ -521,23 +585,71 @@ The easiest way to gather this metrics is to put the following in your `puma.rb`
 # puma.rb config
 after_worker_boot do
   require 'prometheus_exporter/instrumentation'
-  PrometheusExporter::Instrumentation::Puma.start
+  # optional check, avoids spinning up and down threads per worker
+  if !PrometheusExporter::Instrumentation::Puma.started?
+    PrometheusExporter::Instrumentation::Puma.start
+  end
 end
 ```
 
 #### Metrics collected by Puma Instrumentation
 
-| Type  | Name                              | Description                                                 |
-| ---   | ---                               | ---                                                         |
-| Gauge | `puma_workers_total`              | Number of puma workers                                      |
-| Gauge | `puma_booted_workers_total`       | Number of puma workers booted                               |
-| Gauge | `puma_old_workers_total`          | Number of old puma workers                                  |
-| Gauge | `puma_running_threads_total`      | Number of puma threads currently running                    |
-| Gauge | `puma_request_backlog_total`      | Number of requests waiting to be processed by a puma thread |
-| Gauge | `puma_thread_pool_capacity_total` | Number of puma threads available at current scale           |
-| Gauge | `puma_max_threads_total`          | Number of puma threads at available at max scale            |
+| Type  | Name                        | Description                                                 |
+| ---   | ---                         | ---                                                         |
+| Gauge | `puma_workers`              | Number of puma workers                                      |
+| Gauge | `puma_booted_workers`       | Number of puma workers booted                               |
+| Gauge | `puma_old_workers`          | Number of old puma workers                                  |
+| Gauge | `puma_running_threads`      | Number of puma threads currently running                    |
+| Gauge | `puma_request_backlog`      | Number of requests waiting to be processed by a puma thread |
+| Gauge | `puma_thread_pool_capacity` | Number of puma threads available at current scale           |
+| Gauge | `puma_max_threads`          | Number of puma threads at available at max scale            |
 
-All metrics may have a `phase` label.
+All metrics may have a `phase` label and all custom labels provided with the `labels` option.
+
+### Resque metrics
+
+The resque metrics are using the `Resque.info` method, which queries Redis internally. To start monitoring your resque
+installation, you'll need to start the instrumentation:
+
+```ruby
+# e.g. config/initializers/resque.rb
+require 'prometheus_exporter/instrumentation'
+PrometheusExporter::Instrumentation::Resque.start
+```
+
+#### Metrics collected by Resque Instrumentation
+
+| Type  | Name                    | Description                            |
+| ---   | ---                     | ---                                    |
+| Gauge | `resque_processed_jobs` | Total number of processed Resque jobs  |
+| Gauge | `resque_failed_jobs`    | Total number of failed Resque jobs     |
+| Gauge | `resque_pending_jobs`   | Total number of pending Resque jobs    |
+| Gauge | `resque_queues`         | Total number of Resque queues          |
+| Gauge | `resque_workers`        | Total number of Resque workers running |
+| Gauge | `resque_working`        | Total number of Resque workers working |
+
+### GoodJob metrics
+
+The metrics are generated from the database using the relevant scopes. To start monitoring your GoodJob
+installation, you'll need to start the instrumentation:
+
+```ruby
+# e.g. config/initializers/good_job.rb
+require 'prometheus_exporter/instrumentation'
+PrometheusExporter::Instrumentation::GoodJob.start
+```
+
+#### Metrics collected by GoodJob Instrumentation
+
+| Type  | Name                 | Description                             |
+| ---   |----------------------|-----------------------------------------|
+| Gauge | `good_job_scheduled` | Total number of scheduled GoodJob jobs. |
+| Gauge | `good_job_retried`   | Total number of retried GoodJob jobs.   |
+| Gauge | `good_job_queued`    | Total number of queued GoodJob jobs.    |
+| Gauge | `good_job_running`   | Total number of running GoodJob jobs.   |
+| Gauge | `good_job_finished`  | Total number of finished GoodJob jobs.  |
+| Gauge | `good_job_succeeded` | Total number of succeeded GoodJob jobs. |
+| Gauge | `good_job_discarded` | Total number of discarded GoodJob jobs  |
 
 ### Unicorn process metrics
 
@@ -556,11 +668,11 @@ Note: You must install the `raindrops` gem in your `Gemfile` or locally.
 
 #### Metrics collected by Unicorn Instrumentation
 
-| Type  | Name                            | Description                                                    |
-| ---   | ---                             | ---                                                            |
-| Gauge | `unicorn_workers_total`         | Number of unicorn workers                                      |
-| Gauge | `unicorn_active_workers_total`  | Number of active unicorn workers                               |
-| Gauge | `unicorn_request_backlog_total` | Number of requests waiting to be processed by a unicorn worker |
+| Type  | Name                      | Description                                                    |
+| ---   | ---                       | ---                                                            |
+| Gauge | `unicorn_workers`         | Number of unicorn workers                                      |
+| Gauge | `unicorn_active_workers`  | Number of active unicorn workers                               |
+| Gauge | `unicorn_request_backlog` | Number of requests waiting to be processed by a unicorn worker |
 
 ### Custom type collectors
 
@@ -745,6 +857,7 @@ Usage: prometheus_exporter [options]
     -c, --collector FILE             (optional) Custom collector to run
     -a, --type-collector FILE        (optional) Custom type collectors to run in main collector
     -v, --verbose
+    -g, --histogram                  Use histogram instead of summary for aggregations
         --auth FILE                  (optional) enable basic authentication using a htpasswd FILE
         --realm REALM                (optional) Use REALM for basic authentication (default: "Prometheus Exporter")
         --unicorn-listen-address ADDRESS
@@ -768,6 +881,9 @@ prometheus_exporter -p 8080 \
                     --label '{"environment": "integration", "foo": "bar"}' \
                     --prefix 'foo_'
 ```
+
+You can use `-b` option to bind the `prometheus_exporter` web server to any IPv4 interface with `-b 0.0.0.0`, 
+any IPv6 interface with `-b ::`, or `-b ANY` to any IPv4/IPv6 interfaces available on your host system.
 
 #### Enabling Basic Authentication
 
@@ -815,6 +931,38 @@ http_requests_total{service="app-server-01",app_name="app-01"} 1
 
 By default, `PrometheusExporter::Client.default` connects to `localhost:9394`. If your setup requires this (e.g. when using `docker-compose`), you can change the default host and port by setting the environment variables `PROMETHEUS_EXPORTER_HOST` and `PROMETHEUS_EXPORTER_PORT`.
 
+### Histogram mode
+
+By default, the built-in collectors will report aggregations as summaries. If you need to aggregate metrics across labels, you can switch from summaries to histograms:
+
+```
+$ prometheus_exporter --histogram
+```
+
+In histogram mode, the same metrics will be collected but will be reported as histograms rather than summaries. This sacrifices some precision but allows aggregating metrics across actions and nodes using [`histogram_quantile`].
+
+[`histogram_quantile`]: https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile
+
+### Histogram - custom buckets
+
+By default these buckets will be used:
+```
+[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5.0, 10.0].freeze
+```
+if this is not enough you can specify `default_buckets` like this:
+```
+Histogram.default_buckets = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 2.5, 3, 4, 5.0, 10.0, 12, 14, 15, 20, 25].freeze
+```
+
+Specfied buckets on the instance  takes precedence over default:
+
+```
+Histogram.default_buckets = [0.005, 0.01, 0,5].freeze
+buckets = [0.1, 0.2, 0.3]
+histogram = Histogram.new('test_bucktets', 'I have specified buckets', buckets: buckets)
+histogram.buckets => [0.1, 0.2, 0.3]
+```
+
 ## Transport concerns
 
 Prometheus Exporter handles transport using a simple HTTP protocol. In multi process mode we avoid needing a large number of HTTP request by using chunked encoding to send metrics. This means that a single HTTP channel can deliver 100s or even 1000s of metrics over a single HTTP session to the `/send-metrics` endpoint. All calls to `send` and `send_json` on the `PrometheusExporter::Client` class are **non-blocking** and batched.
@@ -826,6 +974,61 @@ The `/bench` directory has simple benchmark, which is able to send through 10k m
 The `PrometheusExporter::Client` class has the method `#send-json`. This method, by default, will call `JSON.dump` on the Object it recieves. You may opt in for `oj` mode where it can use the faster `Oj.dump(obj, mode: :compat)` for JSON serialization. But be warned that if you have custom objects that implement own `to_json` methods this may not work as expected. You can opt for oj serialization with `json_serializer: :oj`.
 
 When `PrometheusExporter::Server::Collector` parses your JSON, by default it will use the faster Oj deserializer if available. This happens cause it only expects a simple Hash out of the box. You can opt in for the default JSON deserializer with `json_serializer: :json`.
+
+## Logging
+
+`PrometheusExporter::Client.default` will export to `STDERR`. To change this, you can pass your own logger:
+```ruby
+PrometheusExporter::Client.new(logger: Rails.logger)
+PrometheusExporter::Client.new(logger: Logger.new(STDOUT))
+```
+
+You can also pass a log level (default is [`Logger::WARN`](https://ruby-doc.org/stdlib-3.0.1/libdoc/logger/rdoc/Logger.html)):
+```ruby
+PrometheusExporter::Client.new(log_level: Logger::DEBUG)
+```
+
+## Docker Usage
+
+You can run `prometheus_exporter` project using an official Docker image:
+
+```bash
+docker pull discourse/prometheus_exporter:latest
+# or use specific version
+docker pull discourse/prometheus_exporter:x.x.x
+```
+
+The start the container:
+
+```bash
+docker run -p 9394:9394 discourse/prometheus_exporter
+```
+
+Additional flags could be included:
+
+```
+docker run -p 9394:9394 discourse/prometheus_exporter --verbose --prefix=myapp
+```
+
+## Docker/Kubernetes Healthcheck
+
+A `/ping` endpoint which only returns `PONG` is available so you can run container healthchecks :
+
+Example:
+
+```yml
+services:
+  rails-exporter:
+    command:
+      - bin/prometheus_exporter
+      - -b
+      - 0.0.0.0
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--show-error", "--fail", "--max-time", "3", "http://0.0.0.0:9394/ping"]
+      timeout: 3s
+      interval: 10s
+      retries: 5
+```
 
 ## Contributing
 

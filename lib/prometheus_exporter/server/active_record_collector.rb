@@ -2,7 +2,8 @@
 
 module PrometheusExporter::Server
   class ActiveRecordCollector < TypeCollector
-    MAX_ACTIVERECORD_METRIC_AGE = 60
+    MAX_METRIC_AGE = 60
+
     ACTIVE_RECORD_GAUGES = {
       connections: "Total connections in pool",
       busy: "Connections in use in pool",
@@ -13,7 +14,12 @@ module PrometheusExporter::Server
     }
 
     def initialize
-      @active_record_metrics = []
+      @active_record_metrics = MetricsContainer.new(ttl: MAX_METRIC_AGE)
+      @active_record_metrics.filter = -> (new_metric, old_metric) do
+        new_metric["pid"] == old_metric["pid"] &&
+        new_metric["hostname"] == old_metric["hostname"] &&
+        new_metric["metric_labels"]["pool_name"] == old_metric["metric_labels"]["pool_name"]
+      end
     end
 
     def type
@@ -26,7 +32,7 @@ module PrometheusExporter::Server
       metrics = {}
 
       @active_record_metrics.map do |m|
-        metric_key = (m["metric_labels"] || {}).merge("pid" => m["pid"])
+        metric_key = (m["metric_labels"] || {}).merge("pid" => m["pid"], "hostname" => m["hostname"])
         metric_key.merge!(m["custom_labels"]) if m["custom_labels"]
 
         ACTIVE_RECORD_GAUGES.map do |k, help|
@@ -42,15 +48,6 @@ module PrometheusExporter::Server
     end
 
     def collect(obj)
-      now = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
-
-      obj["created_at"] = now
-
-      @active_record_metrics.delete_if do |current|
-        (obj["pid"] == current["pid"] && obj["hostname"] == current["hostname"]) ||
-          (current["created_at"] + MAX_ACTIVERECORD_METRIC_AGE < now)
-      end
-
       @active_record_metrics << obj
     end
   end

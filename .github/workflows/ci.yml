@@ -1,42 +1,99 @@
-name: Test Exporter
+name: CI
 
 on:
   push:
+    branches:
+      - main
   pull_request:
   schedule:
-    - cron: '0 0 * * 0' # weekly
+    - cron: "0 0 * * 0" # weekly
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  DOCKER_REPO: ghcr.io/discourse/prometheus_exporter
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Ruby ${{ matrix.ruby }}
+    name: Ruby ${{ matrix.ruby }} AR ${{ matrix.activerecord }}
+    timeout-minutes: 10
+
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/ar_${{ matrix.activerecord }}.gemfile
+
     strategy:
+      fail-fast: false
       matrix:
-        ruby: ["2.7", "2.6", "2.5"]
+        ruby: ['2.6', '2.7', '3.0', '3.1', '3.2']
+        activerecord: [60, 61]
+
     steps:
-      - uses: actions/checkout@master
-        with:
-          fetch-depth: 1
-      - uses: actions/setup-ruby@v1
+      - uses: actions/checkout@v2
+
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-      - uses: actions/cache@v2
-        with:
-          path: vendor/bundle
-          key: ${{ runner.os }}-${{ matrix.ruby }}-gems-v2-${{ hashFiles('**/Gemfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.ruby }}-gems-v2-
-      - name: Setup gems
-        run: |
-          gem install bundler
-          # for Ruby <= 2.6 , details https://github.com/rubygems/rubygems/issues/3284
-          gem update --system 3.0.8 && gem update --system
-          bundle config path vendor/bundle
-          bundle install --jobs 4
-          bundle exec appraisal install
+          bundler-cache: true
+
       - name: Rubocop
         run: bundle exec rubocop
-      - name: install gems
-        run: bundle exec appraisal bundle
+
       - name: Run tests
-        run: bundle exec appraisal rake
+        run: bundle exec rake
+
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+
+    outputs:
+      new_version_published: ${{ steps.release.outputs.new_version_published }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Release gem
+        id: release
+        uses: discourse/publish-rubygems-action@v2
+        env:
+          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+          GIT_EMAIL: team@discourse.org
+          GIT_NAME: discoursebot
+
+  publish_docker:
+    needs: publish
+    if: needs.publish.outputs.new_version_published == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/setup-qemu-action@v2
+      - uses: docker/setup-buildx-action@v2
+
+      - name: Set vars
+        id: vars
+        run: |
+          ruby -r ./lib/prometheus_exporter/version.rb -e 'print "version=#{PrometheusExporter::VERSION}"' >> $GITHUB_OUTPUT
+
+      - name: Login to Github Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push images
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            GEM_VERSION=${{ steps.vars.outputs.version }}
+          tags: |
+            ${{ env.DOCKER_REPO }}:${{ steps.vars.outputs.version }}
+            ${{ env.DOCKER_REPO }}:latest

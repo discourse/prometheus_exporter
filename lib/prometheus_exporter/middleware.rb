@@ -6,23 +6,30 @@ require 'prometheus_exporter/client'
 class PrometheusExporter::Middleware
   MethodProfiler = PrometheusExporter::Instrumentation::MethodProfiler
 
-  def initialize(app, config = { instrument: true, client: nil })
+  def initialize(app, config = { instrument: :alias_method, client: nil })
     @app = app
     @client = config[:client] || PrometheusExporter::Client.default
 
     if config[:instrument]
-      if defined? Redis::Client
-        MethodProfiler.patch(Redis::Client, [:call, :call_pipeline], :redis)
+      if defined?(RedisClient)
+        apply_redis_client_middleware!
+      end
+      if defined?(Redis::VERSION) && (Gem::Version.new(Redis::VERSION) >= Gem::Version.new('5.0.0'))
+        # redis 5 support handled via RedisClient
+      elsif defined? Redis::Client
+        MethodProfiler.patch(Redis::Client, [
+          :call, :call_pipeline
+        ], :redis, instrument: config[:instrument])
       end
       if defined? PG::Connection
         MethodProfiler.patch(PG::Connection, [
           :exec, :async_exec, :exec_prepared, :send_query_prepared, :query
-        ], :sql)
+        ], :sql, instrument: config[:instrument])
       end
       if defined? Mysql2::Client
-        MethodProfiler.patch(Mysql2::Client, [:query], :sql)
-        MethodProfiler.patch(Mysql2::Statement, [:execute], :sql)
-        MethodProfiler.patch(Mysql2::Result, [:each], :sql)
+        MethodProfiler.patch(Mysql2::Client, [:query], :sql, instrument: config[:instrument])
+        MethodProfiler.patch(Mysql2::Statement, [:execute], :sql, instrument: config[:instrument])
+        MethodProfiler.patch(Mysql2::Result, [:each], :sql, instrument: config[:instrument])
       end
     end
   end
@@ -36,11 +43,12 @@ class PrometheusExporter::Middleware
 
     result
   ensure
-
+    status = (result && result[0]) || -1
     obj = {
       type: "web",
       timings: info,
       queue_time: queue_time,
+      status: status,
       default_labels: default_labels(env, result)
     }
     labels = custom_labels(env)
@@ -52,18 +60,21 @@ class PrometheusExporter::Middleware
   end
 
   def default_labels(env, result)
-    status = (result && result[0]) || -1
     params = env["action_dispatch.request.parameters"]
     action = controller = nil
     if params
       action = params["action"]
       controller = params["controller"]
+    elsif (cors = env["rack.cors"]) && cors.respond_to?(:preflight?) && cors.preflight?
+      # if the Rack CORS Middleware identifies the request as a preflight request,
+      # the stack doesn't get to the point where controllers/actions are defined
+      action = "preflight"
+      controller = "preflight"
     end
 
     {
       action: action || "other",
-      controller: controller || "other",
-      status: status
+      controller: controller || "other"
     }
   end
 
@@ -108,6 +119,16 @@ class PrometheusExporter::Middleware
     value = env['HTTP_X_AMZN_TRACE_ID']
     value&.split('Root=')&.last&.split('-')&.fetch(1)&.to_i(16)
 
+  end
+
+  private
+
+  module RedisInstrumenter
+    MethodProfiler.define_methods_on_module(self, ["call", "call_pipelined"], "redis")
+  end
+
+  def apply_redis_client_middleware!
+    RedisClient.register(RedisInstrumenter)
   end
 
 end

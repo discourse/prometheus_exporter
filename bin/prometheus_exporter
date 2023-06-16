@@ -3,12 +3,15 @@
 
 require 'optparse'
 require 'json'
+require 'logger'
 
 require_relative "./../lib/prometheus_exporter"
 require_relative "./../lib/prometheus_exporter/server"
 
 def run
-  options = {}
+  options = {
+    logger_path: STDERR
+  }
   custom_collector_filename = nil
   custom_type_collectors_filenames = []
 
@@ -47,6 +50,9 @@ def run
     opt.on('-v', '--verbose') do |o|
       options[:verbose] = true
     end
+    opt.on('-g', '--histogram', "Use histogram instead of summary for aggregations") do |o|
+      options[:histogram] = true
+    end
     opt.on('--auth FILE', String, "(optional) enable basic authentication using a htpasswd FILE") do |o|
       options[:auth] = o
     end
@@ -61,21 +67,28 @@ def run
     opt.on('--unicorn-master PID_FILE', String, '(optional) PID file of unicorn master process to monitor unicorn') do |o|
       options[:unicorn_pid_file] = o
     end
+
+    opt.on('--logger-path PATH', String, '(optional) Path to file for logger output. Defaults to STDERR') do |o|
+      options[:logger_path] = o
+    end
   end.parse!
 
+  logger = Logger.new(options[:logger_path])
+  logger.level = Logger::WARN
+
   if options.has_key?(:realm) && !options.has_key?(:auth)
-    STDERR.puts "[Warn] Providing REALM without AUTH has no effect"
+    logger.warn "Providing REALM without AUTH has no effect"
   end
 
   if options.has_key?(:auth)
     unless File.exist?(options[:auth]) && File.readable?(options[:auth])
-      STDERR.puts "[Error] The AUTH file either doesn't exist or we don't have access to it"
+      logger.fatal "The AUTH file either doesn't exist or we don't have access to it"
       exit 1
     end
   end
 
   if custom_collector_filename
-    eval File.read(custom_collector_filename), nil, File.expand_path(custom_collector_filename)
+    require File.expand_path(custom_collector_filename)
     found = false
 
     base_klass = PrometheusExporter::Server::CollectorBase
@@ -88,14 +101,14 @@ def run
     end
 
     if !found
-      STDERR.puts "[Error] Can not find a class inheriting off PrometheusExporter::Server::CollectorBase"
+      logger.fatal "Can not find a class inheriting off PrometheusExporter::Server::CollectorBase"
       exit 1
     end
   end
 
   if custom_type_collectors_filenames.length > 0
     custom_type_collectors_filenames.each do |t|
-      eval File.read(t), nil, File.expand_path(t)
+      require File.expand_path(t)
     end
 
     ObjectSpace.each_object(Class) do |klass|

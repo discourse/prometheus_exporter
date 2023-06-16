@@ -29,19 +29,25 @@ module PrometheusExporter::Server
       @bad_metrics_total.observe(0)
 
       @access_log, @logger = nil
+      log_target = opts[:log_target]
 
       if @verbose
         @access_log = [
           [$stderr, WEBrick::AccessLog::COMMON_LOG_FORMAT],
           [$stderr, WEBrick::AccessLog::REFERER_LOG_FORMAT],
         ]
-        @logger = WEBrick::Log.new($stderr)
+        @logger = WEBrick::Log.new(log_target || $stderr)
       else
         @access_log = []
-        @logger = WEBrick::Log.new("/dev/null")
+        @logger = WEBrick::Log.new(log_target || "/dev/null")
       end
 
       @logger.info "Using Basic Authentication via #{@auth}" if @verbose && @auth
+
+      if %w(ALL ANY).include?(@bind)
+        @logger.info "Listening on both 0.0.0.0/:: network interfaces"
+        @bind = nil
+      end
 
       @server = WEBrick::HTTPServer.new(
         Port: @port,
@@ -72,9 +78,11 @@ module PrometheusExporter::Server
           end
         elsif req.path == '/send-metrics'
           handle_metrics(req, res)
+        elsif req.path == '/ping'
+          res.body = 'PONG'
         else
           res.status = 404
-          res.body = "Not Found! The Prometheus Ruby Exporter only listens on /metrics and /send-metrics"
+          res.body = "Not Found! The Prometheus Ruby Exporter only listens on /ping, /metrics and /send-metrics"
         end
       end
     end
@@ -87,10 +95,7 @@ module PrometheusExporter::Server
           @collector.process(block)
         rescue => e
           if @verbose
-            STDERR.puts
-            STDERR.puts e.inspect
-            STDERR.puts e.backtrace
-            STDERR.puts
+            @logger.error "\n\n#{e.inspect}\n#{e.backtrace}\n\n"
           end
           @bad_metrics_total.observe
           res.body = "Bad Metrics #{e}"
@@ -108,7 +113,7 @@ module PrometheusExporter::Server
         begin
           @server.start
         rescue => e
-          STDERR.puts "Failed to start prometheus collector web on port #{@port}: #{e}"
+          @logger.error "Failed to start prometheus collector web on port #{@port}: #{e}"
         end
       end
     end
@@ -125,7 +130,7 @@ module PrometheusExporter::Server
         end
       rescue Timeout::Error
         # we timed out ... bummer
-        STDERR.puts "Generating Prometheus metrics text timed out"
+        @logger.error "Generating Prometheus metrics text timed out"
       end
 
       metrics = []

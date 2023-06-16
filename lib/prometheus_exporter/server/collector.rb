@@ -14,12 +14,16 @@ module PrometheusExporter::Server
       register_collector(ProcessCollector.new)
       register_collector(SidekiqCollector.new)
       register_collector(SidekiqQueueCollector.new)
+      register_collector(SidekiqProcessCollector.new)
+      register_collector(SidekiqStatsCollector.new)
       register_collector(DelayedJobCollector.new)
       register_collector(PumaCollector.new)
       register_collector(HutchCollector.new)
       register_collector(UnicornCollector.new)
       register_collector(ActiveRecordCollector.new)
       register_collector(ShoryukenCollector.new)
+      register_collector(ResqueCollector.new)
+      register_collector(GoodJobCollector.new)
     end
 
     def register_collector(collector)

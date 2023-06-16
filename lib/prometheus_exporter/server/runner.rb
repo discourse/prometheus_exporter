@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-require 'prometheus_exporter/client'
-require_relative '../instrumentation/unicorn'
+require_relative '../client'
 
 module PrometheusExporter::Server
   class RunnerException < StandardError; end
@@ -17,6 +16,7 @@ module PrometheusExporter::Server
       @prefix = nil
       @auth = nil
       @realm = nil
+      @histogram = nil
 
       options.each do |k, v|
         send("#{k}=", v) if self.class.method_defined?("#{k}=")
@@ -27,6 +27,10 @@ module PrometheusExporter::Server
       PrometheusExporter::Metric::Base.default_prefix = prefix
       PrometheusExporter::Metric::Base.default_labels = label
 
+      if histogram
+        PrometheusExporter::Metric::Base.default_aggregation = PrometheusExporter::Metric::Histogram
+      end
+
       register_type_collectors
 
       unless collector.is_a?(PrometheusExporter::Server::CollectorBase)
@@ -34,6 +38,9 @@ module PrometheusExporter::Server
       end
 
       if unicorn_listen_address && unicorn_pid_file
+
+        require_relative '../instrumentation'
+
         local_client = PrometheusExporter::LocalClient.new(collector: collector)
         PrometheusExporter::Instrumentation::Unicorn.start(
           pid_file: unicorn_pid_file,
@@ -47,7 +54,7 @@ module PrometheusExporter::Server
     end
 
     attr_accessor :unicorn_listen_address, :unicorn_pid_file
-    attr_writer :prefix, :port, :bind, :collector_class, :type_collectors, :timeout, :verbose, :server_class, :label, :auth, :realm
+    attr_writer :prefix, :port, :bind, :collector_class, :type_collectors, :timeout, :verbose, :server_class, :label, :auth, :realm, :histogram
 
     def auth
       @auth || nil
@@ -96,6 +103,10 @@ module PrometheusExporter::Server
 
     def label
       @label ||= PrometheusExporter::DEFAULT_LABEL
+    end
+
+    def histogram
+      @histogram || false
     end
 
     private

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require_relative '../test_helper'
 require 'prometheus_exporter/metric'
 
 module PrometheusExporter::Metric
@@ -12,11 +12,13 @@ module PrometheusExporter::Metric
     before  do
       Base.default_prefix = ''
       Base.default_labels = {}
+      Base.default_aggregation = nil
     end
 
     after do
       Base.default_prefix = ''
       Base.default_labels = {}
+      Base.default_aggregation = nil
     end
 
     it "supports a dynamic prefix" do
@@ -41,7 +43,23 @@ module PrometheusExporter::Metric
       text = <<~TEXT
         # HELP a_counter my amazing counter
         # TYPE a_counter counter
-        a_counter{baz="bar",foo="bar"} 2
+        a_counter{foo="bar",baz="bar"} 2
+        a_counter{foo="bar"} 1
+      TEXT
+
+      assert_equal(counter.to_prometheus_text, text)
+    end
+
+    it "uses specified labels over default labels when there is conflict" do
+      Base.default_labels = { foo: "bar" }
+
+      counter.observe(2, foo: "baz")
+      counter.observe
+
+      text = <<~TEXT
+        # HELP a_counter my amazing counter
+        # TYPE a_counter counter
+        a_counter{foo="baz"} 2
         a_counter{foo="bar"} 1
       TEXT
 
@@ -110,6 +128,29 @@ module PrometheusExporter::Metric
       TEXT
 
       assert_equal(summary.to_prometheus_text.strip, text.strip)
+    end
+
+    it "creates a summary by default" do
+      aggregation = Base.default_aggregation.new("test", "test")
+
+      text = <<~TEXT
+        # HELP test test
+        # TYPE test summary
+      TEXT
+
+      assert_equal(aggregation.to_prometheus_text.strip, text.strip)
+    end
+
+    it "creates a histogram when configured" do
+      Base.default_aggregation = Histogram
+      aggregation = Base.default_aggregation.new("test", "test")
+
+      text = <<~TEXT
+        # HELP test test
+        # TYPE test histogram
+      TEXT
+
+      assert_equal(aggregation.to_prometheus_text.strip, text.strip)
     end
   end
 end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require_relative '../test_helper'
 require 'prometheus_exporter/server'
 require 'prometheus_exporter/client'
 require 'net/http'
@@ -96,7 +96,8 @@ class PrometheusExporterTest < Minitest::Test
   def test_it_can_collect_over_ipv6
     port = find_free_port
 
-    server = PrometheusExporter::Server::WebServer.new port: port
+    # for some reason on WSL it is not binding to v6 for localhost.
+    server = PrometheusExporter::Server::WebServer.new port: port, bind: "::1"
     collector = server.collector
     server.start
 
@@ -247,6 +248,29 @@ class PrometheusExporterTest < Minitest::Test
       http.request(request) do |response|
         assert_equal("401", response.code)
         assert_match(/Unauthorized/, response.body)
+      end
+    end
+
+  ensure
+    client.stop rescue nil
+    server.stop rescue nil
+  end
+
+  def test_it_responds_to_ping
+    collector = DemoCollector.new
+    port = find_free_port
+
+    server = PrometheusExporter::Server::WebServer.new port: port, collector: collector
+    server.start
+
+    client = PrometheusExporter::Client.new host: "localhost", port: port, thread_sleep: 0.001
+
+    Net::HTTP.new("localhost", port).start do |http|
+      request = Net::HTTP::Get.new "/ping"
+
+      http.request(request) do |response|
+        assert_equal("200", response.code)
+        assert_match(/PONG/, response.body)
       end
     end
 
