@@ -5,6 +5,7 @@ module PrometheusExporter::Server
     def initialize
       @delayed_jobs_total = nil
       @delayed_job_duration_seconds = nil
+      @delayed_job_latency_seconds_total = nil
       @delayed_jobs_total = nil
       @delayed_failed_jobs_total = nil
       @delayed_jobs_max_attempts_reached_total = nil
@@ -25,6 +26,7 @@ module PrometheusExporter::Server
 
       ensure_delayed_job_metrics
       @delayed_job_duration_seconds.observe(obj["duration"], counter_labels)
+      @delayed_job_latency_seconds_total.observe(obj["latency"], counter_labels)
       @delayed_jobs_total.observe(1, counter_labels)
       @delayed_failed_jobs_total.observe(1, counter_labels) if !obj["success"]
       @delayed_jobs_max_attempts_reached_total.observe(1, counter_labels) if obj["attempts"] >= obj["max_attempts"]
@@ -38,7 +40,7 @@ module PrometheusExporter::Server
 
     def metrics
       if @delayed_jobs_total
-        [@delayed_job_duration_seconds, @delayed_jobs_total, @delayed_failed_jobs_total,
+        [@delayed_job_duration_seconds, @delayed_job_latency_seconds_total, @delayed_jobs_total, @delayed_failed_jobs_total,
          @delayed_jobs_max_attempts_reached_total, @delayed_job_duration_seconds_summary, @delayed_job_attempts_summary,
          @delayed_jobs_enqueued, @delayed_jobs_pending]
       else
@@ -54,6 +56,10 @@ module PrometheusExporter::Server
         @delayed_job_duration_seconds =
         PrometheusExporter::Metric::Counter.new(
           "delayed_job_duration_seconds", "Total time spent in delayed jobs.")
+
+        @delayed_job_latency_seconds_total =
+        PrometheusExporter::Metric::Counter.new(
+          "delayed_job_latency_seconds_total", "Total delayed jobs latency.")
 
         @delayed_jobs_total =
         PrometheusExporter::Metric::Counter.new(

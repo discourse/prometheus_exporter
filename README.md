@@ -534,6 +534,7 @@ end
 | Type    | Name                                      | Description                                                        | Labels     |
 | ---     | ---                                       | ---                                                                | ---        |
 | Counter | `delayed_job_duration_seconds`            | Total time spent in delayed jobs                                   | `job_name` |
+| Counter | `delayed_job_latency_seconds_total`       | Total delayed jobs latency                                         | `job_name` |
 | Counter | `delayed_jobs_total`                      | Total number of delayed jobs executed                              | `job_name` |
 | Gauge   | `delayed_jobs_enqueued`                   | Number of enqueued delayed jobs                                    | -          |
 | Gauge   | `delayed_jobs_pending`                    | Number of pending delayed jobs                                     | -          |
@@ -543,6 +544,7 @@ end
 | Summary | `delayed_job_attempts_summary`            | Summary of the amount of attempts it takes delayed jobs to succeed | -          |
 
 All metrics have labels for `job_name` and `queue_name`.
+`delayed_job_latency_seconds_total` is considering delayed job's [sleep_delay](https://github.com/collectiveidea/delayed_job#:~:text=If%20no%20jobs%20are%20found%2C%20the%20worker%20sleeps%20for%20the%20amount%20of%20time%20specified%20by%20the%20sleep%20delay%20option.%20Set%20Delayed%3A%3AWorker.sleep_delay%20%3D%2060%20for%20a%2060%20second%20sleep%20time.) parameter, so please be aware of this in case you are looking for high latency precision.
 
 #### Hutch Message Processing Tracer
 
