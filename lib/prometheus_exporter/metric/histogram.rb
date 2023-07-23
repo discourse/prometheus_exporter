@@ -91,7 +91,7 @@ module PrometheusExporter::Metric
     end
 
     def fill_buckets(value, buckets)
-      @buckets.reverse.each do |b|
+      @buckets.reverse_each do |b|
         break if value > b
         buckets[b] += 1
       end
