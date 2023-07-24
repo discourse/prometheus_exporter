@@ -29,7 +29,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
   * [Client default labels](#client-default-labels)
   * [Client default host](#client-default-host)
   * [Histogram mode](#histogram-mode)
-  * [Histogram - custom buckets](#histogram--custom-buckets)
+  * [Histogram - custom buckets](#histogram---custom-buckets)
 * [Transport concerns](#transport-concerns)
 * [JSON generation and parsing](#json-generation-and-parsing)
 * [Logging](#logging)
