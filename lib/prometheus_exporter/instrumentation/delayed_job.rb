@@ -31,6 +31,7 @@ module PrometheusExporter::Instrumentation
     def call(job, max_attempts, enqueued_count, pending_count, *args, &block)
       success = false
       start = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
+      latency = Time.current - job.run_at
       attempts = job.attempts + 1 # Increment because we're adding the current attempt
       result = block.call(job, *args)
       success = true
@@ -44,6 +45,7 @@ module PrometheusExporter::Instrumentation
         queue_name: job.queue,
         success: success,
         duration: duration,
+        latency: latency,
         attempts: attempts,
         max_attempts: max_attempts,
         enqueued: enqueued_count,
