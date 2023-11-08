@@ -13,7 +13,7 @@ module PrometheusExporter::Instrumentation
   class Sidekiq
     def self.death_handler
       -> (job, ex) do
-        job_is_fire_and_forget = job["retry"] == false
+        job_is_fire_and_forget = job["dead"] == false || job["retry"] == false
 
         worker_class = Object.const_get(job["class"])
         worker_custom_labels = self.get_worker_custom_labels(worker_class, job)
