@@ -11,29 +11,26 @@ module TestingMod
   class FakeConnection
     def call_pipelined(_, _)
     end
+
     def call(_, _)
     end
+
     def connected?
       true
     end
+
     def revalidate
     end
+
     def read_timeout=(v)
     end
+
     def write_timeout=(v)
     end
   end
 
   def connect(_config)
     FakeConnection.new
-  end
-
-  def call(command, _config)
-    super
-  end
-
-  def call_pipelined(command, _config)
-    super
   end
 end
 
@@ -79,13 +76,18 @@ end
 
 module ClockHelper
   def stub_monotonic_clock(at = 0.0, advance: nil, &blk)
-    Process.stub(:clock_gettime, at + advance.to_f, Process::CLOCK_MONOTONIC, &blk)
+    Process.stub(
+      :clock_gettime,
+      at + advance.to_f,
+      Process::CLOCK_MONOTONIC,
+      &blk
+    )
   end
 end
 
 module CollectorHelper
   def setup
-    PrometheusExporter::Metric::Base.default_prefix = ''
+    PrometheusExporter::Metric::Base.default_prefix = ""
   end
 
   def max_metric_age

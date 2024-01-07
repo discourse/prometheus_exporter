@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop: disable Lint/Debugger
 
 class CustomTypeCollector < PrometheusExporter::Server::TypeCollector
   def type
