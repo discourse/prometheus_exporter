@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-require 'socket'
-require 'thread'
-require 'logger'
+require "socket"
+require "logger"
 
 module PrometheusExporter
   class Client
@@ -25,7 +24,9 @@ module PrometheusExporter
           keys: keys,
           value: value
         }
-        values[:prometheus_exporter_action] = prometheus_exporter_action if prometheus_exporter_action
+        values[
+          :prometheus_exporter_action
+        ] = prometheus_exporter_action if prometheus_exporter_action
         values[:opts] = @opts if @opts
         values
       end
@@ -57,8 +58,11 @@ module PrometheusExporter
     attr_reader :logger
 
     def initialize(
-      host: ENV.fetch('PROMETHEUS_EXPORTER_HOST', 'localhost'),
-      port: ENV.fetch('PROMETHEUS_EXPORTER_PORT', PrometheusExporter::DEFAULT_PORT),
+      host: ENV.fetch("PROMETHEUS_EXPORTER_HOST", "localhost"),
+      port: ENV.fetch(
+        "PROMETHEUS_EXPORTER_PORT",
+        PrometheusExporter::DEFAULT_PORT
+      ),
       max_queue_size: nil,
       thread_sleep: 0.5,
       json_serializer: nil,
@@ -90,7 +94,8 @@ module PrometheusExporter
       @mutex = Mutex.new
       @thread_sleep = thread_sleep
 
-      @json_serializer = json_serializer == :oj ? PrometheusExporter::OjCompat : JSON
+      @json_serializer =
+        json_serializer == :oj ? PrometheusExporter::OjCompat : JSON
 
       @custom_labels = custom_labels
     end
@@ -100,7 +105,14 @@ module PrometheusExporter
     end
 
     def register(type, name, help, opts = nil)
-      metric = RemoteMetric.new(type: type, name: name, help: help, client: self, opts: opts)
+      metric =
+        RemoteMetric.new(
+          type: type,
+          name: name,
+          help: help,
+          client: self,
+          opts: opts
+        )
       @metrics << metric
       metric
     end
@@ -161,9 +173,7 @@ module PrometheusExporter
       @mutex.synchronize do
         wait_for_empty_queue_with_timeout(wait_timeout_seconds)
         @worker_thread&.kill
-        while @worker_thread&.alive?
-          sleep 0.001
-        end
+        sleep 0.001 while @worker_thread&.alive?
         @worker_thread = nil
         close_socket!
       end
@@ -183,12 +193,13 @@ module PrometheusExporter
         @mutex.synchronize do
           return if @worker_thread&.alive?
 
-          @worker_thread = Thread.new do
-            while true
-              worker_loop
-              sleep @thread_sleep
+          @worker_thread =
+            Thread.new do
+              while true
+                worker_loop
+                sleep @thread_sleep
+              end
             end
-          end
         end
       end
     rescue ThreadError => e
@@ -212,7 +223,8 @@ module PrometheusExporter
     end
 
     def close_socket_if_old!
-      if @socket_pid == Process.pid && @socket && @socket_started && ((@socket_started + MAX_SOCKET_AGE) < Time.now.to_f)
+      if @socket_pid == Process.pid && @socket && @socket_started &&
+           ((@socket_started + MAX_SOCKET_AGE) < Time.now.to_f)
         close_socket!
       end
     end
@@ -240,7 +252,7 @@ module PrometheusExporter
       end
 
       nil
-    rescue
+    rescue StandardError
       @socket = nil
       @socket_started = nil
       @socket_pid = nil
@@ -250,7 +262,10 @@ module PrometheusExporter
     def wait_for_empty_queue_with_timeout(timeout_seconds)
       start_time = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
       while @queue.length > 0
-        break if start_time + timeout_seconds < ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
+        if start_time + timeout_seconds <
+             ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
+          break
+        end
         sleep(0.05)
       end
     end

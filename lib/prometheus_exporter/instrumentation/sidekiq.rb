@@ -1,18 +1,19 @@
 # frozen_string_literal: true
 
-require 'yaml'
+require "yaml"
 
 module PrometheusExporter::Instrumentation
-  JOB_WRAPPER_CLASS_NAME = 'ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper'
-  DELAYED_CLASS_NAMES = [
-    'Sidekiq::Extensions::DelayedClass',
-    'Sidekiq::Extensions::DelayedModel',
-    'Sidekiq::Extensions::DelayedMailer',
+  JOB_WRAPPER_CLASS_NAME =
+    "ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper"
+  DELAYED_CLASS_NAMES = %w[
+    Sidekiq::Extensions::DelayedClass
+    Sidekiq::Extensions::DelayedModel
+    Sidekiq::Extensions::DelayedMailer
   ]
 
   class Sidekiq
     def self.death_handler
-      -> (job, ex) do
+      ->(job, ex) do
         job_is_fire_and_forget = job["retry"] == false
 
         worker_class = Object.const_get(job["class"])
@@ -43,7 +44,8 @@ module PrometheusExporter::Instrumentation
     end
 
     def initialize(options = { client: nil })
-      @client = options.fetch(:client, nil) || PrometheusExporter::Client.default
+      @client =
+        options.fetch(:client, nil) || PrometheusExporter::Client.default
     end
 
     def call(worker, msg, queue)
@@ -82,7 +84,7 @@ module PrometheusExporter::Instrumentation
     end
 
     def self.get_job_wrapper_name(msg)
-      msg['wrapped']
+      msg["wrapped"]
     end
 
     def self.get_delayed_name(msg, class_name)
@@ -90,17 +92,17 @@ module PrometheusExporter::Instrumentation
         # fallback to class_name since we're relying on the internal implementation
         # of the delayed extensions
         # https://github.com/mperham/sidekiq/blob/master/lib/sidekiq/extensions/class_methods.rb
-        (target, method_name, _args) = YAML.load(msg['args'].first) # rubocop:disable Security/YAMLLoad
+        target, method_name, _args = YAML.load(msg["args"].first)
         if target.class == Class
           "#{target.name}##{method_name}"
         else
           "#{target.class.name}##{method_name}"
         end
       rescue Psych::DisallowedClass, ArgumentError
-        parsed = Psych.parse(msg['args'].first)
+        parsed = Psych.parse(msg["args"].first)
         children = parsed.root.children
-        target = (children[0].value || children[0].tag).sub('!', '')
-        method_name = (children[1].value || children[1].tag).sub(':', '')
+        target = (children[0].value || children[0].tag).sub("!", "")
+        method_name = (children[1].value || children[1].tag).sub(":", "")
 
         if target && method_name
           "#{target}##{method_name}"
@@ -108,7 +110,7 @@ module PrometheusExporter::Instrumentation
           class_name
         end
       end
-    rescue
+    rescue StandardError
       class_name
     end
   end
