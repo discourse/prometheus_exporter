@@ -16,6 +16,8 @@ module PrometheusExporter::Server
         "Limit before Ruby triggers a GC against current objects (bytes).",
       oldmalloc_increase_bytes_limit:
         "Limit before Ruby triggers a major GC against old objects (bytes).",
+      marking_time: "Time spent in GC marking.",
+      sweeping_time: "Time spent in GC sweeping.",
     }
 
     PROCESS_COUNTERS = {

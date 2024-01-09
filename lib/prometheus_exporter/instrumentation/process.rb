@@ -71,6 +71,8 @@ module PrometheusExporter::Instrumentation
       metric[:allocated_objects_total] = stat[:total_allocated_objects]
       metric[:malloc_increase_bytes_limit] = stat[:malloc_increase_bytes_limit]
       metric[:oldmalloc_increase_bytes_limit] = stat[:oldmalloc_increase_bytes_limit]
+      metric[:marking_time] = stat[:marking_time]
+      metric[:sweeping_time] = stat[:sweeping_time]
     end
 
     def collect_v8_stats(metric)
