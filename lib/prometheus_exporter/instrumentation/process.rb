@@ -62,6 +62,8 @@ module PrometheusExporter::Instrumentation
       metric[:rss] = rss
     end
 
+    SWEEPING_AND_MARKING = RUBY_VERSION >= "3.3.0"
+
     def collect_gc_stats(metric)
       stat = GC.stat
       metric[:heap_live_slots] = stat[:heap_live_slots]
@@ -71,8 +73,10 @@ module PrometheusExporter::Instrumentation
       metric[:allocated_objects_total] = stat[:total_allocated_objects]
       metric[:malloc_increase_bytes_limit] = stat[:malloc_increase_bytes_limit]
       metric[:oldmalloc_increase_bytes_limit] = stat[:oldmalloc_increase_bytes_limit]
-      metric[:marking_time] = stat[:marking_time]
-      metric[:sweeping_time] = stat[:sweeping_time]
+      if SWEEPING_AND_MARKING
+        metric[:marking_time] = stat[:marking_time]
+        metric[:sweeping_time] = stat[:sweeping_time]
+      end
     end
 
     def collect_v8_stats(metric)

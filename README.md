@@ -373,8 +373,8 @@ end
 | Counter | `major_gc_ops_total`      | Major GC operations by process               |
 | Counter | `minor_gc_ops_total`      | Minor GC operations by process               |
 | Counter | `allocated_objects_total` | Total number of allocated objects by process |
-| Gauge   | `marking_time`            | Marking time spent                           |
-| Gauge   | `sweeping_time`           | Sweeping time spent                          |
+| Gauge   | `marking_time`            | Marking time spent (Ruby 3.3 minimum)        |
+| Gauge   | `sweeping_time`           | Sweeping time spent (Ruby 3.3 minimum)       |
 
 _Metrics marked with * are only collected when `MiniRacer` is defined._
 
