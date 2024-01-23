@@ -654,6 +654,9 @@ installation, you'll need to start the instrumentation:
 # e.g. config/initializers/good_job.rb
 require 'prometheus_exporter/instrumentation'
 PrometheusExporter::Instrumentation::GoodJob.start
+
+# or, to collect metrics labelled by their queue name
+PrometheusExporter::Instrumentation::GoodJob.start(collect_by_queue: true)
 ```
 
 #### Metrics collected by GoodJob Instrumentation

@@ -4,8 +4,6 @@ module PrometheusExporter::Instrumentation
   class DelayedJob
     JOB_CLASS_REGEXP = /job_class: ((\w+:{0,2})+)/.freeze
 
-    RuntimeMetric = Struct.new(:max_attempts, :enqueued_count, :pending_count, :ready_count)
-
     class << self
       def register_plugin(client: nil, include_module_name: false)
         instrumenter = self.new(client: client)
