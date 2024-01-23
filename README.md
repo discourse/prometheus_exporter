@@ -540,6 +540,7 @@ end
 | Counter | `delayed_jobs_total`                      | Total number of delayed jobs executed                              | `job_name` |
 | Gauge   | `delayed_jobs_enqueued`                   | Number of enqueued delayed jobs                                    | -          |
 | Gauge   | `delayed_jobs_pending`                    | Number of pending delayed jobs                                     | -          |
+| Gauge   | `delayed_jobs_ready`                      | Number of ready delayed jobs                                       | -          |
 | Counter | `delayed_failed_jobs_total`               | Total number failed delayed jobs executed                          | `job_name` |
 | Counter | `delayed_jobs_max_attempts_reached_total` | Total number of delayed jobs that reached max attempts             | -          |
 | Summary | `delayed_job_duration_seconds_summary`    | Summary of the time it takes jobs to execute                       | `status`   |

@@ -4,6 +4,8 @@ module PrometheusExporter::Instrumentation
   class DelayedJob
     JOB_CLASS_REGEXP = /job_class: ((\w+:{0,2})+)/.freeze
 
+    RuntimeMetric = Struct.new(:max_attempts, :enqueued_count, :pending_count, :ready_count)
+
     class << self
       def register_plugin(client: nil, include_module_name: false)
         instrumenter = self.new(client: client)
@@ -15,13 +17,15 @@ module PrometheusExporter::Instrumentation
               lifecycle.around(:invoke_job) do |job, *args, &block|
                 max_attempts = Delayed::Worker.max_attempts
                 enqueued_count = Delayed::Job.where(queue: job.queue).count
-                pending_count =
-                  Delayed::Job.where(attempts: 0, locked_at: nil, queue: job.queue).count
+                pending_count = Delayed::Job.where(attempts: 0, locked_at: nil, queue: job.queue).count
+                ready_count = Delayed::Job.where(queue: job.queue, run_at: ..Time.current, locked_at: nil, failed_at: nil).count
+
                 instrumenter.call(
                   job,
                   max_attempts,
                   enqueued_count,
                   pending_count,
+                  ready_count,
                   include_module_name,
                   *args,
                   &block
@@ -38,7 +42,7 @@ module PrometheusExporter::Instrumentation
       @client = client || PrometheusExporter::Client.default
     end
 
-    def call(job, max_attempts, enqueued_count, pending_count, include_module_name, *args, &block)
+    def call(job, max_attempts, enqueued_count, pending_count, ready_count, include_module_name, *args, &block)
       success = false
       start = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
       latency = Time.current - job.run_at
@@ -60,6 +64,7 @@ module PrometheusExporter::Instrumentation
         max_attempts: max_attempts,
         enqueued: enqueued_count,
         pending: pending_count,
+        ready: ready_count
       )
     end
   end
