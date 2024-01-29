@@ -31,7 +31,7 @@ jobs:
         activerecord: [60, 61, 70]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -50,10 +50,10 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      new_version_published: ${{ steps.release.outputs.new_version_published }}
+      new_version_published: ${{ steps.release.outputs.new_version }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Release gem
         id: release
@@ -70,7 +70,7 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v2
       - uses: docker/setup-buildx-action@v2
 
