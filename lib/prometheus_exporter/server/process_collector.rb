@@ -13,6 +13,8 @@ module PrometheusExporter::Server
       v8_physical_size: "Physical size consumed by V8 heaps.",
       v8_heap_count: "Number of V8 contexts running.",
       rss: "Total RSS used by process.",
+      malloc_increase_bytes_limit: 'Limit before Ruby triggers a GC against current objects (bytes).',
+      oldmalloc_increase_bytes_limit: 'Limit before Ruby triggers a major GC against old objects (bytes).'
     }
 
     PROCESS_COUNTERS = {
