@@ -63,6 +63,8 @@ module PrometheusExporter::Instrumentation
       metric[:major_gc_ops_total] = stat[:major_gc_count]
       metric[:minor_gc_ops_total] = stat[:minor_gc_count]
       metric[:allocated_objects_total] = stat[:total_allocated_objects]
+      metric[:malloc_increase_bytes_limit] = stat[:malloc_increase_bytes_limit]
+      metric[:oldmalloc_increase_bytes_limit] = stat[:oldmalloc_increase_bytes_limit]
     end
 
     def collect_v8_stats(metric)
