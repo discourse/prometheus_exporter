@@ -74,7 +74,7 @@ def run
   end.parse!
 
   logger = Logger.new(options[:logger_path])
-  logger.level = Logger::WARN
+  logger.level = Logger::INFO
 
   if options.has_key?(:realm) && !options.has_key?(:auth)
     logger.warn "Providing REALM without AUTH has no effect"
@@ -121,7 +121,7 @@ def run
 
   runner = PrometheusExporter::Server::Runner.new(options)
 
-  puts "#{Time.now} Starting prometheus exporter on #{runner.bind}:#{runner.port}"
+  logger.info "Starting prometheus exporter on #{runner.bind}:#{runner.port}"
   runner.start
   sleep
 end
