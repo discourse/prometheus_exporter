@@ -13,6 +13,8 @@ module PrometheusExporter::Server
       v8_physical_size: "Physical size consumed by V8 heaps.",
       v8_heap_count: "Number of V8 contexts running.",
       rss: "Total RSS used by process.",
+      marking_time: "Time spent in GC marking.",
+      sweeping_time: "Time spent in GC sweeping.",
     }
 
     PROCESS_COUNTERS = {

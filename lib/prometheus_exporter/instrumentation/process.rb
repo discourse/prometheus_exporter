@@ -56,6 +56,8 @@ module PrometheusExporter::Instrumentation
 
     end
 
+    SWEEPING_AND_MARKING = RUBY_VERSION >= "3.3.0"
+
     def collect_gc_stats(metric)
       stat = GC.stat
       metric[:heap_live_slots] = stat[:heap_live_slots]
@@ -63,6 +65,10 @@ module PrometheusExporter::Instrumentation
       metric[:major_gc_ops_total] = stat[:major_gc_count]
       metric[:minor_gc_ops_total] = stat[:minor_gc_count]
       metric[:allocated_objects_total] = stat[:total_allocated_objects]
+      if SWEEPING_AND_MARKING
+        metric[:marking_time] = stat[:marking_time]
+        metric[:sweeping_time] = stat[:sweeping_time]
+      end
     end
 
     def collect_v8_stats(metric)
