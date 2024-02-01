@@ -538,6 +538,7 @@ end
 | Counter | `delayed_jobs_total`                      | Total number of delayed jobs executed                              | `job_name` |
 | Gauge   | `delayed_jobs_enqueued`                   | Number of enqueued delayed jobs                                    | -          |
 | Gauge   | `delayed_jobs_pending`                    | Number of pending delayed jobs                                     | -          |
+| Gauge   | `delayed_jobs_ready`                      | Number of ready delayed jobs                                       | -          |
 | Counter | `delayed_failed_jobs_total`               | Total number failed delayed jobs executed                          | `job_name` |
 | Counter | `delayed_jobs_max_attempts_reached_total` | Total number of delayed jobs that reached max attempts             | -          |
 | Summary | `delayed_job_duration_seconds_summary`    | Summary of the time it takes jobs to execute                       | `status`   |
@@ -639,6 +640,9 @@ installation, you'll need to start the instrumentation:
 # e.g. config/initializers/good_job.rb
 require 'prometheus_exporter/instrumentation'
 PrometheusExporter::Instrumentation::GoodJob.start
+
+# or, to collect metrics labelled by their queue name
+PrometheusExporter::Instrumentation::GoodJob.start(collect_by_queue: true)
 ```
 
 #### Metrics collected by GoodJob Instrumentation
@@ -884,7 +888,7 @@ prometheus_exporter -p 8080 \
                     --prefix 'foo_'
 ```
 
-You can use `-b` option to bind the `prometheus_exporter` web server to any IPv4 interface with `-b 0.0.0.0`, 
+You can use `-b` option to bind the `prometheus_exporter` web server to any IPv4 interface with `-b 0.0.0.0`,
 any IPv6 interface with `-b ::`, or `-b ANY` to any IPv4/IPv6 interfaces available on your host system.
 
 #### Enabling Basic Authentication
