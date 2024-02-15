@@ -164,6 +164,17 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
         mock.verify
       end
     end
+
+    Object.stub_const(:Dalli, Module) do
+      ::Dalli.stub_const(:Client) do
+        mock = Minitest::Mock.new
+        mock.expect :call, nil, [Dalli::Client, Array, :memcache, { instrument: :prepend }]
+        ::PrometheusExporter::Instrumentation::MethodProfiler.stub(:patch, mock) do
+          configure_middleware(instrument: :prepend)
+        end
+        mock.verify
+      end
+    end
   end
 
   def test_patch_called_with_alias_method_instrument
@@ -200,6 +211,17 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
         mock.expect :call, nil, [Mysql2::Result, Array, :sql, { instrument: :alias_method }]
         ::PrometheusExporter::Instrumentation::MethodProfiler.stub(:patch, mock) do
           configure_middleware
+        end
+        mock.verify
+      end
+    end
+
+    Object.stub_const(:Dalli, Module) do
+      ::Dalli.stub_const(:Client) do
+        mock = Minitest::Mock.new
+        mock.expect :call, nil, [Dalli::Client, Array, :memcache, { instrument: :alias_method }]
+        ::PrometheusExporter::Instrumentation::MethodProfiler.stub(:patch, mock) do
+          configure_middleware(instrument: :alias_method)
         end
         mock.verify
       end
