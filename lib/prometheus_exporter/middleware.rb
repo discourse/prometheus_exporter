@@ -31,6 +31,9 @@ class PrometheusExporter::Middleware
         MethodProfiler.patch(Mysql2::Statement, [:execute], :sql, instrument: config[:instrument])
         MethodProfiler.patch(Mysql2::Result, [:each], :sql, instrument: config[:instrument])
       end
+      if defined? Dalli::Client
+        MethodProfiler.patch(Dalli::Client, %i[delete fetch get add set], :memcache, instrument: config[:instrument])
+      end
     end
   end
 

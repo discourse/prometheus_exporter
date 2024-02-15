@@ -213,13 +213,14 @@ Rails.application.middleware.unshift PrometheusExporter::Middleware, instrument:
 
 #### Metrics collected by Rails integration middleware
 
-| Type    | Name                                   | Description                                                 |
-| ---     | ---                                    | ---                                                         |
-| Counter | `http_requests_total`                  | Total HTTP requests from web app                            |
-| Summary | `http_request_duration_seconds`        | Time spent in HTTP reqs in seconds                          |
-| Summary | `http_request_redis_duration_seconds`¹ | Time spent in HTTP reqs in Redis, in seconds                |
-| Summary | `http_request_sql_duration_seconds`²   | Time spent in HTTP reqs in SQL in seconds                   |
-| Summary | `http_request_queue_duration_seconds`³ | Time spent queueing the request in load balancer in seconds |
+| Type    | Name                                      | Description                                                 |
+| ---     | ---                                       | ---                                                         |
+| Counter | `http_requests_total`                     | Total HTTP requests from web app                            |
+| Summary | `http_request_duration_seconds`           | Time spent in HTTP reqs in seconds                          |
+| Summary | `http_request_redis_duration_seconds`¹    | Time spent in HTTP reqs in Redis, in seconds                |
+| Summary | `http_request_sql_duration_seconds`²      | Time spent in HTTP reqs in SQL in seconds                   |
+| Summary | `http_request_queue_duration_seconds`³    | Time spent queueing the request in load balancer in seconds |
+| Summary | `http_request_memcache_duration_seconds`⁴ | Time spent in HTTP reqs in Memcache in seconds              |
 
 All metrics have a `controller` and an `action` label.
 `http_requests_total` additionally has a (HTTP response) `status` label.
@@ -268,6 +269,7 @@ ruby_http_request_duration_seconds{path="/api/v1/teams/:id",method="GET",status=
 ¹) Only available when Redis is used.
 ²) Only available when Mysql or PostgreSQL are used.
 ³) Only available when [Instrumenting Request Queueing Time](#instrumenting-request-queueing-time) is set up.
+⁴) Only available when Dalli is used.
 
 #### Activerecord Connection Pool Metrics
 

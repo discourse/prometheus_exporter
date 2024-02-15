@@ -32,7 +32,7 @@ class PrometheusWebCollectorTest < Minitest::Test
 
     metrics = collector.metrics
 
-    assert_equal 5, metrics.size
+    assert_equal 6, metrics.size
   end
 
   def test_collecting_metrics
@@ -47,6 +47,10 @@ class PrometheusWebCollectorTest < Minitest::Test
           duration: 0.03,
           count: 4
         },
+        "memcache" => {
+          duration: 0.02,
+          count: 1
+        },
         "queue" => 0.03,
         "total_duration" => 1.0
       },
@@ -58,7 +62,7 @@ class PrometheusWebCollectorTest < Minitest::Test
     )
 
     metrics = collector.metrics
-    assert_equal 5, metrics.size
+    assert_equal 6, metrics.size
   end
 
   def test_collecting_metrics_with_custom_labels
@@ -77,7 +81,7 @@ class PrometheusWebCollectorTest < Minitest::Test
 
     metrics = collector.metrics
 
-    assert_equal 5, metrics.size
+    assert_equal 6, metrics.size
     assert(metrics.first.metric_text.include?('http_requests_total{controller="home",action="index",service="service1",status="200"} 1'))
   end
 
@@ -98,7 +102,7 @@ class PrometheusWebCollectorTest < Minitest::Test
 
     metrics = collector.metrics
 
-    assert_equal 5, metrics.size
+    assert_equal 6, metrics.size
     assert(metrics.first.metric_text.include?('http_requests_total{controller="home",action="index",service="service1",status="200"} 1'))
   end
 
@@ -117,6 +121,10 @@ class PrometheusWebCollectorTest < Minitest::Test
           duration: 0.03,
           count: 4
         },
+        "memcache" => {
+          duration: 0.02,
+          count: 1
+        },
         "queue" => 0.03,
         "total_duration" => 1.0,
       },
@@ -132,7 +140,7 @@ class PrometheusWebCollectorTest < Minitest::Test
     metrics = collector.metrics
     metrics_lines = metrics.map(&:metric_text).flat_map(&:lines)
 
-    assert_equal 5, metrics.size
+    assert_equal 6, metrics.size
     assert_includes(metrics_lines, "http_requests_total{controller=\"home\",action=\"index\",service=\"service1\",status=\"200\"} 1")
     assert_includes(metrics_lines, "http_request_duration_seconds_bucket{controller=\"home\",action=\"index\",service=\"service1\",le=\"+Inf\"} 1\n")
   end
