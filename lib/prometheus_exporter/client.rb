@@ -7,7 +7,7 @@ module PrometheusExporter
   class Client
     NAMING_VALIDATION_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]*$/
 
-   class RemoteMetric
+    class RemoteMetric
       attr_reader :name, :type, :help
 
       def initialize(name:, help:, type:, client:, opts: nil)
