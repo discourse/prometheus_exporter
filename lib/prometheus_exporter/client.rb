@@ -5,7 +5,9 @@ require "logger"
 
 module PrometheusExporter
   class Client
-    class RemoteMetric
+    NAMING_VALIDATION_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]*$/
+
+   class RemoteMetric
       attr_reader :name, :type, :help
 
       def initialize(name:, help:, type:, client:, opts: nil)
@@ -128,6 +130,8 @@ module PrometheusExporter
     end
 
     def send_json(obj)
+      return false unless valid_naming?(obj)
+
       payload =
         if @custom_labels
           if obj[:custom_labels]
@@ -268,6 +272,28 @@ module PrometheusExporter
         end
         sleep(0.05)
       end
+    end
+
+    def valid_naming?(obj)
+      if obj[:name]
+        return false unless obj[:name].match?(NAMING_VALIDATION_REGEX)
+      end
+
+      custom_label_names = []
+      if obj[:custom_labels]
+        custom_label_names.concat(obj[:custom_labels].keys)
+      end
+
+      if @custom_labels
+        custom_label_names.concat(@custom_labels.keys)
+      end
+
+      return true if custom_label_names.empty?
+
+      custom_label_names.all? { |name|
+        str = name.to_s
+        str.match?(NAMING_VALIDATION_REGEX) && !str.start_with?("__")
+      }
     end
   end
 
