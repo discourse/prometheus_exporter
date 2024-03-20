@@ -583,6 +583,17 @@ The puma metrics are using the `Puma.stats` method and hence need to be started 
 workers has been booted and from a Puma thread otherwise the metrics won't be accessible.
 The easiest way to gather this metrics is to put the following in your `puma.rb` config:
 
+For Puma single mode
+```ruby
+# puma.rb config
+require 'prometheus_exporter/instrumentation'
+# optional check, avoids spinning up and down threads per worker
+if !PrometheusExporter::Instrumentation::Puma.started?
+  PrometheusExporter::Instrumentation::Puma.start
+end
+```
+
+For Puma clustered mode
 ```ruby
 # puma.rb config
 after_worker_boot do
