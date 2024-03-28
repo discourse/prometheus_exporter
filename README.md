@@ -40,7 +40,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
 
 ## Requirements
 
-Minimum Ruby of version 2.6.0 is required, Ruby 2.5.0 is EOL as of March 31st 2021.
+Minimum Ruby of version 3.0.0 is required, Ruby 2.7 is EOL as of March 31st 2023.
 
 ## Migrating from v0.x
 
@@ -884,7 +884,7 @@ prometheus_exporter -p 8080 \
                     --prefix 'foo_'
 ```
 
-You can use `-b` option to bind the `prometheus_exporter` web server to any IPv4 interface with `-b 0.0.0.0`, 
+You can use `-b` option to bind the `prometheus_exporter` web server to any IPv4 interface with `-b 0.0.0.0`,
 any IPv6 interface with `-b ::`, or `-b ANY` to any IPv4/IPv6 interfaces available on your host system.
 
 #### Enabling Basic Authentication
