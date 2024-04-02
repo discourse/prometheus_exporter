@@ -5,3 +5,10 @@ AllCops:
   Exclude:
     - 'gemfiles/**/*'
     - 'vendor/**/*'
+
+Discourse/Plugins/NoMonkeyPatching:
+  Enabled: false
+
+Discourse/Plugins/NamespaceMethods:
+  Exclude:
+    - bin/prometheus_exporter
