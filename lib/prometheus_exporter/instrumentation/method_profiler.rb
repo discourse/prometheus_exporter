@@ -44,7 +44,7 @@ class PrometheusExporter::Instrumentation::MethodProfiler
     patch_source_line = __LINE__ + 3
     patches = methods.map do |method_name|
       <<~RUBY
-        def #{method_name}(*args, &blk)
+        def #{method_name}(...)
           unless prof = Thread.current[:_method_profiler]
             return super
           end
@@ -75,13 +75,13 @@ class PrometheusExporter::Instrumentation::MethodProfiler
       <<~RUBY
       unless defined?(#{method_name}__mp_unpatched)
         alias_method :#{method_name}__mp_unpatched, :#{method_name}
-        def #{method_name}(*args, &blk)
+        def #{method_name}(...)
           unless prof = Thread.current[:_method_profiler]
-            return #{method_name}__mp_unpatched(*args, &blk)
+            return #{method_name}__mp_unpatched(...)
           end
           begin
             start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-            #{method_name}__mp_unpatched(*args, &blk)
+            #{method_name}__mp_unpatched(...)
           ensure
             data = (prof[:#{name}] ||= {duration: 0.0, calls: 0})
             data[:duration] += Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
