@@ -72,7 +72,8 @@ class PrometheusRunnerTest < Minitest::Test
       label: { environment: 'integration' },
       auth: 'my_htpasswd_file',
       realm: 'test realm',
-      histogram: true
+      histogram: true,
+      counter_warmup: true
     )
 
     assert_equal(runner.prefix, 'new_')
@@ -85,6 +86,7 @@ class PrometheusRunnerTest < Minitest::Test
     assert_equal(runner.auth, 'my_htpasswd_file')
     assert_equal(runner.realm, 'test realm')
     assert_equal(runner.histogram, true)
+    assert_equal(runner.counter_warmup, true)
 
     reset_base_metric_label
   end

@@ -17,6 +17,7 @@ module PrometheusExporter::Server
       @auth = nil
       @realm = nil
       @histogram = nil
+      @counter = nil
 
       options.each do |k, v|
         send("#{k}=", v) if self.class.method_defined?("#{k}=")
@@ -26,6 +27,7 @@ module PrometheusExporter::Server
     def start
       PrometheusExporter::Metric::Base.default_prefix = prefix
       PrometheusExporter::Metric::Base.default_labels = label
+      PrometheusExporter::Metric::Counter.counter_warmup = counter_warmup
 
       if histogram
         PrometheusExporter::Metric::Base.default_aggregation = PrometheusExporter::Metric::Histogram
@@ -54,7 +56,7 @@ module PrometheusExporter::Server
     end
 
     attr_accessor :unicorn_listen_address, :unicorn_pid_file
-    attr_writer :prefix, :port, :bind, :collector_class, :type_collectors, :timeout, :verbose, :server_class, :label, :auth, :realm, :histogram
+    attr_writer :prefix, :port, :bind, :collector_class, :type_collectors, :timeout, :verbose, :server_class, :label, :auth, :realm, :histogram, :counter_warmup
 
     def auth
       @auth || nil
@@ -107,6 +109,10 @@ module PrometheusExporter::Server
 
     def histogram
       @histogram || false
+    end
+
+    def counter_warmup
+      @counter_warmup || false
     end
 
     private
