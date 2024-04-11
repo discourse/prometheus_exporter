@@ -3,6 +3,8 @@
 require_relative '../test_helper'
 require 'prometheus_exporter/server'
 
+require 'ostruct'
+
 class PrometheusRunnerTest < Minitest::Test
   class MockerWebServer < OpenStruct
     def start
