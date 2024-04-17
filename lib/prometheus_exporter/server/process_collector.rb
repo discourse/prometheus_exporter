@@ -28,6 +28,11 @@ module PrometheusExporter::Server
       @process_metrics.filter = -> (new_metric, old_metric) do
         new_metric["pid"] == old_metric["pid"] && new_metric["hostname"] == old_metric["hostname"]
       end
+      @counter_metrics = {}
+      PROCESS_COUNTERS.each do |k, help|
+        k = k.to_s
+        @counter_metrics[k] = PrometheusExporter::Metric::Counter.new(k, help)
+      end
     end
 
     def type
@@ -43,7 +48,7 @@ module PrometheusExporter::Server
         metric_key = (m["metric_labels"] || {}).merge("pid" => m["pid"], "hostname" => m["hostname"])
         metric_key.merge!(m["custom_labels"]) if m["custom_labels"]
 
-        PROCESS_GAUGES.map do |k, help|
+        PROCESS_GAUGES.each do |k, help|
           k = k.to_s
           if v = m[k]
             g = metrics[k] ||= PrometheusExporter::Metric::Gauge.new(k, help)
@@ -51,10 +56,10 @@ module PrometheusExporter::Server
           end
         end
 
-        PROCESS_COUNTERS.map do |k, help|
+        PROCESS_COUNTERS.each do |k, help|
           k = k.to_s
           if v = m[k]
-            c = metrics[k] ||= PrometheusExporter::Metric::Counter.new(k, help)
+            c = metrics[k] ||= @counter_metrics[k]
             c.observe(v, metric_key)
           end
         end
