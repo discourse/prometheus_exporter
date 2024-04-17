@@ -17,7 +17,7 @@ module PrometheusExporter::Server
       @auth = nil
       @realm = nil
       @histogram = nil
-      @counter = nil
+      @counter_warmup = nil
 
       options.each do |k, v|
         send("#{k}=", v) if self.class.method_defined?("#{k}=")
