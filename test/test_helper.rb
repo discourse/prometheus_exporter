@@ -4,12 +4,12 @@ $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 require "prometheus_exporter"
 
 require "minitest/autorun"
-
+require "ostruct"
 require "redis"
 
 module TestingMod
   class FakeConnection
-    def call_pipelined(_, _)
+    def call_pipelined(_, _, _)
     end
 
     def call(_, _)

@@ -12,3 +12,7 @@ Discourse/Plugins/NoMonkeyPatching:
 Discourse/Plugins/NamespaceMethods:
   Exclude:
     - bin/prometheus_exporter
+
+Style/InvertibleUnlessCondition:
+  Exclude:
+    - '*.gemspec' 
