@@ -23,7 +23,7 @@ class PrometheusExporter::Middleware
       end
       if defined? PG::Connection
         MethodProfiler.patch(PG::Connection, [
-          :exec, :async_exec, :exec_prepared, :send_query_prepared, :query
+          :exec, :async_exec, :exec_prepared, :exec_params, :send_query_prepared, :query
         ], :sql, instrument: config[:instrument])
       end
       if defined? Mysql2::Client
