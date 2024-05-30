@@ -15,7 +15,9 @@ module PrometheusExporter::Instrumentation
               max_attempts = Delayed::Worker.max_attempts
               enqueued_count = Delayed::Job.where(queue: job.queue).count
               pending_count = Delayed::Job.where(attempts: 0, locked_at: nil, queue: job.queue).count
-              instrumenter.call(job, max_attempts, enqueued_count, pending_count, *args, &block)
+              # It may be necessary to coallesce the run_at time with created_at timestamp to get a more accurate count
+              ready_count = Delayed::Job.where(queue: job.queue, run_at: ..Time.current).count
+              instrumenter.call(job, max_attempts, enqueued_count, pending_count, ready_count, *args, &block)
             end
           end
         end
@@ -28,7 +30,7 @@ module PrometheusExporter::Instrumentation
       @client = client || PrometheusExporter::Client.default
     end
 
-    def call(job, max_attempts, enqueued_count, pending_count, *args, &block)
+    def call(job, max_attempts, enqueued_count, pending_count, ready_count, *args, &block)
       success = false
       start = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
       latency = Time.current - job.run_at
@@ -49,7 +51,8 @@ module PrometheusExporter::Instrumentation
         attempts: attempts,
         max_attempts: max_attempts,
         enqueued: enqueued_count,
-        pending: pending_count
+        pending: pending_count,
+        ready: ready_count
       )
     end
   end
