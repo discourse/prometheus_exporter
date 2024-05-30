@@ -360,7 +360,7 @@ class PrometheusCollectorTest < Minitest::Test
     queue = "default"
 
     client = Minitest::Mock.new
-    client.expect(:send_json, '', [{
+    client.expect(:send_json, '', [],
       type: "sidekiq",
       name: "PrometheusCollectorTest::#{worker_class}",
       queue: queue,
@@ -368,7 +368,7 @@ class PrometheusCollectorTest < Minitest::Test
       shutdown: false,
       duration: 0,
       custom_labels: WorkerWithCustomLabels.custom_labels
-    }])
+    )
 
     ::Process.stub(:clock_gettime, 1, ::Process::CLOCK_MONOTONIC) do
       instrument = PrometheusExporter::Instrumentation::Sidekiq.new(client: client)
@@ -386,7 +386,7 @@ class PrometheusCollectorTest < Minitest::Test
     queue = "default"
 
     client = Minitest::Mock.new
-    client.expect(:send_json, '', [{
+    client.expect(:send_json, '', [],
       type: "sidekiq",
       name: "PrometheusCollectorTest::#{worker_class}",
       queue: queue,
@@ -394,7 +394,7 @@ class PrometheusCollectorTest < Minitest::Test
       shutdown: false,
       duration: 0,
       custom_labels: { first_job_arg: 'arg_one' }
-    }])
+    )
 
     ::Process.stub(:clock_gettime, 1, ::Process::CLOCK_MONOTONIC) do
       instrument = PrometheusExporter::Instrumentation::Sidekiq.new(client: client)
@@ -416,12 +416,12 @@ class PrometheusCollectorTest < Minitest::Test
     worker = Minitest::Mock.new
 
     client = Minitest::Mock.new
-    client.expect(:send_json, '', [{
+    client.expect(:send_json, '', [],
       type: "sidekiq",
       name: job["class"],
       dead: true,
       custom_labels: {}
-    }])
+    )
 
     Object.stub(:const_get, worker, [job['class']]) do
       PrometheusExporter::Client.stub(:default, client) do
@@ -444,12 +444,12 @@ class PrometheusCollectorTest < Minitest::Test
     worker = Minitest::Mock.new
 
     client = Minitest::Mock.new
-    client.expect(:send_json, '', [{
+    client.expect(:send_json, '', [],
       type: "sidekiq",
       name: "DelayedAction#foo",
       dead: true,
       custom_labels: {}
-    }])
+    )
 
     Object.stub(:const_get, worker, [job['class']]) do
       PrometheusExporter::Client.stub(:default, client) do
@@ -469,12 +469,12 @@ class PrometheusCollectorTest < Minitest::Test
     }
 
     client = Minitest::Mock.new
-    client.expect(:send_json, '', [{
+    client.expect(:send_json, '', [],
       type: "sidekiq",
       name: job["class"],
       dead: true,
       custom_labels: WorkerWithCustomLabels.custom_labels
-    }])
+    )
 
     Object.stub(:const_get, WorkerWithCustomLabels, [job['class']]) do
       PrometheusExporter::Client.stub(:default, client) do
