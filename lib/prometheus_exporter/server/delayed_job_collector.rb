@@ -13,6 +13,8 @@ module PrometheusExporter::Server
       @delayed_job_attempts_summary = nil
       @delayed_jobs_enqueued = nil
       @delayed_jobs_pending = nil
+      @delayed_jobs_failed = nil
+      @delayed_jobs_max_failed = nil
     end
 
     def type
@@ -36,13 +38,15 @@ module PrometheusExporter::Server
       @delayed_job_attempts_summary.observe(obj["attempts"], counter_labels) if obj["success"]
       @delayed_jobs_enqueued.observe(obj["enqueued"], gauge_labels)
       @delayed_jobs_pending.observe(obj["pending"], gauge_labels)
+      @delayed_jobs_failed.observe(obj["failed"], labels)
+      @delayed_jobs_max_failed.observe(obj["max_failed"], labels)
     end
 
     def metrics
       if @delayed_jobs_total
         [@delayed_job_duration_seconds, @delayed_job_latency_seconds_total, @delayed_jobs_total, @delayed_failed_jobs_total,
          @delayed_jobs_max_attempts_reached_total, @delayed_job_duration_seconds_summary, @delayed_job_attempts_summary,
-         @delayed_jobs_enqueued, @delayed_jobs_pending]
+         @delayed_jobs_enqueued, @delayed_jobs_pending, @delayed_jobs_failed, @delayed_jobs_max_failed]
       else
         []
       end
@@ -72,6 +76,14 @@ module PrometheusExporter::Server
         @delayed_jobs_pending =
         PrometheusExporter::Metric::Gauge.new(
           "delayed_jobs_pending", "Number of pending delayed jobs.")
+
+        @delayed_jobs_failed =
+        PrometheusExporter::Metric::Gauge.new(
+          "delayed_jobs_failed", "Number of failed delayed jobs.")
+
+        @delayed_jobs_max_failed =
+        PrometheusExporter::Metric::Gauge.new(
+          "delayed_jobs_max_failed", "Number of failed delayed jobs without more retries.")
 
         @delayed_failed_jobs_total =
         PrometheusExporter::Metric::Counter.new(

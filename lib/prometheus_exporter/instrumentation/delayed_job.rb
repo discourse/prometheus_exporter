@@ -13,9 +13,11 @@ module PrometheusExporter::Instrumentation
           callbacks do |lifecycle|
             lifecycle.around(:invoke_job) do |job, *args, &block|
               max_attempts = Delayed::Worker.max_attempts
+              failed_count = Delayed::Job.where('queue = ? AND last_error is not null', job.queue).count
+              max_failed_count = Delayed::Job.where('queue = ? AND last_error is not null and attempts >= ?', job.queue, max_attempts).count
               enqueued_count = Delayed::Job.where(queue: job.queue).count
               pending_count = Delayed::Job.where(attempts: 0, locked_at: nil, queue: job.queue).count
-              instrumenter.call(job, max_attempts, enqueued_count, pending_count, *args, &block)
+              instrumenter.call(job, max_attempts, enqueued_count, pending_count, failed_count, max_failed_count, *args, &block)
             end
           end
         end
@@ -28,7 +30,7 @@ module PrometheusExporter::Instrumentation
       @client = client || PrometheusExporter::Client.default
     end
 
-    def call(job, max_attempts, enqueued_count, pending_count, *args, &block)
+    def call(job, max_attempts, enqueued_count, pending_count, failed_count, max_failed_count, *args, &block)
       success = false
       start = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
       latency = Time.current - job.run_at
@@ -48,6 +50,8 @@ module PrometheusExporter::Instrumentation
         latency: latency,
         attempts: attempts,
         max_attempts: max_attempts,
+        failed: failed_count,
+        max_failed: max_failed_count,
         enqueued: enqueued_count,
         pending: pending_count
       )
