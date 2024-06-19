@@ -1,4 +1,10 @@
-2.1.0 - 2024-08-01
+2.1.1 - 2024-06-19
+
+- FEATURE: improve good_job instrumentation
+- FIX: improve Ruby 3.X support
+- FEATURE: imstrumentation for malloc / oldmalloc increace in GC stats
+
+2.1.0 - 2024-01-08
 
 - FEATURE: good_job instrumentation
 - PERF: improve performance of histogram
