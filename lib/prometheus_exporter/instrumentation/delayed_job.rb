@@ -2,10 +2,10 @@
 
 module PrometheusExporter::Instrumentation
   class DelayedJob
-    JOB_CLASS_REGEXP = %r{job_class: (\w+:{0,2})+}.freeze
+    JOB_CLASS_REGEXP = %r{job_class: ((\w+:{0,2})+)}.freeze
 
     class << self
-      def register_plugin(client: nil)
+      def register_plugin(client: nil, include_module_name: false)
         instrumenter = self.new(client: client)
         return unless defined?(Delayed::Plugin)
 
@@ -15,7 +15,8 @@ module PrometheusExporter::Instrumentation
               max_attempts = Delayed::Worker.max_attempts
               enqueued_count = Delayed::Job.where(queue: job.queue).count
               pending_count = Delayed::Job.where(attempts: 0, locked_at: nil, queue: job.queue).count
-              instrumenter.call(job, max_attempts, enqueued_count, pending_count, *args, &block)
+              instrumenter.call(job, max_attempts, enqueued_count, pending_count, include_module_name,
+                                *args, &block)
             end
           end
         end
@@ -28,7 +29,7 @@ module PrometheusExporter::Instrumentation
       @client = client || PrometheusExporter::Client.default
     end
 
-    def call(job, max_attempts, enqueued_count, pending_count, *args, &block)
+    def call(job, max_attempts, enqueued_count, pending_count, include_module_name, *args, &block)
       success = false
       start = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
       latency = Time.current - job.run_at
@@ -41,7 +42,7 @@ module PrometheusExporter::Instrumentation
 
       @client.send_json(
         type: "delayed_job",
-        name: job.handler.to_s.match(JOB_CLASS_REGEXP).to_a[1].to_s,
+        name: job.handler.to_s.match(JOB_CLASS_REGEXP).to_a[include_module_name ? 1 : 2].to_s,
         queue_name: job.queue,
         success: success,
         duration: duration,
