@@ -9,6 +9,7 @@ module PrometheusExporter::Server
       @http_request_redis_duration_seconds = nil
       @http_request_sql_duration_seconds = nil
       @http_request_queue_duration_seconds = nil
+      @http_request_memcache_duration_seconds = nil
     end
 
     def type
@@ -48,6 +49,11 @@ module PrometheusExporter::Server
           "Time spent in HTTP reqs in SQL in seconds."
         )
 
+        @metrics["http_request_memcache_duration_seconds"] = @http_request_memcache_duration_seconds = PrometheusExporter::Metric::Base.default_aggregation.new(
+          "http_request_memcache_duration_seconds",
+          "Time spent in HTTP reqs in Memcache in seconds."
+        )
+
         @metrics["http_request_queue_duration_seconds"] = @http_request_queue_duration_seconds = PrometheusExporter::Metric::Base.default_aggregation.new(
           "http_request_queue_duration_seconds",
           "Time spent queueing the request in load balancer in seconds."
@@ -69,6 +75,9 @@ module PrometheusExporter::Server
         end
         if sql = timings["sql"]
           @http_request_sql_duration_seconds.observe(sql["duration"], labels)
+        end
+        if memcache = timings["memcache"]
+          @http_request_memcache_duration_seconds.observe(memcache["duration"], labels)
         end
       end
       if queue_time = obj["queue_time"]
