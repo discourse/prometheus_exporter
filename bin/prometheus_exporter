@@ -71,6 +71,10 @@ def run
     opt.on('--logger-path PATH', String, '(optional) Path to file for logger output. Defaults to STDERR') do |o|
       options[:logger_path] = o
     end
+
+    opt.on('--counter-warmup', "Automate initialization of counter values to 0") do |o|
+      options[:counter_warmup] = true
+    end
   end.parse!
 
   logger = Logger.new(options[:logger_path])

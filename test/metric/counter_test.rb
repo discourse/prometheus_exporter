@@ -143,5 +143,36 @@ module PrometheusExporter::Metric
 
       assert_equal(counter.to_h, { sam: "ham" } => 5, { foo: "bar" } => 10)
     end
+
+    describe "with counter warmup enabled" do
+      before do
+        Counter.counter_warmup = true
+      end
+
+      after do
+        Counter.counter_warmup = false
+      end
+
+      it "returns 0 on 1st read of text, actual value on 2nd read" do
+        counter.observe(5, sam: "ham")
+        counter.observe(10, foo: "bar")
+
+        text = <<~TEXT
+          # HELP a_counter my amazing counter
+          # TYPE a_counter counter
+          a_counter{sam="ham"} 0
+          a_counter{foo="bar"} 0
+        TEXT
+        assert_equal(counter.to_prometheus_text, text)
+
+        text = <<~TEXT
+          # HELP a_counter my amazing counter
+          # TYPE a_counter counter
+          a_counter{sam="ham"} 5
+          a_counter{foo="bar"} 10
+        TEXT
+        assert_equal(counter.to_prometheus_text, text)
+      end
+    end
   end
 end
