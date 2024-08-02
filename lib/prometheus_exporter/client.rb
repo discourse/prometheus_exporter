@@ -283,4 +283,10 @@ module PrometheusExporter
       @collector.process(json)
     end
   end
+
+  class StubClient < Client
+    def send(_json); end
+    def process_queue; end
+    def stop(wait_timeout_seconds: 0); end
+  end
 end
