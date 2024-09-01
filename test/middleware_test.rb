@@ -168,7 +168,7 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
     Object.stub_const(:Dalli, Module) do
       ::Dalli.stub_const(:Client) do
         mock = Minitest::Mock.new
-        mock.expect :call, nil, [Dalli::Client, Array, :memcache, { instrument: :prepend }]
+        mock.expect :call, nil, [Dalli::Client, Array, :memcache], instrument: :prepend
         ::PrometheusExporter::Instrumentation::MethodProfiler.stub(:patch, mock) do
           configure_middleware(instrument: :prepend)
         end
@@ -219,7 +219,7 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
     Object.stub_const(:Dalli, Module) do
       ::Dalli.stub_const(:Client) do
         mock = Minitest::Mock.new
-        mock.expect :call, nil, [Dalli::Client, Array, :memcache, { instrument: :alias_method }]
+        mock.expect :call, nil, [Dalli::Client, Array, :memcache], instrument: :alias_method
         ::PrometheusExporter::Instrumentation::MethodProfiler.stub(:patch, mock) do
           configure_middleware(instrument: :alias_method)
         end
