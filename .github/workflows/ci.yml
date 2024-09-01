@@ -13,7 +13,7 @@ permissions:
   packages: write
 
 env:
-  DOCKER_REPO: ghcr.io/discourse/prometheus_exporter
+  DOCKER_REPO: ghcr.io/${{ github.repository_owner }}/prometheus_exporter
 
 jobs:
   build:
