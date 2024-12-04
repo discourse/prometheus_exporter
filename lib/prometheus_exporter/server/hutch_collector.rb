@@ -14,8 +14,8 @@ module PrometheusExporter::Server
     end
 
     def collect(obj)
-      default_labels = { job_name: obj['name'] }
-      custom_labels = obj['custom_labels']
+      default_labels = { job_name: obj["name"] }
+      custom_labels = obj["custom_labels"]
       labels = custom_labels.nil? ? default_labels : default_labels.merge(custom_labels)
 
       ensure_hutch_metrics
@@ -36,15 +36,23 @@ module PrometheusExporter::Server
 
     def ensure_hutch_metrics
       if !@hutch_jobs_total
+        @hutch_job_duration_seconds =
+          PrometheusExporter::Metric::Counter.new(
+            "hutch_job_duration_seconds",
+            "Total time spent in hutch jobs.",
+          )
 
-        @hutch_job_duration_seconds = PrometheusExporter::Metric::Counter.new(
-          "hutch_job_duration_seconds", "Total time spent in hutch jobs.")
+        @hutch_jobs_total =
+          PrometheusExporter::Metric::Counter.new(
+            "hutch_jobs_total",
+            "Total number of hutch jobs executed.",
+          )
 
-        @hutch_jobs_total = PrometheusExporter::Metric::Counter.new(
-          "hutch_jobs_total", "Total number of hutch jobs executed.")
-
-        @hutch_failed_jobs_total = PrometheusExporter::Metric::Counter.new(
-          "hutch_failed_jobs_total", "Total number failed hutch jobs executed.")
+        @hutch_failed_jobs_total =
+          PrometheusExporter::Metric::Counter.new(
+            "hutch_failed_jobs_total",
+            "Total number failed hutch jobs executed.",
+          )
       end
     end
   end

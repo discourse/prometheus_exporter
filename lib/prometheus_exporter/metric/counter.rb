@@ -18,9 +18,7 @@ module PrometheusExporter::Metric
     end
 
     def metric_text
-      @data.map do |labels, value|
-        "#{prefix(@name)}#{labels_text(labels)} #{value}"
-      end.join("\n")
+      @data.map { |labels, value| "#{prefix(@name)}#{labels_text(labels)} #{value}" }.join("\n")
     end
 
     def to_h

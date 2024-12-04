@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 # see https://samsaffron.com/archive/2017/10/18/fastest-way-to-profile-a-method-in-ruby
-module PrometheusExporter::Instrumentation; end
+module PrometheusExporter::Instrumentation
+end
 
 class PrometheusExporter::Instrumentation::MethodProfiler
   def self.patch(klass, methods, name, instrument:)
@@ -21,9 +22,8 @@ class PrometheusExporter::Instrumentation::MethodProfiler
   end
 
   def self.start(transfer = nil)
-    Thread.current[:_method_profiler] = transfer || {
-      __start: Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    }
+    Thread.current[:_method_profiler] = transfer ||
+      { __start: Process.clock_gettime(Process::CLOCK_MONOTONIC) }
   end
 
   def self.clear
@@ -42,8 +42,8 @@ class PrometheusExporter::Instrumentation::MethodProfiler
 
   def self.define_methods_on_module(klass, methods, name)
     patch_source_line = __LINE__ + 3
-    patches = methods.map do |method_name|
-      <<~RUBY
+
+    patches = methods.map { |method_name| <<~RUBY }.join("\n")
         def #{method_name}(...)
           unless prof = Thread.current[:_method_profiler]
             return super
@@ -58,9 +58,8 @@ class PrometheusExporter::Instrumentation::MethodProfiler
           end
         end
       RUBY
-    end.join("\n")
 
-    klass.module_eval patches, __FILE__, patch_source_line
+    klass.module_eval(patches, __FILE__, patch_source_line)
   end
 
   def self.patch_using_prepend(klass, methods, name)
@@ -71,14 +70,16 @@ class PrometheusExporter::Instrumentation::MethodProfiler
 
   def self.patch_using_alias_method(klass, methods, name)
     patch_source_line = __LINE__ + 3
-    patches = methods.map do |method_name|
-      <<~RUBY
+
+    patches = methods.map { |method_name| <<~RUBY }.join("\n")
       unless defined?(#{method_name}__mp_unpatched)
         alias_method :#{method_name}__mp_unpatched, :#{method_name}
+
         def #{method_name}(...)
           unless prof = Thread.current[:_method_profiler]
             return #{method_name}__mp_unpatched(...)
           end
+
           begin
             start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
             #{method_name}__mp_unpatched(...)
@@ -90,8 +91,7 @@ class PrometheusExporter::Instrumentation::MethodProfiler
         end
       end
       RUBY
-    end.join("\n")
 
-    klass.class_eval patches, __FILE__, patch_source_line
+    klass.class_eval(patches, __FILE__, patch_source_line)
   end
 end

@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
-require 'minitest/stub_const'
-require_relative 'test_helper'
-require 'prometheus_exporter/instrumentation/sidekiq'
+require "minitest/stub_const"
+require_relative "test_helper"
+require "prometheus_exporter/instrumentation/sidekiq"
 
 class PrometheusExporterSidekiqMiddlewareTest < Minitest::Test
-
   class FakeClient
   end
 
@@ -27,9 +26,11 @@ class PrometheusExporterSidekiqMiddlewareTest < Minitest::Test
   end
 
   def test_initiating_middlware
-    middleware_entry = FakeSidekiqMiddlewareChainEntry.new(
-      PrometheusExporter::Instrumentation::Sidekiq, { client: client })
+    middleware_entry =
+      FakeSidekiqMiddlewareChainEntry.new(
+        PrometheusExporter::Instrumentation::Sidekiq,
+        { client: client },
+      )
     assert_instance_of PrometheusExporter::Instrumentation::Sidekiq, middleware_entry.make_new
   end
-
 end

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module PrometheusExporter::Server
-
   class ProcessCollector < TypeCollector
     MAX_METRIC_AGE = 60
 
@@ -13,8 +12,10 @@ module PrometheusExporter::Server
       v8_physical_size: "Physical size consumed by V8 heaps.",
       v8_heap_count: "Number of V8 contexts running.",
       rss: "Total RSS used by process.",
-      malloc_increase_bytes_limit: 'Limit before Ruby triggers a GC against current objects (bytes).',
-      oldmalloc_increase_bytes_limit: 'Limit before Ruby triggers a major GC against old objects (bytes).'
+      malloc_increase_bytes_limit:
+        "Limit before Ruby triggers a GC against current objects (bytes).",
+      oldmalloc_increase_bytes_limit:
+        "Limit before Ruby triggers a major GC against old objects (bytes).",
     }
 
     PROCESS_COUNTERS = {
@@ -25,7 +26,7 @@ module PrometheusExporter::Server
 
     def initialize
       @process_metrics = MetricsContainer.new(ttl: MAX_METRIC_AGE)
-      @process_metrics.filter = -> (new_metric, old_metric) do
+      @process_metrics.filter = ->(new_metric, old_metric) do
         new_metric["pid"] == old_metric["pid"] && new_metric["hostname"] == old_metric["hostname"]
       end
     end
@@ -40,7 +41,8 @@ module PrometheusExporter::Server
       metrics = {}
 
       @process_metrics.map do |m|
-        metric_key = (m["metric_labels"] || {}).merge("pid" => m["pid"], "hostname" => m["hostname"])
+        metric_key =
+          (m["metric_labels"] || {}).merge("pid" => m["pid"], "hostname" => m["hostname"])
         metric_key.merge!(m["custom_labels"]) if m["custom_labels"]
 
         PROCESS_GAUGES.map do |k, help|

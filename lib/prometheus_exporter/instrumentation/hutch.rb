@@ -19,7 +19,7 @@ module PrometheusExporter::Instrumentation
         type: "hutch",
         name: @klass.class.to_s,
         success: success,
-        duration: duration
+        duration: duration,
       )
     end
   end

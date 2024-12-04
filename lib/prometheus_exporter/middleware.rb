@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'prometheus_exporter/instrumentation/method_profiler'
-require 'prometheus_exporter/client'
+require "prometheus_exporter/instrumentation/method_profiler"
+require "prometheus_exporter/client"
 
 class PrometheusExporter::Middleware
   MethodProfiler = PrometheusExporter::Instrumentation::MethodProfiler
@@ -11,28 +11,41 @@ class PrometheusExporter::Middleware
     @client = config[:client] || PrometheusExporter::Client.default
 
     if config[:instrument]
-      if defined?(RedisClient)
-        apply_redis_client_middleware!
-      end
-      if defined?(Redis::VERSION) && (Gem::Version.new(Redis::VERSION) >= Gem::Version.new('5.0.0'))
+      apply_redis_client_middleware! if defined?(RedisClient)
+
+      if defined?(Redis::VERSION) && (Gem::Version.new(Redis::VERSION) >= Gem::Version.new("5.0.0"))
         # redis 5 support handled via RedisClient
-      elsif defined? Redis::Client
-        MethodProfiler.patch(Redis::Client, [
-          :call, :call_pipeline
-        ], :redis, instrument: config[:instrument])
+      elsif defined?(Redis::Client)
+        MethodProfiler.patch(
+          Redis::Client,
+          %i[call call_pipeline],
+          :redis,
+          instrument: config[:instrument],
+        )
       end
-      if defined? PG::Connection
-        MethodProfiler.patch(PG::Connection, [
-          :exec, :async_exec, :exec_prepared, :exec_params, :send_query_prepared, :query
-        ], :sql, instrument: config[:instrument])
+
+      if defined?(PG::Connection)
+        MethodProfiler.patch(
+          PG::Connection,
+          %i[exec async_exec exec_prepared exec_params send_query_prepared query],
+          :sql,
+          instrument: config[:instrument],
+        )
       end
-      if defined? Mysql2::Client
+
+      if defined?(Mysql2::Client)
         MethodProfiler.patch(Mysql2::Client, [:query], :sql, instrument: config[:instrument])
         MethodProfiler.patch(Mysql2::Statement, [:execute], :sql, instrument: config[:instrument])
         MethodProfiler.patch(Mysql2::Result, [:each], :sql, instrument: config[:instrument])
       end
-      if defined? Dalli::Client
-        MethodProfiler.patch(Dalli::Client, %i[delete fetch get add set], :memcache, instrument: config[:instrument])
+
+      if defined?(Dalli::Client)
+        MethodProfiler.patch(
+          Dalli::Client,
+          %i[delete fetch get add set],
+          :memcache,
+          instrument: config[:instrument],
+        )
       end
     end
   end
@@ -52,12 +65,10 @@ class PrometheusExporter::Middleware
       timings: info,
       queue_time: queue_time,
       status: status,
-      default_labels: default_labels(env, result)
+      default_labels: default_labels(env, result),
     }
     labels = custom_labels(env)
-    if labels
-      obj = obj.merge(custom_labels: labels)
-    end
+    obj = obj.merge(custom_labels: labels) if labels
 
     @client.send_json(obj)
   end
@@ -75,10 +86,7 @@ class PrometheusExporter::Middleware
       controller = "preflight"
     end
 
-    {
-      action: action || "other",
-      controller: controller || "other"
-    }
+    { action: action || "other", controller: controller || "other" }
   end
 
   # allows subclasses to add custom labels based on env
@@ -106,32 +114,29 @@ class PrometheusExporter::Middleware
 
   # determine queue start from well-known trace headers
   def queue_start(env)
-
     # get the content of the x-queue-start or x-request-start header
-    value = env['HTTP_X_REQUEST_START'] || env['HTTP_X_QUEUE_START']
-    unless value.nil? || value == ''
+    value = env["HTTP_X_REQUEST_START"] || env["HTTP_X_QUEUE_START"]
+    unless value.nil? || value == ""
       # nginx returns time as milliseconds with 3 decimal places
       # apache returns time as microseconds without decimal places
       # this method takes care to convert both into a proper second + fractions timestamp
-      value = value.to_s.gsub(/t=|\./, '')
+      value = value.to_s.gsub(/t=|\./, "")
       return "#{value[0, 10]}.#{value[10, 13]}".to_f
     end
 
     # get the content of the x-amzn-trace-id header
     # see also: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-request-tracing.html
-    value = env['HTTP_X_AMZN_TRACE_ID']
-    value&.split('Root=')&.last&.split('-')&.fetch(1)&.to_i(16)
-
+    value = env["HTTP_X_AMZN_TRACE_ID"]
+    value&.split("Root=")&.last&.split("-")&.fetch(1)&.to_i(16)
   end
 
   private
 
   module RedisInstrumenter
-    MethodProfiler.define_methods_on_module(self, ["call", "call_pipelined"], "redis")
+    MethodProfiler.define_methods_on_module(self, %w[call call_pipelined], "redis")
   end
 
   def apply_redis_client_middleware!
     RedisClient.register(RedisInstrumenter)
   end
-
 end

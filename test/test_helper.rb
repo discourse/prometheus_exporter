@@ -76,12 +76,7 @@ end
 
 module ClockHelper
   def stub_monotonic_clock(at = 0.0, advance: nil, &blk)
-    Process.stub(
-      :clock_gettime,
-      at + advance.to_f,
-      Process::CLOCK_MONOTONIC,
-      &blk
-    )
+    Process.stub(:clock_gettime, at + advance.to_f, Process::CLOCK_MONOTONIC, &blk)
   end
 end
 

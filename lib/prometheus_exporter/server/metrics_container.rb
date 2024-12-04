@@ -9,10 +9,10 @@ module PrometheusExporter::Server
     attr_accessor :filter
 
     def initialize(ttl: METRIC_MAX_AGE, expire_attr: METRIC_EXPIRE_ATTR, filter: nil)
-      @data          = []
-      @ttl           = ttl
-      @expire_attr   = expire_attr
-      @filter        = filter
+      @data = []
+      @ttl = ttl
+      @expire_attr = expire_attr
+      @filter = filter
     end
 
     def <<(obj)

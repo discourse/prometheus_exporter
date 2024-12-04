@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative '../test_helper'
-require 'prometheus_exporter/server'
-require 'prometheus_exporter/instrumentation'
+require_relative "../test_helper"
+require "prometheus_exporter/server"
+require "prometheus_exporter/instrumentation"
 
 class PrometheusGoodJobCollectorTest < Minitest::Test
   include CollectorHelper
@@ -20,8 +20,8 @@ class PrometheusGoodJobCollectorTest < Minitest::Test
         "running" => 5,
         "finished" => 100,
         "succeeded" => 2000,
-        "discarded" => 9
-      }
+        "discarded" => 9,
+      },
     )
 
     metrics = collector.metrics
@@ -33,7 +33,7 @@ class PrometheusGoodJobCollectorTest < Minitest::Test
       "good_job_running 5",
       "good_job_finished 100",
       "good_job_succeeded 2000",
-      "good_job_discarded 9"
+      "good_job_discarded 9",
     ]
     assert_equal expected, metrics.map(&:metric_text)
   end
@@ -48,9 +48,9 @@ class PrometheusGoodJobCollectorTest < Minitest::Test
       "finished" => 100,
       "succeeded" => 2000,
       "discarded" => 9,
-      'custom_labels' => {
-        'hostname' => 'good_job_host'
-      }
+      "custom_labels" => {
+        "hostname" => "good_job_host",
+      },
     )
 
     metrics = collector.metrics
@@ -59,20 +59,13 @@ class PrometheusGoodJobCollectorTest < Minitest::Test
   end
 
   def test_metrics_expiration
-    data = {
-      "type" => "good_job",
-      "scheduled" => 3,
-      "retried" => 4,
-      "queued" => 0
-    }
+    data = { "type" => "good_job", "scheduled" => 3, "retried" => 4, "queued" => 0 }
 
     stub_monotonic_clock(0) do
       collector.collect(data)
       assert_equal 3, collector.metrics.size
     end
 
-    stub_monotonic_clock(max_metric_age + 1) do
-      assert_equal 0, collector.metrics.size
-    end
+    stub_monotonic_clock(max_metric_age + 1) { assert_equal 0, collector.metrics.size }
   end
 end

@@ -2,7 +2,6 @@
 
 module PrometheusExporter::Server
   class SidekiqCollector < TypeCollector
-
     def initialize
       @sidekiq_jobs_total = nil
       @sidekiq_job_duration_seconds = nil
@@ -17,8 +16,8 @@ module PrometheusExporter::Server
     end
 
     def collect(obj)
-      default_labels = { job_name: obj['name'], queue: obj['queue'] }
-      custom_labels = obj['custom_labels']
+      default_labels = { job_name: obj["name"], queue: obj["queue"] }
+      custom_labels = obj["custom_labels"]
       labels = custom_labels.nil? ? default_labels : default_labels.merge(custom_labels)
 
       ensure_sidekiq_metrics
@@ -50,26 +49,35 @@ module PrometheusExporter::Server
 
     def ensure_sidekiq_metrics
       if !@sidekiq_jobs_total
-
         @sidekiq_job_duration_seconds =
-        PrometheusExporter::Metric::Base.default_aggregation.new(
-          "sidekiq_job_duration_seconds", "Total time spent in sidekiq jobs.")
+          PrometheusExporter::Metric::Base.default_aggregation.new(
+            "sidekiq_job_duration_seconds",
+            "Total time spent in sidekiq jobs.",
+          )
 
         @sidekiq_jobs_total =
-        PrometheusExporter::Metric::Counter.new(
-          "sidekiq_jobs_total", "Total number of sidekiq jobs executed.")
+          PrometheusExporter::Metric::Counter.new(
+            "sidekiq_jobs_total",
+            "Total number of sidekiq jobs executed.",
+          )
 
         @sidekiq_restarted_jobs_total =
-        PrometheusExporter::Metric::Counter.new(
-          "sidekiq_restarted_jobs_total", "Total number of sidekiq jobs that we restarted because of a sidekiq shutdown.")
+          PrometheusExporter::Metric::Counter.new(
+            "sidekiq_restarted_jobs_total",
+            "Total number of sidekiq jobs that we restarted because of a sidekiq shutdown.",
+          )
 
         @sidekiq_failed_jobs_total =
-        PrometheusExporter::Metric::Counter.new(
-          "sidekiq_failed_jobs_total", "Total number of failed sidekiq jobs.")
+          PrometheusExporter::Metric::Counter.new(
+            "sidekiq_failed_jobs_total",
+            "Total number of failed sidekiq jobs.",
+          )
 
         @sidekiq_dead_jobs_total =
-        PrometheusExporter::Metric::Counter.new(
-          "sidekiq_dead_jobs_total", "Total number of dead sidekiq jobs.")
+          PrometheusExporter::Metric::Counter.new(
+            "sidekiq_dead_jobs_total",
+            "Total number of dead sidekiq jobs.",
+          )
       end
     end
   end

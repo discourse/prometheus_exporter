@@ -7,9 +7,7 @@ module PrometheusExporter::Instrumentation
       resque_collector = new
       client ||= PrometheusExporter::Client.default
 
-      worker_loop do
-        client.send_json(resque_collector.collect)
-      end
+      worker_loop { client.send_json(resque_collector.collect) }
 
       super
     end

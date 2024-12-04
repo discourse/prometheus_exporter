@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 begin
-  require 'raindrops'
+  require "raindrops"
 rescue LoadError
   # No raindrops available, dont do anything
 end
@@ -29,7 +29,7 @@ module PrometheusExporter::Instrumentation
 
     def collect
       metric = {}
-      metric[:type] = 'unicorn'
+      metric[:type] = "unicorn"
       collect_unicorn_stats(metric)
       metric
     end

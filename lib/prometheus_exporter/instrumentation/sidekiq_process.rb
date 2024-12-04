@@ -6,9 +6,7 @@ module PrometheusExporter::Instrumentation
       client ||= PrometheusExporter::Client.default
       sidekiq_process_collector = new
 
-      worker_loop do
-        client.send_json(sidekiq_process_collector.collect)
-      end
+      worker_loop { client.send_json(sidekiq_process_collector.collect) }
 
       super
     end
@@ -19,10 +17,7 @@ module PrometheusExporter::Instrumentation
     end
 
     def collect
-      {
-        type: 'sidekiq_process',
-        process: collect_stats
-      }
+      { type: "sidekiq_process", process: collect_stats }
     end
 
     def collect_stats
@@ -30,23 +25,21 @@ module PrometheusExporter::Instrumentation
       return {} unless process
 
       {
-        busy: process['busy'],
-        concurrency: process['concurrency'],
+        busy: process["busy"],
+        concurrency: process["concurrency"],
         labels: {
-          labels: process['labels'].sort.join(','),
-          queues: process['queues'].sort.join(','),
-          quiet: process['quiet'],
-          tag: process['tag'],
-          hostname: process['hostname'],
-          identity: process['identity'],
-        }
+          labels: process["labels"].sort.join(","),
+          queues: process["queues"].sort.join(","),
+          quiet: process["quiet"],
+          tag: process["tag"],
+          hostname: process["hostname"],
+          identity: process["identity"],
+        },
       }
     end
 
     def current_process
-      ::Sidekiq::ProcessSet.new.find do |sp|
-        sp['hostname'] == @hostname && sp['pid'] == @pid
-      end
+      ::Sidekiq::ProcessSet.new.find { |sp| sp["hostname"] == @hostname && sp["pid"] == @pid }
     end
   end
 end
