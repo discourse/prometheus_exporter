@@ -53,12 +53,32 @@ class PrometheusExporterTest < Minitest::Test
     assert_equal(expected_quantiles, summary_metric.standard_values("value", "key")[:opts])
   end
 
+  def test_close_socket_on_error
+    logs = StringIO.new
+    logger = Logger.new(logs)
+    logger.level = :error
+
+    client =
+      PrometheusExporter::Client.new(logger: logger, port: 321, process_queue_once_and_stop: true)
+    client.send("put a message in the queue")
+
+    assert_includes(
+      logs.string,
+      "Prometheus Exporter, failed to send message Connection refused - connect(2) for \"localhost\" port 321",
+    )
+  end
+
   def test_overriding_logger
     logs = StringIO.new
     logger = Logger.new(logs)
     logger.level = :warn
 
-    client = PrometheusExporter::Client.new(logger: logger, max_queue_size: 1)
+    client =
+      PrometheusExporter::Client.new(
+        logger: logger,
+        max_queue_size: 1,
+        process_queue_once_and_stop: true,
+      )
     client.send("put a message in the queue")
     client.send("put a second message in the queue to trigger the logger")
 
