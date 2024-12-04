@@ -59,7 +59,8 @@ module PrometheusExporter
       json_serializer: nil,
       custom_labels: nil,
       logger: Logger.new(STDERR),
-      log_level: Logger::WARN
+      log_level: Logger::WARN,
+      process_queue_once_and_stop: false
     )
       @logger = logger
       @logger.level = log_level
@@ -86,6 +87,7 @@ module PrometheusExporter
       @json_serializer = json_serializer == :oj ? PrometheusExporter::OjCompat : JSON
 
       @custom_labels = custom_labels
+      @process_queue_once_and_stop = process_queue_once_and_stop
     end
 
     def custom_labels=(custom_labels)
@@ -144,7 +146,7 @@ module PrometheusExporter
           @socket.write("\r\n")
         rescue => e
           logger.warn "Prometheus Exporter is dropping a message: #{e}"
-          @socket = nil
+          close_socket!
           raise
         end
       end
@@ -170,6 +172,11 @@ module PrometheusExporter
     end
 
     def ensure_worker_thread!
+      if @process_queue_once_and_stop
+        worker_loop
+        return
+      end
+
       unless @worker_thread&.alive?
         @mutex.synchronize do
           return if @worker_thread&.alive?
@@ -234,8 +241,7 @@ module PrometheusExporter
 
       nil
     rescue StandardError
-      @socket = nil
-      @socket_started = nil
+      close_socket!
       @socket_pid = nil
       raise
     end
