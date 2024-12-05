@@ -7,9 +7,7 @@ module PrometheusExporter::Instrumentation
       good_job_collector = new
       client ||= PrometheusExporter::Client.default
 
-      worker_loop do
-        client.send_json(good_job_collector.collect)
-      end
+      worker_loop { client.send_json(good_job_collector.collect) }
 
       super
     end
@@ -23,7 +21,7 @@ module PrometheusExporter::Instrumentation
         running: ::GoodJob::Job.running.size,
         finished: ::GoodJob::Job.finished.size,
         succeeded: ::GoodJob::Job.succeeded.size,
-        discarded: ::GoodJob::Job.discarded.size
+        discarded: ::GoodJob::Job.discarded.size,
       }
     end
   end

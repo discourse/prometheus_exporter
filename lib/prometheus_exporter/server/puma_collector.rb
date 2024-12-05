@@ -15,7 +15,7 @@ module PrometheusExporter::Server
 
     def initialize
       @puma_metrics = MetricsContainer.new(ttl: MAX_PUMA_METRIC_AGE)
-      @puma_metrics.filter = -> (new_metric, old_metric) do
+      @puma_metrics.filter = ->(new_metric, old_metric) do
         new_metric["pid"] == old_metric["pid"] && new_metric["hostname"] == old_metric["hostname"]
       end
     end
@@ -31,15 +31,9 @@ module PrometheusExporter::Server
 
       @puma_metrics.map do |m|
         labels = {}
-        if m["phase"]
-          labels.merge!(phase: m["phase"])
-        end
-        if m["custom_labels"]
-          labels.merge!(m["custom_labels"])
-        end
-        if m["metric_labels"]
-          labels.merge!(m["metric_labels"])
-        end
+        labels.merge!(phase: m["phase"]) if m["phase"]
+        labels.merge!(m["custom_labels"]) if m["custom_labels"]
+        labels.merge!(m["metric_labels"]) if m["metric_labels"]
 
         PUMA_GAUGES.map do |k, help|
           k = k.to_s

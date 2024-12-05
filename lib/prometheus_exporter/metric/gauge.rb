@@ -18,9 +18,7 @@ module PrometheusExporter::Metric
     end
 
     def metric_text
-      @data.map do |labels, value|
-        "#{prefix(@name)}#{labels_text(labels)} #{value}"
-      end.join("\n")
+      @data.map { |labels, value| "#{prefix(@name)}#{labels_text(labels)} #{value}" }.join("\n")
     end
 
     def reset!
@@ -39,9 +37,7 @@ module PrometheusExporter::Metric
       if value.nil?
         data.delete(labels)
       else
-        if !(Numeric === value)
-          raise ArgumentError, 'value must be a number'
-        end
+        raise ArgumentError, "value must be a number" if !(Numeric === value)
         @data[labels] = value
       end
     end

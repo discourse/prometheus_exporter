@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative '../test_helper'
-require 'prometheus_exporter/metric'
+require_relative "../test_helper"
+require "prometheus_exporter/metric"
 
 module PrometheusExporter::Metric
   describe Gauge do
@@ -13,14 +13,10 @@ module PrometheusExporter::Metric
       Gauge.new("a_gauge_total", "my amazing gauge")
     end
 
-    before do
-      Base.default_prefix = ''
-    end
+    before { Base.default_prefix = "" }
 
     it "should not allow observe to corrupt data" do
-      assert_raises do
-        gauge.observe("hello")
-      end
+      assert_raises { gauge.observe("hello") }
 
       # going to special case nil here instead of adding a new API
       # observing nil should set to nothing
@@ -41,7 +37,7 @@ module PrometheusExporter::Metric
     end
 
     it "supports a dynamic prefix" do
-      Base.default_prefix = 'web_'
+      Base.default_prefix = "web_"
       gauge.observe(400.11)
 
       text = <<~TEXT
@@ -52,7 +48,7 @@ module PrometheusExporter::Metric
 
       assert_equal(gauge.to_prometheus_text, text)
 
-      Base.default_prefix = ''
+      Base.default_prefix = ""
     end
 
     it "can correctly set gauges with labels" do
@@ -72,7 +68,6 @@ module PrometheusExporter::Metric
     end
 
     it "can correctly reset on change" do
-
       gauge.observe(10)
       gauge.observe(11)
 
@@ -86,7 +81,6 @@ module PrometheusExporter::Metric
     end
 
     it "can use the set on alias" do
-
       gauge.set(10)
       gauge.set(11)
 

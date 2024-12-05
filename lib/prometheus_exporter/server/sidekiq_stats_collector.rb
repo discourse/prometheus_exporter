@@ -5,14 +5,14 @@ module PrometheusExporter::Server
     MAX_METRIC_AGE = 60
 
     SIDEKIQ_STATS_GAUGES = {
-      'dead_size' => 'Size of dead the queue',
-      'enqueued' => 'Number of enqueued jobs',
-      'failed' => 'Number of failed jobs',
-      'processed' => 'Total number of processed jobs',
-      'processes_size' => 'Number of processes',
-      'retry_size' => 'Size of the retries queue',
-      'scheduled_size' => 'Size of the scheduled queue',
-      'workers_size' => 'Number of jobs actively being processed',
+      "dead_size" => "Size of dead the queue",
+      "enqueued" => "Number of enqueued jobs",
+      "failed" => "Number of failed jobs",
+      "processed" => "Total number of processed jobs",
+      "processes_size" => "Number of processes",
+      "retry_size" => "Size of the retries queue",
+      "scheduled_size" => "Size of the scheduled queue",
+      "workers_size" => "Number of jobs actively being processed",
     }.freeze
 
     attr_reader :sidekiq_metrics, :gauges
@@ -23,7 +23,7 @@ module PrometheusExporter::Server
     end
 
     def type
-      'sidekiq_stats'
+      "sidekiq_stats"
     end
 
     def metrics
@@ -31,8 +31,9 @@ module PrometheusExporter::Server
 
       sidekiq_metrics.map do |metric|
         SIDEKIQ_STATS_GAUGES.map do |name, help|
-          if (value = metric['stats'][name])
-            gauge = gauges[name] ||= PrometheusExporter::Metric::Gauge.new("sidekiq_stats_#{name}", help)
+          if (value = metric["stats"][name])
+            gauge =
+              gauges[name] ||= PrometheusExporter::Metric::Gauge.new("sidekiq_stats_#{name}", help)
             gauge.observe(value)
           end
         end

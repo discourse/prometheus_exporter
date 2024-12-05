@@ -9,7 +9,7 @@ module PrometheusExporter::Server
       pending_jobs: "Total number of pending Resque jobs.",
       queues: "Total number of Resque queues.",
       workers: "Total number of Resque workers running.",
-      working: "Total number of Resque workers working."
+      working: "Total number of Resque workers working.",
     }
 
     def initialize

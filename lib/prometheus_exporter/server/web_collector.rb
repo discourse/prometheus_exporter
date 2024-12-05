@@ -29,41 +29,49 @@ module PrometheusExporter::Server
 
     def ensure_metrics
       unless @http_requests_total
-        @metrics["http_requests_total"] = @http_requests_total = PrometheusExporter::Metric::Counter.new(
-          "http_requests_total",
-          "Total HTTP requests from web app."
-        )
+        @metrics["http_requests_total"] = @http_requests_total =
+          PrometheusExporter::Metric::Counter.new(
+            "http_requests_total",
+            "Total HTTP requests from web app.",
+          )
 
-        @metrics["http_request_duration_seconds"] = @http_request_duration_seconds = PrometheusExporter::Metric::Base.default_aggregation.new(
-          "http_request_duration_seconds",
-          "Time spent in HTTP reqs in seconds."
-        )
+        @metrics["http_request_duration_seconds"] = @http_request_duration_seconds =
+          PrometheusExporter::Metric::Base.default_aggregation.new(
+            "http_request_duration_seconds",
+            "Time spent in HTTP reqs in seconds.",
+          )
 
-        @metrics["http_request_redis_duration_seconds"] = @http_request_redis_duration_seconds = PrometheusExporter::Metric::Base.default_aggregation.new(
-          "http_request_redis_duration_seconds",
-          "Time spent in HTTP reqs in Redis, in seconds."
-        )
+        @metrics["http_request_redis_duration_seconds"] = @http_request_redis_duration_seconds =
+          PrometheusExporter::Metric::Base.default_aggregation.new(
+            "http_request_redis_duration_seconds",
+            "Time spent in HTTP reqs in Redis, in seconds.",
+          )
 
-        @metrics["http_request_sql_duration_seconds"] = @http_request_sql_duration_seconds = PrometheusExporter::Metric::Base.default_aggregation.new(
-          "http_request_sql_duration_seconds",
-          "Time spent in HTTP reqs in SQL in seconds."
-        )
+        @metrics["http_request_sql_duration_seconds"] = @http_request_sql_duration_seconds =
+          PrometheusExporter::Metric::Base.default_aggregation.new(
+            "http_request_sql_duration_seconds",
+            "Time spent in HTTP reqs in SQL in seconds.",
+          )
 
-        @metrics["http_request_memcache_duration_seconds"] = @http_request_memcache_duration_seconds = PrometheusExporter::Metric::Base.default_aggregation.new(
-          "http_request_memcache_duration_seconds",
-          "Time spent in HTTP reqs in Memcache in seconds."
-        )
+        @metrics[
+          "http_request_memcache_duration_seconds"
+        ] = @http_request_memcache_duration_seconds =
+          PrometheusExporter::Metric::Base.default_aggregation.new(
+            "http_request_memcache_duration_seconds",
+            "Time spent in HTTP reqs in Memcache in seconds.",
+          )
 
-        @metrics["http_request_queue_duration_seconds"] = @http_request_queue_duration_seconds = PrometheusExporter::Metric::Base.default_aggregation.new(
-          "http_request_queue_duration_seconds",
-          "Time spent queueing the request in load balancer in seconds."
-        )
+        @metrics["http_request_queue_duration_seconds"] = @http_request_queue_duration_seconds =
+          PrometheusExporter::Metric::Base.default_aggregation.new(
+            "http_request_queue_duration_seconds",
+            "Time spent queueing the request in load balancer in seconds.",
+          )
       end
     end
 
     def observe(obj)
-      default_labels = obj['default_labels']
-      custom_labels = obj['custom_labels']
+      default_labels = obj["default_labels"]
+      custom_labels = obj["custom_labels"]
       labels = custom_labels.nil? ? default_labels : default_labels.merge(custom_labels)
 
       @http_requests_total.observe(1, labels.merge("status" => obj["status"]))

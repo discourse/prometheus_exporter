@@ -1,22 +1,22 @@
 # frozen_string_literal: true
 
-require_relative '../test_helper'
-require 'prometheus_exporter/instrumentation'
-require 'active_record'
+require_relative "../test_helper"
+require "prometheus_exporter/instrumentation"
+require "active_record"
 
 class PrometheusInstrumentationActiveRecordTest < Minitest::Test
-
   def setup
     super
 
     # With this trick this variable with be accessible with ::ObjectSpace
-    @pool = if active_record_version >= Gem::Version.create('6.1.0.rc1')
-      active_record61_pool
-    elsif active_record_version >= Gem::Version.create('6.0.0')
-      active_record60_pool
-    else
-      raise 'unsupported active_record version'
-    end
+    @pool =
+      if active_record_version >= Gem::Version.create("6.1.0.rc1")
+        active_record61_pool
+      elsif active_record_version >= Gem::Version.create("6.0.0")
+        active_record60_pool
+      else
+        raise "unsupported active_record version"
+      end
   end
 
   def metric_labels
@@ -28,7 +28,8 @@ class PrometheusInstrumentationActiveRecordTest < Minitest::Test
   end
 
   def collector
-    @collector ||= PrometheusExporter::Instrumentation::ActiveRecord.new(metric_labels, config_labels)
+    @collector ||=
+      PrometheusExporter::Instrumentation::ActiveRecord.new(metric_labels, config_labels)
   end
 
   %i[size connections busy dead idle waiting checkout_timeout type metric_labels].each do |key|
@@ -42,7 +43,7 @@ class PrometheusInstrumentationActiveRecordTest < Minitest::Test
   end
 
   def test_type
-    assert_equal collector.collect.first[:type], 'active_record'
+    assert_equal collector.collect.first[:type], "active_record"
   end
 
   private
@@ -57,6 +58,7 @@ class PrometheusInstrumentationActiveRecordTest < Minitest::Test
 
   def active_record61_pool
     ::ActiveRecord::ConnectionAdapters::ConnectionPool.new(
-      OpenStruct.new(db_config: OpenStruct.new(checkout_timeout: 0, idle_timeout: 0, pool: 5)))
+      OpenStruct.new(db_config: OpenStruct.new(checkout_timeout: 0, idle_timeout: 0, pool: 5)),
+    )
   end
 end

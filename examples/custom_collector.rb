@@ -20,8 +20,6 @@ class MyCustomCollector < PrometheusExporter::Server::BaseCollector
   end
 
   def prometheus_metrics_text
-    @mutex.synchronize do
-      "#{@gauge1.to_prometheus_text}\n#{@gauge2.to_prometheus_text}"
-    end
+    @mutex.synchronize { "#{@gauge1.to_prometheus_text}\n#{@gauge2.to_prometheus_text}" }
   end
 end

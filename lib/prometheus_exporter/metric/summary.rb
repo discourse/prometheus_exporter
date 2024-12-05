@@ -2,7 +2,6 @@
 
 module PrometheusExporter::Metric
   class Summary < Base
-
     DEFAULT_QUANTILES = [0.99, 0.9, 0.5, 0.1, 0.01]
     ROTATE_AGE = 120
 
@@ -49,9 +48,7 @@ module PrometheusExporter::Metric
       result = {}
 
       if length > 0
-        @quantiles.each do |quantile|
-          result[quantile] = sorted[(length * quantile).ceil - 1]
-        end
+        @quantiles.each { |quantile| result[quantile] = sorted[(length * quantile).ceil - 1] }
       end
 
       result
@@ -61,12 +58,9 @@ module PrometheusExporter::Metric
       buffer = @buffers[@current_buffer]
 
       result = {}
-      buffer.each do |labels, raw_data|
-        result[labels] = calculate_quantiles(raw_data)
-      end
+      buffer.each { |labels, raw_data| result[labels] = calculate_quantiles(raw_data) }
 
       result
-
     end
 
     def metric_text
@@ -87,8 +81,8 @@ module PrometheusExporter::Metric
 
     # makes sure we have storage
     def ensure_summary(labels)
-      @buffers[0][labels] ||=  []
-      @buffers[1][labels] ||=  []
+      @buffers[0][labels] ||= []
+      @buffers[1][labels] ||= []
       @sums[labels] ||= 0.0
       @counts[labels] ||= 0
       nil
@@ -97,9 +91,7 @@ module PrometheusExporter::Metric
     def rotate_if_needed
       if (now = Process.clock_gettime(Process::CLOCK_MONOTONIC)) > (@last_rotated + ROTATE_AGE)
         @last_rotated = now
-        @buffers[@current_buffer].each do |labels, raw|
-          raw.clear
-        end
+        @buffers[@current_buffer].each { |labels, raw| raw.clear }
         @current_buffer = @current_buffer == 0 ? 1 : 0
       end
       nil
@@ -116,6 +108,5 @@ module PrometheusExporter::Metric
       @sums[labels] += value
       @counts[labels] += 1
     end
-
   end
 end

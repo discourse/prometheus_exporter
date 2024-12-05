@@ -2,7 +2,6 @@
 
 module PrometheusExporter::Metric
   class Base
-
     @default_prefix = nil if !defined?(@default_prefix)
     @default_labels = nil if !defined?(@default_labels)
     @default_aggregation = nil if !defined?(@default_aggregation)
@@ -77,11 +76,14 @@ module PrometheusExporter::Metric
     def labels_text(labels)
       labels = Base.default_labels.merge(labels || {})
       if labels && labels.length > 0
-        s = labels.map do |key, value|
-          value = value.to_s
-          value = escape_value(value) if needs_escape?(value)
-          "#{key}=\"#{value}\""
-        end.join(",")
+        s =
+          labels
+            .map do |key, value|
+              value = value.to_s
+              value = escape_value(value) if needs_escape?(value)
+              "#{key}=\"#{value}\""
+            end
+            .join(",")
         "{#{s}}"
       end
     end
@@ -109,6 +111,5 @@ module PrometheusExporter::Metric
     def needs_escape?(str)
       str.match?(/[\n"\\]/m)
     end
-
   end
 end

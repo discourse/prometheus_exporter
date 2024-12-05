@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative '../test_helper'
-require 'prometheus_exporter/metric'
+require_relative "../test_helper"
+require "prometheus_exporter/metric"
 
 module PrometheusExporter::Metric
   describe Counter do
@@ -9,12 +9,10 @@ module PrometheusExporter::Metric
       Counter.new("a_counter", "my amazing counter")
     end
 
-    before do
-      Base.default_prefix = ''
-    end
+    before { Base.default_prefix = "" }
 
     it "supports a dynamic prefix" do
-      Base.default_prefix = 'web_'
+      Base.default_prefix = "web_"
       counter.observe
 
       text = <<~TEXT
@@ -24,7 +22,7 @@ module PrometheusExporter::Metric
       TEXT
 
       assert_equal(counter.to_prometheus_text, text)
-      Base.default_prefix = ''
+      Base.default_prefix = ""
     end
 
     it "can correctly increment counters with labels" do
@@ -70,7 +68,6 @@ module PrometheusExporter::Metric
     end
 
     it "can correctly log multiple increments" do
-
       counter.observe
       counter.observe
       counter.observe

@@ -3,8 +3,7 @@
 require "yaml"
 
 module PrometheusExporter::Instrumentation
-  JOB_WRAPPER_CLASS_NAME =
-    "ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper"
+  JOB_WRAPPER_CLASS_NAME = "ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper"
   DELAYED_CLASS_NAMES = %w[
     Sidekiq::Extensions::DelayedClass
     Sidekiq::Extensions::DelayedModel
@@ -24,7 +23,7 @@ module PrometheusExporter::Instrumentation
             type: "sidekiq",
             name: get_name(job["class"], job),
             dead: true,
-            custom_labels: worker_custom_labels
+            custom_labels: worker_custom_labels,
           )
         end
       end
@@ -44,8 +43,7 @@ module PrometheusExporter::Instrumentation
     end
 
     def initialize(options = { client: nil })
-      @client =
-        options.fetch(:client, nil) || PrometheusExporter::Client.default
+      @client = options.fetch(:client, nil) || PrometheusExporter::Client.default
     end
 
     def call(worker, msg, queue)
@@ -67,7 +65,7 @@ module PrometheusExporter::Instrumentation
         success: success,
         shutdown: shutdown,
         duration: duration,
-        custom_labels: self.class.get_worker_custom_labels(worker.class, msg)
+        custom_labels: self.class.get_worker_custom_labels(worker.class, msg),
       )
     end
 

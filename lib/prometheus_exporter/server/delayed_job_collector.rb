@@ -20,19 +20,31 @@ module PrometheusExporter::Server
     end
 
     def collect(obj)
-      custom_labels = obj['custom_labels'] || {}
-      gauge_labels = { queue_name: obj['queue_name'] }.merge(custom_labels)
-      counter_labels = gauge_labels.merge(job_name: obj['name'])
+      custom_labels = obj["custom_labels"] || {}
+      gauge_labels = { queue_name: obj["queue_name"] }.merge(custom_labels)
+      counter_labels = gauge_labels.merge(job_name: obj["name"])
 
       ensure_delayed_job_metrics
       @delayed_job_duration_seconds.observe(obj["duration"], counter_labels)
       @delayed_job_latency_seconds_total.observe(obj["latency"], counter_labels)
       @delayed_jobs_total.observe(1, counter_labels)
       @delayed_failed_jobs_total.observe(1, counter_labels) if !obj["success"]
-      @delayed_jobs_max_attempts_reached_total.observe(1, counter_labels) if obj["attempts"] >= obj["max_attempts"]
+      if obj["attempts"] >= obj["max_attempts"]
+        @delayed_jobs_max_attempts_reached_total.observe(1, counter_labels)
+      end
       @delayed_job_duration_seconds_summary.observe(obj["duration"], counter_labels)
-      @delayed_job_duration_seconds_summary.observe(obj["duration"], counter_labels.merge(status: "success")) if obj["success"]
-      @delayed_job_duration_seconds_summary.observe(obj["duration"], counter_labels.merge(status: "failed"))  if !obj["success"]
+      if obj["success"]
+        @delayed_job_duration_seconds_summary.observe(
+          obj["duration"],
+          counter_labels.merge(status: "success"),
+        )
+      end
+      if !obj["success"]
+        @delayed_job_duration_seconds_summary.observe(
+          obj["duration"],
+          counter_labels.merge(status: "failed"),
+        )
+      end
       @delayed_job_attempts_summary.observe(obj["attempts"], counter_labels) if obj["success"]
       @delayed_jobs_enqueued.observe(obj["enqueued"], gauge_labels)
       @delayed_jobs_pending.observe(obj["pending"], gauge_labels)
@@ -40,9 +52,17 @@ module PrometheusExporter::Server
 
     def metrics
       if @delayed_jobs_total
-        [@delayed_job_duration_seconds, @delayed_job_latency_seconds_total, @delayed_jobs_total, @delayed_failed_jobs_total,
-         @delayed_jobs_max_attempts_reached_total, @delayed_job_duration_seconds_summary, @delayed_job_attempts_summary,
-         @delayed_jobs_enqueued, @delayed_jobs_pending]
+        [
+          @delayed_job_duration_seconds,
+          @delayed_job_latency_seconds_total,
+          @delayed_jobs_total,
+          @delayed_failed_jobs_total,
+          @delayed_jobs_max_attempts_reached_total,
+          @delayed_job_duration_seconds_summary,
+          @delayed_job_attempts_summary,
+          @delayed_jobs_enqueued,
+          @delayed_jobs_pending,
+        ]
       else
         []
       end
@@ -52,42 +72,59 @@ module PrometheusExporter::Server
 
     def ensure_delayed_job_metrics
       if !@delayed_jobs_total
-
         @delayed_job_duration_seconds =
-        PrometheusExporter::Metric::Counter.new(
-          "delayed_job_duration_seconds", "Total time spent in delayed jobs.")
+          PrometheusExporter::Metric::Counter.new(
+            "delayed_job_duration_seconds",
+            "Total time spent in delayed jobs.",
+          )
 
         @delayed_job_latency_seconds_total =
-        PrometheusExporter::Metric::Counter.new(
-          "delayed_job_latency_seconds_total", "Total delayed jobs latency.")
+          PrometheusExporter::Metric::Counter.new(
+            "delayed_job_latency_seconds_total",
+            "Total delayed jobs latency.",
+          )
 
         @delayed_jobs_total =
-        PrometheusExporter::Metric::Counter.new(
-          "delayed_jobs_total", "Total number of delayed jobs executed.")
+          PrometheusExporter::Metric::Counter.new(
+            "delayed_jobs_total",
+            "Total number of delayed jobs executed.",
+          )
 
         @delayed_jobs_enqueued =
-        PrometheusExporter::Metric::Gauge.new(
-          "delayed_jobs_enqueued", "Number of enqueued delayed jobs.")
+          PrometheusExporter::Metric::Gauge.new(
+            "delayed_jobs_enqueued",
+            "Number of enqueued delayed jobs.",
+          )
 
         @delayed_jobs_pending =
-        PrometheusExporter::Metric::Gauge.new(
-          "delayed_jobs_pending", "Number of pending delayed jobs.")
+          PrometheusExporter::Metric::Gauge.new(
+            "delayed_jobs_pending",
+            "Number of pending delayed jobs.",
+          )
 
         @delayed_failed_jobs_total =
-        PrometheusExporter::Metric::Counter.new(
-          "delayed_failed_jobs_total", "Total number failed delayed jobs executed.")
+          PrometheusExporter::Metric::Counter.new(
+            "delayed_failed_jobs_total",
+            "Total number failed delayed jobs executed.",
+          )
 
         @delayed_jobs_max_attempts_reached_total =
-            PrometheusExporter::Metric::Counter.new(
-                "delayed_jobs_max_attempts_reached_total", "Total number of delayed jobs that reached max attempts.")
+          PrometheusExporter::Metric::Counter.new(
+            "delayed_jobs_max_attempts_reached_total",
+            "Total number of delayed jobs that reached max attempts.",
+          )
 
         @delayed_job_duration_seconds_summary =
-            PrometheusExporter::Metric::Base.default_aggregation.new("delayed_job_duration_seconds_summary",
-                                                                     "Summary of the time it takes jobs to execute.")
+          PrometheusExporter::Metric::Base.default_aggregation.new(
+            "delayed_job_duration_seconds_summary",
+            "Summary of the time it takes jobs to execute.",
+          )
 
         @delayed_job_attempts_summary =
-            PrometheusExporter::Metric::Base.default_aggregation.new("delayed_job_attempts_summary",
-                                                                     "Summary of the amount of attempts it takes delayed jobs to succeed.")
+          PrometheusExporter::Metric::Base.default_aggregation.new(
+            "delayed_job_attempts_summary",
+            "Summary of the amount of attempts it takes delayed jobs to succeed.",
+          )
       end
     end
   end

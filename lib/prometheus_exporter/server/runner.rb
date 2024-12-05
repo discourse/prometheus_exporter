@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
-require_relative '../client'
+require_relative "../client"
 
 module PrometheusExporter::Server
-  class RunnerException < StandardError; end
-  class WrongInheritance < RunnerException; end
+  class RunnerException < StandardError
+  end
+
+  class WrongInheritance < RunnerException
+  end
 
   class Runner
     def initialize(options = {})
@@ -18,9 +21,7 @@ module PrometheusExporter::Server
       @realm = nil
       @histogram = nil
 
-      options.each do |k, v|
-        send("#{k}=", v) if self.class.method_defined?("#{k}=")
-      end
+      options.each { |k, v| send("#{k}=", v) if self.class.method_defined?("#{k}=") }
     end
 
     def start
@@ -34,27 +35,47 @@ module PrometheusExporter::Server
       register_type_collectors
 
       unless collector.is_a?(PrometheusExporter::Server::CollectorBase)
-        raise WrongInheritance, 'Collector class must be inherited from PrometheusExporter::Server::CollectorBase'
+        raise WrongInheritance,
+              "Collector class must be inherited from PrometheusExporter::Server::CollectorBase"
       end
 
       if unicorn_listen_address && unicorn_pid_file
-
-        require_relative '../instrumentation'
+        require_relative "../instrumentation"
 
         local_client = PrometheusExporter::LocalClient.new(collector: collector)
         PrometheusExporter::Instrumentation::Unicorn.start(
           pid_file: unicorn_pid_file,
           listener_address: unicorn_listen_address,
-          client: local_client
+          client: local_client,
         )
       end
 
-      server = server_class.new(port: port, bind: bind, collector: collector, timeout: timeout, verbose: verbose, auth: auth, realm: realm)
+      server =
+        server_class.new(
+          port: port,
+          bind: bind,
+          collector: collector,
+          timeout: timeout,
+          verbose: verbose,
+          auth: auth,
+          realm: realm,
+        )
       server.start
     end
 
     attr_accessor :unicorn_listen_address, :unicorn_pid_file
-    attr_writer :prefix, :port, :bind, :collector_class, :type_collectors, :timeout, :verbose, :server_class, :label, :auth, :realm, :histogram
+    attr_writer :prefix,
+                :port,
+                :bind,
+                :collector_class,
+                :type_collectors,
+                :timeout,
+                :verbose,
+                :server_class,
+                :label,
+                :auth,
+                :realm,
+                :histogram
 
     def auth
       @auth || nil
@@ -89,7 +110,7 @@ module PrometheusExporter::Server
     end
 
     def verbose
-      return @verbose if defined? @verbose
+      return @verbose if defined?(@verbose)
       false
     end
 

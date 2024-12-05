@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'minitest/stub_const'
-require_relative 'test_helper'
-require 'rack/test'
-require 'prometheus_exporter/middleware'
+require "minitest/stub_const"
+require_relative "test_helper"
+require "rack/test"
+require "prometheus_exporter/middleware"
 
 class PrometheusExporterMiddlewareTest < Minitest::Test
   include Rack::Test::Methods
@@ -23,9 +23,7 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
   end
 
   def inner_app
-    Proc.new do |env|
-      [200, {}, "OK"]
-    end
+    Proc.new { |env| [200, {}, "OK"] }
   end
 
   def now
@@ -42,7 +40,7 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
 
   def assert_valid_headers_response(delta = 0.5)
     configure_middleware
-    get '/'
+    get "/"
     assert last_response.ok?
     refute_nil client.last_send
     refute_nil client.last_send[:queue_time]
@@ -51,7 +49,7 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
 
   def assert_invalid_headers_response
     configure_middleware
-    get '/'
+    get "/"
     assert last_response.ok?
     refute_nil client.last_send
     assert_nil client.last_send[:queue_time]
@@ -59,34 +57,34 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
 
   def test_converting_apache_request_start
     configure_middleware
-    now_microsec = '1234567890123456'
-    header 'X-Request-Start', "t=#{now_microsec}"
+    now_microsec = "1234567890123456"
+    header "X-Request-Start", "t=#{now_microsec}"
     assert_valid_headers_response
   end
 
   def test_converting_nginx_request_start
     configure_middleware
-    now = '1234567890.123'
-    header 'X-Request-Start', "t=#{now}"
+    now = "1234567890.123"
+    header "X-Request-Start", "t=#{now}"
     assert_valid_headers_response
   end
 
   def test_request_start_in_wrong_format
     configure_middleware
-    header 'X-Request-Start', ""
+    header "X-Request-Start", ""
     assert_invalid_headers_response
   end
 
   def test_converting_amzn_trace_id_start
     configure_middleware
-    now = '1234567890'
-    header 'X-Amzn-Trace-Id', "Root=1-#{now.to_i.to_s(16)}-abc123"
+    now = "1234567890"
+    header "X-Amzn-Trace-Id", "Root=1-#{now.to_i.to_s(16)}-abc123"
     assert_valid_headers_response
   end
 
   def test_amzn_trace_id_in_wrong_format
     configure_middleware
-    header 'X-Amzn-Trace-Id', ""
+    header "X-Amzn-Trace-Id", ""
     assert_invalid_headers_response
   end
 
@@ -180,7 +178,7 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
   def test_patch_called_with_alias_method_instrument
     Object.stub_const(:Redis, Module) do
       # must be less than version 5 for this instrumentation
-      ::Redis.stub_const(:VERSION, '4.0.4') do
+      ::Redis.stub_const(:VERSION, "4.0.4") do
         ::Redis.stub_const(:Client) do
           mock = Minitest::Mock.new
           mock.expect :call, nil, [Redis::Client, Array, :redis], instrument: :alias_method

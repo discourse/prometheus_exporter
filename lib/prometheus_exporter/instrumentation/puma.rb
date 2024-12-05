@@ -26,7 +26,7 @@ module PrometheusExporter::Instrumentation
         pid: pid,
         type: "puma",
         hostname: ::PrometheusExporter.hostname,
-        metric_labels: @metric_labels
+        metric_labels: @metric_labels,
       }
       collect_puma_stats(metric)
       metric

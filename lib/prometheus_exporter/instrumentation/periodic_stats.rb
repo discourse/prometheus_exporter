@@ -2,21 +2,14 @@
 
 module PrometheusExporter::Instrumentation
   class PeriodicStats
-
     def self.start(*args, frequency:, client: nil, **kwargs)
       client ||= PrometheusExporter::Client.default
 
-      if !(Numeric === frequency)
-        raise ArgumentError.new("Expected frequency to be a number")
-      end
+      raise ArgumentError.new("Expected frequency to be a number") if !(Numeric === frequency)
 
-      if frequency < 0
-        raise ArgumentError.new("Expected frequency to be a positive number")
-      end
+      raise ArgumentError.new("Expected frequency to be a positive number") if frequency < 0
 
-      if !@worker_loop
-        raise ArgumentError.new("Worker loop was not set")
-      end
+      raise ArgumentError.new("Worker loop was not set") if !@worker_loop
 
       klass = self
 
@@ -24,18 +17,18 @@ module PrometheusExporter::Instrumentation
 
       @stop_thread = false
 
-      @thread = Thread.new do
-        while !@stop_thread
-          begin
-            @worker_loop.call
-          rescue => e
-            client.logger.error("#{klass} Prometheus Exporter Failed To Collect Stats #{e}")
-          ensure
-            sleep frequency
+      @thread =
+        Thread.new do
+          while !@stop_thread
+            begin
+              @worker_loop.call
+            rescue => e
+              client.logger.error("#{klass} Prometheus Exporter Failed To Collect Stats #{e}")
+            ensure
+              sleep frequency
+            end
           end
         end
-      end
-
     end
 
     def self.started?
@@ -57,6 +50,5 @@ module PrometheusExporter::Instrumentation
       end
       @thread = nil
     end
-
   end
 end

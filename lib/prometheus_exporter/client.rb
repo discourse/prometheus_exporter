@@ -17,13 +17,7 @@ module PrometheusExporter
       end
 
       def standard_values(value, keys, prometheus_exporter_action = nil)
-        values = {
-          type: @type,
-          help: @help,
-          name: @name,
-          keys: keys,
-          value: value
-        }
+        values = { type: @type, help: @help, name: @name, keys: keys, value: value }
         values[
           :prometheus_exporter_action
         ] = prometheus_exporter_action if prometheus_exporter_action
@@ -59,10 +53,7 @@ module PrometheusExporter
 
     def initialize(
       host: ENV.fetch("PROMETHEUS_EXPORTER_HOST", "localhost"),
-      port: ENV.fetch(
-        "PROMETHEUS_EXPORTER_PORT",
-        PrometheusExporter::DEFAULT_PORT
-      ),
+      port: ENV.fetch("PROMETHEUS_EXPORTER_PORT", PrometheusExporter::DEFAULT_PORT),
       max_queue_size: nil,
       thread_sleep: 0.5,
       json_serializer: nil,
@@ -83,9 +74,7 @@ module PrometheusExporter
       max_queue_size ||= MAX_QUEUE_SIZE
       max_queue_size = max_queue_size.to_i
 
-      if max_queue_size <= 0
-        raise ArgumentError, "max_queue_size must be larger than 0"
-      end
+      raise ArgumentError, "max_queue_size must be larger than 0" if max_queue_size <= 0
 
       @max_queue_size = max_queue_size
       @host = host
@@ -94,8 +83,7 @@ module PrometheusExporter
       @mutex = Mutex.new
       @thread_sleep = thread_sleep
 
-      @json_serializer =
-        json_serializer == :oj ? PrometheusExporter::OjCompat : JSON
+      @json_serializer = json_serializer == :oj ? PrometheusExporter::OjCompat : JSON
 
       @custom_labels = custom_labels
     end
@@ -105,14 +93,7 @@ module PrometheusExporter
     end
 
     def register(type, name, help, opts = nil)
-      metric =
-        RemoteMetric.new(
-          type: type,
-          name: name,
-          help: help,
-          client: self,
-          opts: opts
-        )
+      metric = RemoteMetric.new(type: type, name: name, help: help, client: self, opts: opts)
       @metrics << metric
       metric
     end
@@ -262,10 +243,7 @@ module PrometheusExporter
     def wait_for_empty_queue_with_timeout(timeout_seconds)
       start_time = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
       while @queue.length > 0
-        if start_time + timeout_seconds <
-             ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
-          break
-        end
+        break if start_time + timeout_seconds < ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
         sleep(0.05)
       end
     end

@@ -6,9 +6,7 @@ module PrometheusExporter::Instrumentation
       client ||= PrometheusExporter::Client.default
       sidekiq_queue_collector = new(all_queues: all_queues)
 
-      worker_loop do
-        client.send_json(sidekiq_queue_collector.collect)
-      end
+      worker_loop { client.send_json(sidekiq_queue_collector.collect) }
 
       super
     end
@@ -20,10 +18,7 @@ module PrometheusExporter::Instrumentation
     end
 
     def collect
-      {
-        type: 'sidekiq_queue',
-        queues: collect_queue_stats
-      }
+      { type: "sidekiq_queue", queues: collect_queue_stats }
     end
 
     def collect_queue_stats
@@ -34,13 +29,17 @@ module PrometheusExporter::Instrumentation
         sidekiq_queues.select! { |sidekiq_queue| queues.include?(sidekiq_queue.name) }
       end
 
-      sidekiq_queues.map do |queue|
-        {
-          backlog: queue.size,
-          latency_seconds: queue.latency.to_i,
-          labels: { queue: queue.name }
-        }
-      end.compact
+      sidekiq_queues
+        .map do |queue|
+          {
+            backlog: queue.size,
+            latency_seconds: queue.latency.to_i,
+            labels: {
+              queue: queue.name,
+            },
+          }
+        end
+        .compact
     end
 
     private
@@ -48,11 +47,9 @@ module PrometheusExporter::Instrumentation
     def collect_current_process_queues
       ps = ::Sidekiq::ProcessSet.new
 
-      process = ps.find do |sp|
-        sp['hostname'] == @hostname && sp['pid'] == @pid
-      end
+      process = ps.find { |sp| sp["hostname"] == @hostname && sp["pid"] == @pid }
 
-      process.nil? ? [] : process['queues']
+      process.nil? ? [] : process["queues"]
     end
   end
 end

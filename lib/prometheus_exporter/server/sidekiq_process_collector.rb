@@ -5,8 +5,8 @@ module PrometheusExporter::Server
     MAX_METRIC_AGE = 60
 
     SIDEKIQ_PROCESS_GAUGES = {
-      'busy' => 'Number of running jobs',
-      'concurrency' => 'Maximum concurrency',
+      "busy" => "Number of running jobs",
+      "concurrency" => "Maximum concurrency",
     }.freeze
 
     attr_reader :sidekiq_metrics, :gauges
@@ -17,17 +17,21 @@ module PrometheusExporter::Server
     end
 
     def type
-      'sidekiq_process'
+      "sidekiq_process"
     end
 
     def metrics
       SIDEKIQ_PROCESS_GAUGES.each_key { |name| gauges[name]&.reset! }
 
       sidekiq_metrics.map do |metric|
-        labels = metric.fetch('labels', {})
+        labels = metric.fetch("labels", {})
         SIDEKIQ_PROCESS_GAUGES.map do |name, help|
           if (value = metric[name])
-            gauge = gauges[name] ||= PrometheusExporter::Metric::Gauge.new("sidekiq_process_#{name}", help)
+            gauge =
+              gauges[name] ||= PrometheusExporter::Metric::Gauge.new(
+                "sidekiq_process_#{name}",
+                help,
+              )
             gauge.observe(value, labels)
           end
         end

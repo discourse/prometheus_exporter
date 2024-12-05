@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative '../test_helper'
-require 'prometheus_exporter/metric'
+require_relative "../test_helper"
+require "prometheus_exporter/metric"
 
 module PrometheusExporter::Metric
   describe Base do
@@ -9,20 +9,20 @@ module PrometheusExporter::Metric
       Counter.new("a_counter", "my amazing counter")
     end
 
-    before  do
-      Base.default_prefix = ''
+    before do
+      Base.default_prefix = ""
       Base.default_labels = {}
       Base.default_aggregation = nil
     end
 
     after do
-      Base.default_prefix = ''
+      Base.default_prefix = ""
       Base.default_labels = {}
       Base.default_aggregation = nil
     end
 
     it "supports a dynamic prefix" do
-      Base.default_prefix = 'web_'
+      Base.default_prefix = "web_"
       counter.observe
 
       text = <<~TEXT
@@ -67,7 +67,6 @@ module PrometheusExporter::Metric
     end
 
     it "supports reset! for Gauge" do
-
       gauge = Gauge.new("test", "test")
 
       gauge.observe(999)
@@ -83,7 +82,6 @@ module PrometheusExporter::Metric
     end
 
     it "supports reset! for Counter" do
-
       counter = Counter.new("test", "test")
 
       counter.observe(999)
@@ -99,7 +97,6 @@ module PrometheusExporter::Metric
     end
 
     it "supports reset! for Histogram" do
-
       histogram = Histogram.new("test", "test")
 
       histogram.observe(999)
@@ -115,7 +112,6 @@ module PrometheusExporter::Metric
     end
 
     it "supports reset! for Summary" do
-
       summary = Summary.new("test", "test")
 
       summary.observe(999)

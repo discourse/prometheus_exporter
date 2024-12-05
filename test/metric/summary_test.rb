@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative '../test_helper'
-require 'prometheus_exporter/metric'
+require_relative "../test_helper"
+require "prometheus_exporter/metric"
 
 module PrometheusExporter::Metric
   describe Summary do
@@ -9,16 +9,12 @@ module PrometheusExporter::Metric
       Summary.new("a_summary", "my amazing summary")
     end
 
-    before do
-      Base.default_prefix = ''
-    end
+    before { Base.default_prefix = "" }
 
     it "can correctly gather a summary with custom quantiles" do
       summary = Summary.new("custom", "custom summary", quantiles: [0.4, 0.6])
 
-      (1..10).each do |i|
-        summary.observe(i)
-      end
+      (1..10).each { |i| summary.observe(i) }
 
       expected = <<~TEXT
         # HELP custom custom summary
@@ -33,7 +29,6 @@ module PrometheusExporter::Metric
     end
 
     it "can correctly gather a summary over multiple labels" do
-
       summary.observe(0.1, nil)
       summary.observe(0.2)
       summary.observe(0.610001)
@@ -90,16 +85,13 @@ module PrometheusExporter::Metric
     end
 
     it "can correctly rotate quantiles" do
-
       Process.stub(:clock_gettime, 1.0) do
         summary.observe(0.1)
         summary.observe(0.2)
         summary.observe(0.6)
       end
 
-      Process.stub(:clock_gettime, 1.0 + Summary::ROTATE_AGE + 1.0) do
-        summary.observe(300)
-      end
+      Process.stub(:clock_gettime, 1.0 + Summary::ROTATE_AGE + 1.0) { summary.observe(300) }
 
       Process.stub(:clock_gettime, 1.0 + (Summary::ROTATE_AGE * 2) + 1.1) do
         summary.observe(100)

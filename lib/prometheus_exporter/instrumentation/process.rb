@@ -3,9 +3,7 @@
 # collects stats from currently running process
 module PrometheusExporter::Instrumentation
   class Process < PeriodicStats
-
     def self.start(client: nil, type: "ruby", frequency: 30, labels: nil)
-
       metric_labels =
         if labels && type
           labels.merge(type: type)
@@ -46,14 +44,22 @@ module PrometheusExporter::Instrumentation
     end
 
     def rss
-      @pagesize ||= `getconf PAGESIZE`.to_i rescue 4096
-      File.read("/proc/#{pid}/statm").split(' ')[1].to_i * @pagesize rescue 0
+      @pagesize ||=
+        begin
+          `getconf PAGESIZE`.to_i
+        rescue StandardError
+          4096
+        end
+      begin
+        File.read("/proc/#{pid}/statm").split(" ")[1].to_i * @pagesize
+      rescue StandardError
+        0
+      end
     end
 
     def collect_process_stats(metric)
       metric[:pid] = pid
       metric[:rss] = rss
-
     end
 
     def collect_gc_stats(metric)
@@ -68,7 +74,7 @@ module PrometheusExporter::Instrumentation
     end
 
     def collect_v8_stats(metric)
-      return if !defined? MiniRacer
+      return if !defined?(MiniRacer)
 
       metric[:v8_heap_count] = metric[:v8_heap_size] = 0
       metric[:v8_heap_size] = metric[:v8_physical_size] = 0

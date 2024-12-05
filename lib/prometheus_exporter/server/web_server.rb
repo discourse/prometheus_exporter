@@ -21,19 +21,19 @@ module PrometheusExporter::Server
       @metrics_total =
         PrometheusExporter::Metric::Counter.new(
           "collector_metrics_total",
-          "Total metrics processed by exporter web."
+          "Total metrics processed by exporter web.",
         )
 
       @sessions_total =
         PrometheusExporter::Metric::Counter.new(
           "collector_sessions_total",
-          "Total send_metric sessions processed by exporter web."
+          "Total send_metric sessions processed by exporter web.",
         )
 
       @bad_metrics_total =
         PrometheusExporter::Metric::Counter.new(
           "collector_bad_metrics_total",
-          "Total mis-handled metrics by collector."
+          "Total mis-handled metrics by collector.",
         )
 
       @metrics_total.observe(0)
@@ -46,7 +46,7 @@ module PrometheusExporter::Server
       if @verbose
         @access_log = [
           [$stderr, WEBrick::AccessLog::COMMON_LOG_FORMAT],
-          [$stderr, WEBrick::AccessLog::REFERER_LOG_FORMAT]
+          [$stderr, WEBrick::AccessLog::REFERER_LOG_FORMAT],
         ]
         @logger = WEBrick::Log.new(log_target || $stderr)
       else
@@ -54,9 +54,7 @@ module PrometheusExporter::Server
         @logger = WEBrick::Log.new(log_target || "/dev/null")
       end
 
-      if @verbose && @auth
-        @logger.info "Using Basic Authentication via #{@auth}"
-      end
+      @logger.info "Using Basic Authentication via #{@auth}" if @verbose && @auth
 
       if %w[ALL ANY].include?(@bind)
         @logger.info "Listening on both 0.0.0.0/:: network interfaces"
@@ -68,7 +66,7 @@ module PrometheusExporter::Server
           Port: @port,
           BindAddress: @bind,
           Logger: @logger,
-          AccessLog: @access_log
+          AccessLog: @access_log,
         )
 
       @server.mount_proc "/" do |req, res|
@@ -140,9 +138,7 @@ module PrometheusExporter::Server
     def metrics
       metric_text = nil
       begin
-        Timeout.timeout(@timeout) do
-          metric_text = @collector.prometheus_metrics_text
-        end
+        Timeout.timeout(@timeout) { metric_text = @collector.prometheus_metrics_text }
       rescue Timeout::Error
         # we timed out ... bummer
         @logger.error "Generating Prometheus metrics text timed out"
@@ -153,14 +149,10 @@ module PrometheusExporter::Server
       metrics << add_gauge(
         "collector_working",
         "Is the master process collector able to collect metrics",
-        metric_text && metric_text.length > 0 ? 1 : 0
+        metric_text && metric_text.length > 0 ? 1 : 0,
       )
 
-      metrics << add_gauge(
-        "collector_rss",
-        "total memory used by collector process",
-        get_rss
-      )
+      metrics << add_gauge("collector_rss", "total memory used by collector process", get_rss)
 
       metrics << @metrics_total
       metrics << @sessions_total
@@ -196,9 +188,7 @@ module PrometheusExporter::Server
     def authenticate(req, res)
       htpasswd = WEBrick::HTTPAuth::Htpasswd.new(@auth)
       basic_auth =
-        WEBrick::HTTPAuth::BasicAuth.new(
-          { Realm: @realm, UserDB: htpasswd, Logger: @logger }
-        )
+        WEBrick::HTTPAuth::BasicAuth.new({ Realm: @realm, UserDB: htpasswd, Logger: @logger })
 
       basic_auth.authenticate(req, res)
     end

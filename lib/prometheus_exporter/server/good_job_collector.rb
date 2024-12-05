@@ -10,7 +10,7 @@ module PrometheusExporter::Server
       running: "Total number of running GoodJob jobs.",
       finished: "Total number of finished GoodJob jobs.",
       succeeded: "Total number of succeeded GoodJob jobs.",
-      discarded: "Total number of discarded GoodJob jobs."
+      discarded: "Total number of discarded GoodJob jobs.",
     }
 
     def initialize

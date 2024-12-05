@@ -5,22 +5,20 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "prometheus_exporter/version"
 
 Gem::Specification.new do |spec|
-  spec.name                 = "prometheus_exporter"
-  spec.version              = PrometheusExporter::VERSION
-  spec.authors              = ["Sam Saffron"]
-  spec.email                = ["sam.saffron@gmail.com"]
+  spec.name = "prometheus_exporter"
+  spec.version = PrometheusExporter::VERSION
+  spec.authors = ["Sam Saffron"]
+  spec.email = ["sam.saffron@gmail.com"]
 
-  spec.summary              = %q{Prometheus Exporter}
-  spec.description          = %q{Prometheus metric collector and exporter for Ruby}
-  spec.homepage             = "https://github.com/discourse/prometheus_exporter"
-  spec.license              = "MIT"
+  spec.summary = "Prometheus Exporter"
+  spec.description = "Prometheus metric collector and exporter for Ruby"
+  spec.homepage = "https://github.com/discourse/prometheus_exporter"
+  spec.license = "MIT"
 
-  spec.files = `git ls-files -z`.split("\x0").reject do |f|
-    f.match(%r{^(test|spec|features|bin)/})
-  end
-  spec.bindir               = "bin"
-  spec.executables          = ["prometheus_exporter"]
-  spec.require_paths        = ["lib"]
+  spec.files = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features|bin)/}) }
+  spec.bindir = "bin"
+  spec.executables = ["prometheus_exporter"]
+  spec.require_paths = ["lib"]
 
   spec.add_dependency "webrick"
 
@@ -39,8 +37,8 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "activerecord", "~> 6.0.0"
   spec.add_development_dependency "redis", "> 5"
   spec.add_development_dependency "m"
-  if !RUBY_ENGINE == 'jruby'
-    spec.add_development_dependency "raindrops", "~> 0.19"
-  end
-  spec.required_ruby_version = '>= 3.0.0'
+  spec.add_development_dependency "syntax_tree"
+  spec.add_development_dependency "syntax_tree-disable_ternary"
+  spec.add_development_dependency "raindrops", "~> 0.19" if !RUBY_ENGINE == "jruby"
+  spec.required_ruby_version = ">= 3.0.0"
 end

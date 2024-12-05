@@ -1,8 +1,8 @@
 # frozen_string_literal: true
-require_relative '../test_helper'
-require 'prometheus_exporter/server'
-require 'prometheus_exporter/instrumentation'
-require 'prometheus_exporter/server/metrics_container'
+require_relative "../test_helper"
+require "prometheus_exporter/server"
+require "prometheus_exporter/instrumentation"
+require "prometheus_exporter/server/metrics_container"
 
 class PrometheusMetricsContainerTest < Minitest::Test
   def metrics
@@ -20,7 +20,7 @@ class PrometheusMetricsContainerTest < Minitest::Test
     stub_monotonic_clock(61.0) do
       metrics << { key: "value2" }
       assert_equal 2, metrics.size
-      assert_equal ["value", "value2"], metrics.map { |v| v[:key] }
+      assert_equal %w[value value2], metrics.map { |v| v[:key] }
       assert_equal 61.0, metrics[0]["_expire_at"]
       assert_equal 121.0, metrics[1]["_expire_at"]
     end
@@ -28,7 +28,7 @@ class PrometheusMetricsContainerTest < Minitest::Test
     stub_monotonic_clock(62.0) do
       metrics << { key: "value3" }
       assert_equal 2, metrics.size
-      assert_equal ["value2", "value3"], metrics.map { |v| v[:key] }
+      assert_equal %w[value2 value3], metrics.map { |v| v[:key] }
       assert_equal 121.0, metrics[0]["_expire_at"]
       assert_equal 122.0, metrics[1]["_expire_at"]
     end
@@ -45,9 +45,7 @@ class PrometheusMetricsContainerTest < Minitest::Test
   end
 
   def test_container_with_filter
-    metrics.filter = -> (new_metric, old_metric) do
-      new_metric[:hostname] == old_metric[:hostname]
-    end
+    metrics.filter = ->(new_metric, old_metric) { new_metric[:hostname] == old_metric[:hostname] }
 
     stub_monotonic_clock(1.0) do
       metrics << { hostname: "host1", value: 100 }
