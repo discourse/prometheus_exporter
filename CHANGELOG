@@ -1,3 +1,8 @@
+2.2.0 - 2024-12-05
+
+- FIX: Ensure socket is closed when error is raised while opening socket
+- Feature: Add Dalli::Client memcache metrics for web_collector
+
 2.1.1 - 2024-06-19
 
 - FEATURE: improve good_job instrumentation
