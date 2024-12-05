@@ -13,7 +13,7 @@ permissions:
   packages: write
 
 env:
-  DOCKER_REPO: ghcr.io/discourse/prometheus_exporter
+  DOCKER_REPO: ghcr.io/${{ github.repository_owner }}/prometheus_exporter
 
 jobs:
   build:
@@ -61,7 +61,7 @@ jobs:
 
       - name: Release gem
         id: release
-        uses: discourse/publish-rubygems-action@v2
+        uses: discourse/publish-rubygems-action@v3
         env:
           RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
           GIT_EMAIL: team@discourse.org
