@@ -11,6 +11,7 @@ module PrometheusExporter::Server
       request_backlog: "Number of requests waiting to be processed by a puma thread.",
       thread_pool_capacity: "Number of puma threads available at current scale.",
       max_threads: "Number of puma threads at available at max scale.",
+      busy_threads: "Wholistic stat reflecting the overall current state of work to be done and the capacity to do it",
     }
 
     def initialize
