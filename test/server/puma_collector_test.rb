@@ -23,6 +23,7 @@ class PrometheusPumaCollectorTest < Minitest::Test
       "old_workers" => 0,
       "request_backlog" => 0,
       "running_threads" => 4,
+      "busy_threads" => 6,
       "thread_pool_capacity" => 10,
       "max_threads" => 10,
     )
@@ -37,6 +38,7 @@ class PrometheusPumaCollectorTest < Minitest::Test
       "old_workers" => 0,
       "request_backlog" => 1,
       "running_threads" => 9,
+      "busy_threads" => 10,
       "thread_pool_capacity" => 10,
       "max_threads" => 10,
     )
@@ -52,6 +54,7 @@ class PrometheusPumaCollectorTest < Minitest::Test
       "old_workers" => 0,
       "request_backlog" => 2,
       "running_threads" => 8,
+      "busy_threads" => 10,
       "thread_pool_capacity" => 10,
       "max_threads" => 10,
     )
@@ -72,6 +75,7 @@ class PrometheusPumaCollectorTest < Minitest::Test
       "old_workers" => 0,
       "request_backlog" => 0,
       "running_threads" => 4,
+      "busy_threads" => 4,
       "thread_pool_capacity" => 10,
       "max_threads" => 10,
       "custom_labels" => {
@@ -89,6 +93,7 @@ class PrometheusPumaCollectorTest < Minitest::Test
       "old_workers" => 0,
       "request_backlog" => 1,
       "running_threads" => 9,
+      "busy_threads" => 10,
       "thread_pool_capacity" => 10,
       "max_threads" => 10,
       "custom_labels" => {
@@ -107,6 +112,7 @@ class PrometheusPumaCollectorTest < Minitest::Test
       "old_workers" => 0,
       "request_backlog" => 2,
       "running_threads" => 8,
+      "busy_threads" => 10,
       "thread_pool_capacity" => 10,
       "max_threads" => 10,
       "custom_labels" => {

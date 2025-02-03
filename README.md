@@ -615,6 +615,7 @@ end
 | Gauge | `puma_booted_workers`       | Number of puma workers booted                               |
 | Gauge | `puma_old_workers`          | Number of old puma workers                                  |
 | Gauge | `puma_running_threads`      | Number of puma threads currently running                    |
+| Gauge | `puma_busy_threads`         | Number of puma threads currently busy                       |
 | Gauge | `puma_request_backlog`      | Number of requests waiting to be processed by a puma thread |
 | Gauge | `puma_thread_pool_capacity` | Number of puma threads available at current scale           |
 | Gauge | `puma_max_threads`          | Number of puma threads at available at max scale            |
