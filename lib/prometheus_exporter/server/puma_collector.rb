@@ -8,6 +8,7 @@ module PrometheusExporter::Server
       booted_workers: "Number of puma workers booted.",
       old_workers: "Number of old puma workers.",
       running_threads: "Number of puma threads currently running.",
+      busy_threads: "Number of puma threads currently busy.",
       request_backlog: "Number of requests waiting to be processed by a puma thread.",
       thread_pool_capacity: "Number of puma threads available at current scale.",
       max_threads: "Number of puma threads at available at max scale.",
