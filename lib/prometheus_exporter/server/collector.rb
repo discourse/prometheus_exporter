@@ -40,6 +40,8 @@ module PrometheusExporter::Server
           metric = @metrics[obj["name"]]
           metric = register_metric_unsafe(obj) if !metric
 
+          next unless metric
+
           keys = obj["keys"] || {}
           keys = obj["custom_labels"].merge(keys) if obj["custom_labels"]
 
@@ -73,6 +75,11 @@ module PrometheusExporter::Server
       name = obj["name"]
       help = obj["help"]
       opts = symbolize_keys(obj["opts"] || {})
+
+      if !name
+        STDERR.puts "failed to register metric due to empty name #{obj}"
+        return
+      end
 
       metric =
         case obj["type"]
