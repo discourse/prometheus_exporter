@@ -14,6 +14,7 @@ class ProcessCollectorTest < Minitest::Test
 
   def base_data
     {
+      "cpu_time_seconds_total" => 1.123456,
       "type" => "process",
       "pid" => "1000",
       "hostname" => "localhost",
@@ -33,7 +34,7 @@ class ProcessCollectorTest < Minitest::Test
   def test_metrics_collection
     collector.collect(base_data)
 
-    assert_equal 10, collector.metrics.size
+    assert_equal 11, collector.metrics.size
     assert_equal [
                    'heap_free_slots{pid="1000",hostname="localhost"} 1000',
                    'heap_live_slots{pid="1000",hostname="localhost"} 1001',
@@ -45,28 +46,29 @@ class ProcessCollectorTest < Minitest::Test
                    'major_gc_ops_total{pid="1000",hostname="localhost"} 4000',
                    'minor_gc_ops_total{pid="1000",hostname="localhost"} 4001',
                    'allocated_objects_total{pid="1000",hostname="localhost"} 4002',
+                   'cpu_time_seconds_total{pid="1000",hostname="localhost"} 1.123456',
                  ],
                  collector_metric_lines
   end
 
   def test_metrics_deduplication
     collector.collect(base_data)
-    assert_equal 10, collector.metrics.size
-    assert_equal 10, collector_metric_lines.size
+    assert_equal 11, collector.metrics.size
+    assert_equal 11, collector_metric_lines.size
 
     collector.collect(base_data)
-    assert_equal 10, collector.metrics.size
-    assert_equal 10, collector_metric_lines.size
+    assert_equal 11, collector.metrics.size
+    assert_equal 11, collector_metric_lines.size
 
     collector.collect(base_data.merge({ "hostname" => "localhost2" }))
-    assert_equal 10, collector.metrics.size
-    assert_equal 20, collector_metric_lines.size
+    assert_equal 11, collector.metrics.size
+    assert_equal 22, collector_metric_lines.size
   end
 
   def test_metrics_expiration
     stub_monotonic_clock(0) do
       collector.collect(base_data)
-      assert_equal 10, collector.metrics.size
+      assert_equal 11, collector.metrics.size
     end
 
     stub_monotonic_clock(max_metric_age + 1) { assert_equal 0, collector.metrics.size }

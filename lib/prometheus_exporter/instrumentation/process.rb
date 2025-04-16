@@ -57,9 +57,14 @@ module PrometheusExporter::Instrumentation
       end
     end
 
+    def cpu_time_seconds_total
+      ::Process.clock_gettime(::Process::CLOCK_PROCESS_CPUTIME_ID)
+    end
+
     def collect_process_stats(metric)
       metric[:pid] = pid
       metric[:rss] = rss
+      metric[:cpu_time_seconds_total] = cpu_time_seconds_total
     end
 
     def collect_gc_stats(metric)

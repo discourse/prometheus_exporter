@@ -1,3 +1,7 @@
+2.3.0 - UNRELEASED
+
+- FEATURE: Add `cpu_time_seconds_total` to process metrics
+
 2.2.0 - 2024-12-05
 
 - FIX: Ensure socket is closed when error is raised while opening socket

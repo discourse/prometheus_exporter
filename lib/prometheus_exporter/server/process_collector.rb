@@ -22,6 +22,7 @@ module PrometheusExporter::Server
       major_gc_ops_total: "Major GC operations by process.",
       minor_gc_ops_total: "Minor GC operations by process.",
       allocated_objects_total: "Total number of allocated objects by process.",
+      cpu_time_seconds_total: "Total CPU time used by process (seconds).",
     }
 
     def initialize
