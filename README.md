@@ -40,7 +40,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
 
 ## Requirements
 
-Minimum Ruby of version 3.0.0 is required, Ruby 2.7 is EOL as of March 31st 2023.
+Minimum Ruby of version 3.2 is required.
 
 ## Migrating from v0.x
 

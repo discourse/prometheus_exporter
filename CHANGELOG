@@ -1,3 +1,7 @@
+UNRELEASED
+
+- BREAKING: Bump minimum Ruby to 3.2 and ActiveRecord to 7.1
+
 2.2.0 - 2024-12-05
 
 - FIX: Ensure socket is closed when error is raised while opening socket

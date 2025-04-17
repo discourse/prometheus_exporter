@@ -40,5 +40,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "syntax_tree"
   spec.add_development_dependency "syntax_tree-disable_ternary"
   spec.add_development_dependency "raindrops", "~> 0.19" if !RUBY_ENGINE == "jruby"
-  spec.required_ruby_version = ">= 3.0.0"
+  spec.required_ruby_version = ">= 3.2"
 end
