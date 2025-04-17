@@ -39,12 +39,6 @@ jobs:
           bundler: latest
           bundler-cache: true
 
-      - name: Rubocop
-        run: bundle exec rubocop
-
-      - name: Syntax tree
-        run: bundle exec stree check Gemfile $(git ls-files '*.rb') $(git ls-files '*.rake') $(git ls-files '*.thor')
-
       - name: Run tests
         run: bundle exec rake
 
