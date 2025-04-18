@@ -9,10 +9,10 @@ require "redis"
 
 module TestingMod
   class FakeConnection
-    def call_pipelined(_, _, _)
+    def call_pipelined(...)
     end
 
-    def call(_, _)
+    def call(...)
     end
 
     def connected?

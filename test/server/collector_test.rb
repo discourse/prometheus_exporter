@@ -1038,7 +1038,7 @@ class PrometheusCollectorTest < Minitest::Test
     mock_puma = Minitest::Mock.new
     mock_puma.expect(
       :stats,
-      '{ "workers": 1, "phase": 0, "booted_workers": 1, "old_workers": 0, "worker_status": [{ "pid": 87819, "index": 0, "phase": 0, "booted": true, "last_checkin": "2018-10-16T11:50:31Z", "last_status": { "backlog":0, "running":8, "pool_capacity":32, "max_threads": 32 } }] }',
+      '{ "workers": 1, "phase": 0, "booted_workers": 1, "old_workers": 0, "worker_status": [{ "pid": 87819, "index": 0, "phase": 0, "booted": true, "last_checkin": "2018-10-16T11:50:31Z", "last_status": { "backlog":0, "running":8, "pool_capacity":32, "max_threads": 32, "busy_threads": 4 } }] }',
     )
 
     instrument = PrometheusExporter::Instrumentation::Puma.new
@@ -1061,6 +1061,10 @@ class PrometheusCollectorTest < Minitest::Test
       result.include?('puma_thread_pool_capacity{phase="0",service="service1"} 32'),
       "has pool capacity",
     )
+    assert(
+      result.include?('puma_busy_threads{phase="0",service="service1"} 4'),
+      "has total busy threads",
+    )
     mock_puma.verify
   end
 
@@ -1071,7 +1075,7 @@ class PrometheusCollectorTest < Minitest::Test
     mock_puma = Minitest::Mock.new
     mock_puma.expect(
       :stats,
-      '{ "workers": 1, "phase": 0, "booted_workers": 1, "old_workers": 0, "worker_status": [{ "pid": 87819, "index": 0, "phase": 0, "booted": true, "last_checkin": "2018-10-16T11:50:31Z", "last_status": { "backlog":0, "running":8, "pool_capacity":32, "max_threads": 32 } }] }',
+      '{ "workers": 1, "phase": 0, "booted_workers": 1, "old_workers": 0, "worker_status": [{ "pid": 87819, "index": 0, "phase": 0, "booted": true, "last_checkin": "2018-10-16T11:50:31Z", "last_status": { "backlog":0, "running":8, "pool_capacity":32, "max_threads": 32, "busy_threads": 4 } }] }',
     )
 
     instrument = PrometheusExporter::Instrumentation::Puma.new({ foo: "bar" })
@@ -1093,6 +1097,10 @@ class PrometheusCollectorTest < Minitest::Test
     assert(
       result.include?('puma_thread_pool_capacity{phase="0",service="service1",foo="bar"} 32'),
       "has pool capacity",
+    )
+    assert(
+      result.include?('puma_busy_threads{phase="0",service="service1",foo="bar"} 4'),
+      "has total busy threads",
     )
     mock_puma.verify
   end

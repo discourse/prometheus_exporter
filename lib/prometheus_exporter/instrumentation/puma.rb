@@ -61,11 +61,13 @@ module PrometheusExporter::Instrumentation
       metric[:running_threads] ||= 0
       metric[:thread_pool_capacity] ||= 0
       metric[:max_threads] ||= 0
+      metric[:busy_threads] ||= 0
 
       metric[:request_backlog] += status["backlog"]
       metric[:running_threads] += status["running"]
       metric[:thread_pool_capacity] += status["pool_capacity"]
       metric[:max_threads] += status["max_threads"]
+      metric[:busy_threads] += status["busy_threads"]
     end
   end
 end
