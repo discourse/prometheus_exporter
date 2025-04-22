@@ -11,9 +11,12 @@ module PrometheusExporter::Server
       request_backlog: "Number of requests waiting to be processed by a puma thread.",
       thread_pool_capacity: "Number of puma threads available at current scale.",
       max_threads: "Number of puma threads at available at max scale.",
-      busy_threads:
-        "Wholistic stat reflecting the overall current state of work to be done and the capacity to do it",
     }
+
+    if defined?(::Puma::Const) && Gem::Version.new(::Puma::Const::VERSION) >= Gem::Version.new('6.6.0')
+      PUMA_GAUGES[:busy_threads] = "Wholistic stat reflecting the overall current state of work to be done and the capacity to do it"
+    end
+
 
     def initialize
       @puma_metrics = MetricsContainer.new(ttl: MAX_PUMA_METRIC_AGE)

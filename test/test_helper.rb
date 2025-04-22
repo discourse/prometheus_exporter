@@ -64,6 +64,18 @@ end
 RedisClient::Middlewares.prepend(TestingMod)
 RedisClient.register(RedisValidationMiddleware)
 
+unless defined?(::Puma)
+  module Puma
+    module Const
+      VERSION = "6.6.0"
+    end
+
+    def self.stats
+      '{}'
+    end
+  end
+end
+
 class TestHelper
   def self.wait_for(time, &blk)
     (time / 0.001).to_i.times do
