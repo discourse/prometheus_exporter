@@ -17,7 +17,6 @@ module PrometheusExporter::Server
       PUMA_GAUGES[:busy_threads] = "Wholistic stat reflecting the overall current state of work to be done and the capacity to do it"
     end
 
-
     def initialize
       @puma_metrics = MetricsContainer.new(ttl: MAX_PUMA_METRIC_AGE)
       @puma_metrics.filter = ->(new_metric, old_metric) do
