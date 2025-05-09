@@ -609,15 +609,16 @@ end
 
 #### Metrics collected by Puma Instrumentation
 
-| Type  | Name                        | Description                                                 |
-| ---   | ---                         | ---                                                         |
-| Gauge | `puma_workers`              | Number of puma workers                                      |
-| Gauge | `puma_booted_workers`       | Number of puma workers booted                               |
-| Gauge | `puma_old_workers`          | Number of old puma workers                                  |
-| Gauge | `puma_running_threads`      | Number of puma threads currently running                    |
-| Gauge | `puma_request_backlog`      | Number of requests waiting to be processed by a puma thread |
-| Gauge | `puma_thread_pool_capacity` | Number of puma threads available at current scale           |
-| Gauge | `puma_max_threads`          | Number of puma threads at available at max scale            |
+| Type  | Name                        | Description                                                                                                         |
+| ---   | ---                         | ---                                                                                                                 |
+| Gauge | `puma_workers`              | Number of puma workers                                                                                              |
+| Gauge | `puma_booted_workers`       | Number of puma workers booted                                                                                       |
+| Gauge | `puma_old_workers`          | Number of old puma workers                                                                                          |
+| Gauge | `puma_running_threads`      | How many threads are spawned. A spawned thread may be busy processing a request or waiting for a new request        |
+| Gauge | `puma_request_backlog`      | Number of requests waiting to be processed by a puma thread                                                         |
+| Gauge | `puma_thread_pool_capacity` | Number of puma threads available at current scale                                                                   |
+| Gauge | `puma_max_threads`          | Number of puma threads at available at max scale                                                                    |
+| Gauge | `puma_busy_threads`         | Running - how many threads are waiting to receive work + how many requests are waiting for a thread to pick them up |
 
 All metrics may have a `phase` label and all custom labels provided with the `labels` option.
 
