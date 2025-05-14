@@ -100,6 +100,22 @@ class PrometheusCollectorTest < Minitest::Test
     assert_equal(text, collector.prometheus_metrics_text)
   end
 
+  def test_malformed_metric_without_name_or_action
+    collector = PrometheusExporter::Server::Collector.new
+
+    json = {
+      type: :gauge,
+      keys: {
+        key1: "test1",
+      },
+      value: 1,
+    }.to_json
+
+    collector.process(json)
+
+    assert_equal("", collector.prometheus_metrics_text)
+  end
+
   def test_it_can_increment_gauge_when_specified
     name = "test_name"
     help = "test_help"
