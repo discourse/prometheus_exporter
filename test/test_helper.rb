@@ -71,7 +71,7 @@ unless defined?(::Puma)
     end
 
     def self.stats
-      '{}'
+      "{}"
     end
   end
 end
