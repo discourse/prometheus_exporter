@@ -40,6 +40,8 @@ module PrometheusExporter::Instrumentation
 
     def call(job, max_attempts, enqueued_count, pending_count, include_module_name, *args, &block)
       success = false
+      job_name = job.handler.to_s.match(JOB_CLASS_REGEXP).to_a[include_module_name ? 1 : 2].to_s
+      job_name ||= job.try(:name)
       start = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
       latency = Time.current - job.run_at
       attempts = job.attempts + 1 # Increment because we're adding the current attempt
@@ -51,7 +53,7 @@ module PrometheusExporter::Instrumentation
 
       @client.send_json(
         type: "delayed_job",
-        name: job.handler.to_s.match(JOB_CLASS_REGEXP).to_a[include_module_name ? 1 : 2].to_s,
+        name: job_name,
         queue_name: job.queue,
         success: success,
         duration: duration,
