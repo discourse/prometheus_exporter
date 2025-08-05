@@ -3,6 +3,7 @@ inherit_gem:
 
 AllCops:
   Exclude:
+    - 'bin/*'
     - 'gemfiles/**/*'
     - 'vendor/**/*'
 
