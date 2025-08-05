@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.license = "MIT"
 
   spec.files = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features|bin)/}) }
-  spec.bindir = "bin"
+  spec.bindir = "exe"
   spec.executables = ["prometheus_exporter"]
   spec.require_paths = ["lib"]
 
