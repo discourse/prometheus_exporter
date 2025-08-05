@@ -5,6 +5,9 @@ appraise "ar-61" do
 end
 
 appraise "ar-70" do
-  # latest version
-  gem "activerecord", "~> 7.1.2"
+  gem "activerecord", "~> 7.0.0"
+end
+
+appraise "ar-71" do
+  gem "activerecord", "~> 7.1.0"
 end
