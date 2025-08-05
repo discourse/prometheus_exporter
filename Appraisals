@@ -7,6 +7,7 @@ appraise "ar-61" do
   # warning: mutex_m was loaded from the standard library, but will no longer be part of the default gems since Ruby 3.4.0.
   # Add mutex_m to your Gemfile or gemspec.
   install_if '-> { Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.4.0") }' do
+    gem 'base64'
     gem 'mutex_m'
   end
 end

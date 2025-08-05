@@ -21,6 +21,7 @@ gem "rubocop", ">= 0.69", require: false
 gem "rubocop-discourse", ">= 3", require: false
 
 install_if -> { Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.4.0") } do
+  gem "base64"
   gem "mutex_m"
 end
 
