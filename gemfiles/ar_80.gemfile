@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-gem "appraisal", "~> 2.3"
+gem "appraisal", git: "https://github.com/thoughtbot/appraisal.git"
 gem "activerecord", "~> 8.0.0"
 gem "bundler", ">= 2.1.4"
 gem "m"

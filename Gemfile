@@ -5,7 +5,7 @@ source "https://rubygems.org"
 gemspec
 
 # Dev libs
-gem "appraisal", "~> 2.3"
+gem "appraisal", git: "https://github.com/thoughtbot/appraisal.git"
 gem "activerecord", "~> 7.1"
 gem "bundler", ">= 2.1.4"
 gem "m"
