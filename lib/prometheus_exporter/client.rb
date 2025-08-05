@@ -2,6 +2,7 @@
 
 require "socket"
 require "logger"
+require "openssl"
 
 module PrometheusExporter
   class Client
@@ -60,7 +61,10 @@ module PrometheusExporter
       custom_labels: nil,
       logger: Logger.new(STDERR),
       log_level: Logger::WARN,
-      process_queue_once_and_stop: false
+      process_queue_once_and_stop: false,
+      tls_ca_file: nil,
+      tls_cert_file: nil,
+      tls_key_file: nil
     )
       @logger = logger
       @logger.level = log_level
@@ -88,6 +92,10 @@ module PrometheusExporter
 
       @custom_labels = custom_labels
       @process_queue_once_and_stop = process_queue_once_and_stop
+
+      @tls_ca_file = tls_ca_file
+      @tls_cert_file = tls_cert_file
+      @tls_key_file = tls_key_file
     end
 
     def custom_labels=(custom_labels)
@@ -229,6 +237,18 @@ module PrometheusExporter
       close_socket_if_old!
       if !@socket
         @socket = TCPSocket.new @host, @port
+
+        if @tls_ca_file && @tls_cert_file && @tls_key_file
+          ssl_context = OpenSSL::SSL::SSLContext.new()
+          ssl_context.cert = OpenSSL::X509::Certificate.new(File.read(@tls_cert_file))
+          ssl_context.key = OpenSSL::PKey::RSA.new(File.read(@tls_key_file))
+          ssl_context.ca_file = @tls_ca_file
+          ssl_context.verify_mode = OpenSSL::SSL::VERIFY_PEER
+          @socket = OpenSSL::SSL::SSLSocket.new(@socket, ssl_context)
+          @socket.sync_close = true
+          @socket.connect
+        end
+
         @socket.write("POST /send-metrics HTTP/1.1\r\n")
         @socket.write("Transfer-Encoding: chunked\r\n")
         @socket.write("Host: #{@host}\r\n")
