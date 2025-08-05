@@ -1,2 +1,3 @@
 ---
+BUNDLE_CLEAN: "false"
 BUNDLE_RETRY: "1"
