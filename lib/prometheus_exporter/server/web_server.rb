@@ -12,7 +12,6 @@ module PrometheusExporter::Server
     def initialize(opts)
       @port = opts[:port] || PrometheusExporter::DEFAULT_PORT
       @bind = opts[:bind] || PrometheusExporter::DEFAULT_BIND_ADDRESS
-      @collector = opts[:collector] || Collector.new
       @timeout = opts[:timeout] || PrometheusExporter::DEFAULT_TIMEOUT
       @verbose = opts[:verbose] || false
       @auth = opts[:auth]
@@ -60,6 +59,8 @@ module PrometheusExporter::Server
         @logger.info "Listening on both 0.0.0.0/:: network interfaces"
         @bind = nil
       end
+
+      @collector = opts[:collector] || Collector.new(logger: @logger)
 
       @server =
         WEBrick::HTTPServer.new(
