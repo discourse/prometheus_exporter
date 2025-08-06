@@ -98,8 +98,8 @@ server.collector.register_metric(counter)
 server.collector.register_metric(summary)
 server.collector.register_metric(histogram)
 
-gauge.observe(get_rss)
-gauge.observe(get_rss)
+gauge.observe(server.get_rss)
+gauge.observe(server.get_rss)
 
 counter.observe(1, route: 'test/route')
 counter.observe(1, route: 'another/route')
