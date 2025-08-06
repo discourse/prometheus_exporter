@@ -13,8 +13,11 @@ module PrometheusExporter::Server
       max_threads: "Number of puma threads at available at max scale.",
     }
 
-    if defined?(::Puma::Const) && Gem::Version.new(::Puma::Const::VERSION) >= Gem::Version.new('6.6.0')
-      PUMA_GAUGES[:busy_threads] = "Wholistic stat reflecting the overall current state of work to be done and the capacity to do it"
+    if defined?(::Puma::Const) &&
+         Gem::Version.new(::Puma::Const::VERSION) >= Gem::Version.new("6.6.0")
+      PUMA_GAUGES[
+        :busy_threads
+      ] = "Wholistic stat reflecting the overall current state of work to be done and the capacity to do it"
     end
 
     def initialize
