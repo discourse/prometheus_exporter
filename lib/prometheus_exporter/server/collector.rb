@@ -1,8 +1,13 @@
 # frozen_string_literal: true
 
+require "logger"
+
 module PrometheusExporter::Server
   class Collector < CollectorBase
-    def initialize(json_serializer: nil)
+    attr_reader :logger
+
+    def initialize(json_serializer: nil, logger: Logger.new(STDERR))
+      @logger = logger
       @process_metrics = []
       @metrics = {}
       @mutex = Mutex.new
@@ -77,7 +82,7 @@ module PrometheusExporter::Server
       opts = symbolize_keys(obj["opts"] || {})
 
       if !name
-        STDERR.puts "failed to register metric due to empty name #{obj}"
+        logger.warn "failed to register metric due to empty name #{obj}"
         return
       end
 
@@ -96,7 +101,7 @@ module PrometheusExporter::Server
       if metric
         @metrics[name] = metric
       else
-        STDERR.puts "failed to register metric #{obj}"
+        logger.warn "failed to register metric #{obj}"
       end
     end
 

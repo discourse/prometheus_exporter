@@ -116,6 +116,29 @@ class PrometheusCollectorTest < Minitest::Test
     assert_equal("", collector.prometheus_metrics_text)
   end
 
+  def test_default_logger
+    collector = PrometheusExporter::Server::Collector.new
+    assert_instance_of(Logger, collector.logger)
+  end
+
+  def test_custom_logger
+    logs = StringIO.new
+    custom_logger = Logger.new(logs)
+    collector = PrometheusExporter::Server::Collector.new(logger: custom_logger)
+    
+    assert_equal(custom_logger, collector.logger)
+  end
+
+  def test_logger_warns_on_malformed_metric
+    logs = StringIO.new
+    collector = PrometheusExporter::Server::Collector.new(logger: Logger.new(logs))
+
+    json = { type: :gauge, keys: { key1: "test1" }, value: 1 }.to_json
+    collector.process(json)
+
+    assert_includes(logs.string, "failed to register metric due to empty name")
+  end
+
   def test_it_can_increment_gauge_when_specified
     name = "test_name"
     help = "test_help"
