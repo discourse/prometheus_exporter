@@ -50,7 +50,7 @@ module PrometheusExporter::Server
         )
       end
 
-      server =
+      @server =
         server_class.new(
           port: port,
           bind: bind,
@@ -60,7 +60,11 @@ module PrometheusExporter::Server
           auth: auth,
           realm: realm,
         )
-      server.start
+      @server.start
+    end
+
+    def stop
+      @server.stop
     end
 
     attr_accessor :unicorn_listen_address, :unicorn_pid_file
