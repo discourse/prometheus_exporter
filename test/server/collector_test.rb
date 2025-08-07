@@ -125,7 +125,7 @@ class PrometheusCollectorTest < Minitest::Test
     logs = StringIO.new
     custom_logger = Logger.new(logs)
     collector = PrometheusExporter::Server::Collector.new(logger: custom_logger)
-    
+
     assert_equal(custom_logger, collector.logger)
   end
 
