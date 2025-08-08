@@ -3,7 +3,7 @@
 source "https://rubygems.org"
 
 gem "appraisal", git: "https://github.com/thoughtbot/appraisal.git"
-gem "activerecord", "~> 6.1.1"
+gem "activerecord", "~> 8.0.0"
 gem "bundler", ">= 2.1.4"
 gem "m"
 gem "mini_racer", "~> 0.12.0"
@@ -19,10 +19,5 @@ gem "guard", "~> 2.0", require: false
 gem "guard-minitest", "~> 2.0", require: false
 gem "rubocop", ">= 0.69", require: false
 gem "rubocop-discourse", ">= 3", require: false
-
-install_if -> { Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.4.0") } do
-  gem "base64"
-  gem "mutex_m"
-end
 
 gemspec path: "../"

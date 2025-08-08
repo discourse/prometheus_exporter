@@ -2,6 +2,26 @@
 
 source "https://rubygems.org"
 
+gem "appraisal", git: "https://github.com/thoughtbot/appraisal.git"
 gem "activerecord", "~> 7.0.0"
+gem "bundler", ">= 2.1.4"
+gem "m"
+gem "mini_racer", "~> 0.12.0"
+gem "minitest", "~> 5.23.0"
+gem "minitest-stub-const", "~> 0.6"
+gem "oj", "~> 3.0"
+gem "rack-test", "~> 2.1.0"
+gem "rake", "~> 13.0"
+gem "redis", "> 5"
+gem "syntax_tree"
+gem "syntax_tree-disable_ternary"
+gem "guard", "~> 2.0", require: false
+gem "guard-minitest", "~> 2.0", require: false
+gem "rubocop", ">= 0.69", require: false
+gem "rubocop-discourse", ">= 3", require: false
+
+install_if -> { Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.4.0") } do
+  gem "mutex_m"
+end
 
 gemspec path: "../"

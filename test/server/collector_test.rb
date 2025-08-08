@@ -103,13 +103,7 @@ class PrometheusCollectorTest < Minitest::Test
   def test_malformed_metric_without_name_or_action
     collector = PrometheusExporter::Server::Collector.new
 
-    json = {
-      type: :gauge,
-      keys: {
-        key1: "test1",
-      },
-      value: 1,
-    }.to_json
+    json = { type: :gauge, keys: { key1: "test1" }, value: 1 }.to_json
 
     collector.process(json)
 
@@ -125,7 +119,7 @@ class PrometheusCollectorTest < Minitest::Test
     logs = StringIO.new
     custom_logger = Logger.new(logs)
     collector = PrometheusExporter::Server::Collector.new(logger: custom_logger)
-    
+
     assert_equal(custom_logger, collector.logger)
   end
 
