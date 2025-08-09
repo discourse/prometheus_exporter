@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         ruby: ["3.2", "3.3", "3.4"]
-        activerecord: [61, 70, 71, 80]
+        activerecord: [61, 70, 71, 72, 80]
 
     steps:
       - uses: actions/checkout@v4
