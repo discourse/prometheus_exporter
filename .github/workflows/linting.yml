@@ -22,7 +22,7 @@ jobs:
           bundler-cache: true
 
       - name: Rubocop
-        run: bundle exec rubocop
+        run: bin/rubocop
 
       - name: Syntax tree
-        run: bundle exec stree check Gemfile $(git ls-files '*.rb') $(git ls-files '*.rake') $(git ls-files '*.thor')
+        run: bin/stree check Gemfile $(git ls-files '*.rb') $(git ls-files '*.rake') $(git ls-files '*.thor')
