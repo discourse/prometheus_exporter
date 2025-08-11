@@ -17,12 +17,12 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.4
+          ruby-version: 3.2
           bundler: latest
           bundler-cache: true
 
       - name: Rubocop
-        run: bundle exec rubocop
+        run: bin/rubocop
 
       - name: Syntax tree
-        run: bundle exec stree check Gemfile $(git ls-files '*.rb') $(git ls-files '*.rake') $(git ls-files '*.thor')
+        run: bin/stree check Gemfile $(git ls-files '*.rb') $(git ls-files '*.rake') $(git ls-files '*.thor')
