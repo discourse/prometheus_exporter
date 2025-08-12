@@ -34,12 +34,12 @@ module PrometheusExporter::Server
     end
     alias_method :length, :size
 
-    def map(&blk)
-      wrap_expire(:map, &blk)
-    end
-
     def each(&blk)
       wrap_expire(:each, &blk)
+    end
+
+    def map(&blk)
+      wrap_expire(:map, &blk)
     end
 
     def expire(time: nil, new_metric: nil)
