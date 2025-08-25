@@ -56,6 +56,7 @@ module PrometheusExporter
       port: ENV.fetch("PROMETHEUS_EXPORTER_PORT", PrometheusExporter::DEFAULT_PORT),
       max_queue_size: nil,
       thread_sleep: 0.5,
+      connect_timeout: nil,
       json_serializer: nil,
       custom_labels: nil,
       logger: Logger.new(STDERR),
@@ -83,6 +84,7 @@ module PrometheusExporter
       @worker_thread = nil
       @mutex = Mutex.new
       @thread_sleep = thread_sleep
+      @connect_timeout = connect_timeout
 
       @json_serializer = json_serializer == :oj ? PrometheusExporter::OjCompat : JSON
 
@@ -228,7 +230,8 @@ module PrometheusExporter
 
       close_socket_if_old!
       if !@socket
-        @socket = TCPSocket.new @host, @port
+        @socket = TCPSocket.new @host, @port, connect_timeout: @connect_timeout
+
         @socket.write("POST /send-metrics HTTP/1.1\r\n")
         @socket.write("Transfer-Encoding: chunked\r\n")
         @socket.write("Host: #{@host}\r\n")
