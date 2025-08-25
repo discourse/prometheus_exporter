@@ -59,6 +59,8 @@ module PrometheusExporter::Server
           verbose: verbose,
           auth: auth,
           realm: realm,
+          tls_cert_file: tls_cert_file,
+          tls_key_file: tls_key_file,
         )
       @server.start
     end
@@ -67,7 +69,7 @@ module PrometheusExporter::Server
       @server.stop
     end
 
-    attr_accessor :unicorn_listen_address, :unicorn_pid_file
+    attr_accessor :unicorn_listen_address, :unicorn_pid_file, :tls_cert_file, :tls_key_file
     attr_writer :prefix,
                 :port,
                 :bind,
