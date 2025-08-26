@@ -71,6 +71,13 @@ def run
     opt.on('--logger-path PATH', String, '(optional) Path to file for logger output. Defaults to STDERR') do |o|
       options[:logger_path] = o
     end
+
+    opt.on('--tls-key-file PATH', String, "(optional) Enable server TLS using a private key PATH") do |o|
+      options[:tls_key_file] = o
+    end
+    opt.on('--tls-cert-file PATH', String, "(optional) Enable server TLS using a certificate PATH") do |o|
+      options[:tls_cert_file] = o
+    end
   end.parse!
 
   logger = Logger.new(options[:logger_path])

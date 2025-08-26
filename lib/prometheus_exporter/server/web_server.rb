@@ -62,13 +62,20 @@ module PrometheusExporter::Server
 
       @collector = opts[:collector] || Collector.new(logger: @logger)
 
-      @server =
-        WEBrick::HTTPServer.new(
-          Port: @port,
-          BindAddress: @bind,
-          Logger: @logger,
-          AccessLog: @access_log,
+      webrick_options = { Port: @port, BindAddress: @bind, Logger: @logger, AccessLog: @access_log }
+
+      if opts[:tls_cert_file] && opts[:tls_key_file]
+        require "webrick/https"
+        require "openssl"
+
+        webrick_options[:SSLEnable] = true
+        webrick_options[:SSLCertificate] = OpenSSL::X509::Certificate.new(
+          File.read(opts[:tls_cert_file]),
         )
+        webrick_options[:SSLPrivateKey] = OpenSSL::PKey::RSA.new(File.read(opts[:tls_key_file]))
+      end
+
+      @server = WEBrick::HTTPServer.new(webrick_options)
 
       @server.mount_proc "/" do |req, res|
         res["Content-Type"] = "text/plain; charset=utf-8"
