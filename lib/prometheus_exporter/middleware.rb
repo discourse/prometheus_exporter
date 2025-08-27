@@ -78,7 +78,7 @@ class PrometheusExporter::Middleware
     action = controller = nil
     if controller_instance
       action = controller_instance.action_name
-      controller = controller_instance.controller_name
+      controller = controller_instance.controller_path
     elsif (cors = env["rack.cors"]) && cors.respond_to?(:preflight?) && cors.preflight?
       # if the Rack CORS Middleware identifies the request as a preflight request,
       # the stack doesn't get to the point where controllers/actions are defined
