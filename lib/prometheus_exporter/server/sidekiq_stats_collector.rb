@@ -30,11 +30,12 @@ module PrometheusExporter::Server
       SIDEKIQ_STATS_GAUGES.each_key { |name| gauges[name]&.reset! }
 
       sidekiq_metrics.map do |metric|
+        labels = metric.fetch("custom_labels", {})
         SIDEKIQ_STATS_GAUGES.map do |name, help|
           if (value = metric["stats"][name])
             gauge =
               gauges[name] ||= PrometheusExporter::Metric::Gauge.new("sidekiq_stats_#{name}", help)
-            gauge.observe(value)
+            gauge.observe(value, labels)
           end
         end
       end
