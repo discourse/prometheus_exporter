@@ -22,6 +22,9 @@ module TestingMod
     def revalidate
     end
 
+    def retry_attempt=(v)
+    end
+
     def read_timeout=(v)
     end
 
