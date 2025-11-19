@@ -84,4 +84,25 @@ class PrometheusExporterTest < Minitest::Test
 
     assert_includes(logs.string, "dropping message cause queue is full")
   end
+
+  def test_invalid_naming
+    client = PrometheusExporter::Client.new(custom_labels: {"label" => 1})
+
+    refute_same(false, client.send_json({}))
+    refute_same(false, client.send_json({name: "valid_name"}))
+    refute_same(false, client.send_json({name: "__valid_name"}))
+    refute_same(false, client.send_json({name: "__valid_name_1"}))
+    refute_same(false, client.send_json({name: "__valid_name_1", custom_labels: {"valid_name" => "value"}}))
+    refute_same(false, client.send_json({name: "valid_name", custom_labels: {"_valid_name" => "value"}}))
+
+    assert_equal(false, client.send_json({name: "invalid-name"}))
+    assert_equal(false, client.send_json({name: "valid_name", custom_labels: {"__invalid_name" => "value"}}))
+    assert_equal(false, client.send_json({name: "valid_name", custom_labels: {"invalid-name" => "value"}}))
+
+    client.custom_labels = {"__invalid_name" => "value"}
+    assert_equal(false, client.send_json({}))
+
+    client.custom_labels = {"invalid-name" => "value"}
+    assert_equal(false, client.send_json({}))
+  end
 end
