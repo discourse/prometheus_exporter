@@ -80,7 +80,10 @@ class PrometheusSidekiqProcessCollectorTest < Minitest::Test
 
   def test_collecting_metrics_with_custom_labels
     collector.collect(
-      "custom_labels" => { "service" => "payments", "env" => "prod" },
+      "custom_labels" => {
+        "service" => "payments",
+        "env" => "prod",
+      },
       "process" => {
         "busy" => 3,
         "concurrency" => 10,
@@ -105,7 +108,10 @@ class PrometheusSidekiqProcessCollectorTest < Minitest::Test
 
   def test_custom_labels_overridden_by_process_labels
     collector.collect(
-      "custom_labels" => { "service" => "billing", "tag" => "override" },
+      "custom_labels" => {
+        "service" => "billing",
+        "tag" => "override",
+      },
       "process" => {
         "busy" => 4,
         "concurrency" => 8,
