@@ -20,6 +20,7 @@ gem "redis"
 gem "syntax_tree"
 gem "syntax_tree-disable_ternary"
 gem "raindrops", "~> 0.19" if !RUBY_ENGINE == "jruby"
+gem "simplecov"
 
 # Dev tools / linter
 gem "guard", require: false

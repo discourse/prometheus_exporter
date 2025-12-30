@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
-$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
-require "prometheus_exporter"
+require "simplecov"
+
+# Start SimpleCov
+SimpleCov.start { add_filter "test/" }
 
 require "minitest/mock"
 require "minitest/autorun"
@@ -126,3 +128,6 @@ end
 
 # Allow stubbing process monotonic clock from any class in the suite
 Minitest::Test.send(:include, ClockHelper)
+
+# Load our gem
+require "prometheus_exporter"
