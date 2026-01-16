@@ -9,6 +9,14 @@ module PrometheusExporter::Server
   class WebServer
     attr_reader :collector
 
+    PAGESIZE =
+      begin
+        `getconf PAGESIZE`.to_i
+      rescue StandardError
+        4096
+      end
+    private_constant :PAGESIZE
+
     def initialize(opts)
       @port = opts[:port] || PrometheusExporter::DEFAULT_PORT
       @bind = opts[:bind] || PrometheusExporter::DEFAULT_BIND_ADDRESS
@@ -16,6 +24,7 @@ module PrometheusExporter::Server
       @verbose = opts[:verbose] || false
       @auth = opts[:auth]
       @realm = opts[:realm] || PrometheusExporter::DEFAULT_REALM
+      @pid = Process.pid
 
       @metrics_total =
         PrometheusExporter::Metric::Counter.new(
@@ -173,15 +182,8 @@ module PrometheusExporter::Server
     end
 
     def get_rss
-      @pagesize ||=
-        begin
-          `getconf PAGESIZE`.to_i
-        rescue StandardError
-          4096
-        end
-      @pid ||= Process.pid
       begin
-        File.read("/proc/#{@pid}/statm").split(" ")[1].to_i * @pagesize
+        File.read("/proc/#{@pid}/statm").split(" ")[1].to_i * PAGESIZE
       rescue StandardError
         0
       end

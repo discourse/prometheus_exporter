@@ -16,6 +16,7 @@ gem "rake"
 gem "redis"
 gem "syntax_tree"
 gem "syntax_tree-disable_ternary"
+gem "simplecov"
 gem "guard", require: false
 gem "guard-minitest", require: false
 gem "rubocop", require: false
