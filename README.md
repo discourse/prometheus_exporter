@@ -668,6 +668,22 @@ PrometheusExporter::Instrumentation::GoodJob.start
 | Gauge | `good_job_finished`  | Total number of finished GoodJob jobs.  |
 | Gauge | `good_job_succeeded` | Total number of succeeded GoodJob jobs. |
 | Gauge | `good_job_discarded` | Total number of discarded GoodJob jobs  |
+| Gauge | `good_job_oldest_queued_age_seconds` | Seconds the oldest queued GoodJob job has been waiting to run. |
+| Gauge | `good_job_processes` | Number of active GoodJob processes. |
+
+#### Per-queue breakdown (opt-in)
+
+Pass `per_queue: true` to additionally break the job-state gauges and
+`good_job_oldest_queued_age_seconds` down by queue via a `queue` label:
+
+```ruby
+PrometheusExporter::Instrumentation::GoodJob.start(per_queue: true)
+```
+
+This is off by default, which keeps the original cluster-wide (unlabelled)
+output unchanged. When enabled, the job-state gauges carry a `queue` label
+instead of an aggregate value (so a query like `sum(good_job_queued)` still
+returns the cluster total), while `good_job_processes` remains unlabelled.
 
 ### Unicorn process metrics
 
