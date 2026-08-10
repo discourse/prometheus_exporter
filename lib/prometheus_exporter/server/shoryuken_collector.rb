@@ -44,7 +44,7 @@ module PrometheusExporter::Server
     def ensure_shoryuken_metrics
       if !@shoryuken_jobs_total
         @shoryuken_job_duration_seconds =
-          PrometheusExporter::Metric::Counter.new(
+          PrometheusExporter::Metric::Base.default_aggregation.new(
             "shoryuken_job_duration_seconds",
             "Total time spent in shoryuken jobs.",
           )

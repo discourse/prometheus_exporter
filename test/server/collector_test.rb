@@ -851,9 +851,21 @@ class PrometheusCollectorTest < Minitest::Test
     )
     assert(
       result.include?(
-        "shoryuken_job_duration_seconds{job_name=\"String\",queue_name=\"\",service=\"service1\"} ",
+        "shoryuken_job_duration_seconds{job_name=\"String\",queue_name=\"\",service=\"service1\",quantile=\"0.99\"}",
       ),
-      "has duration",
+      "has duration quantile 0.99",
+    )
+    assert(
+      result.include?(
+        "shoryuken_job_duration_seconds{job_name=\"String\",queue_name=\"\",service=\"service1\",quantile=\"0.9\"}",
+      ),
+      "has duration quantile 0.9",
+    )
+    assert(
+      result.include?(
+        "shoryuken_job_duration_seconds{job_name=\"String\",queue_name=\"\",service=\"service1\",quantile=\"0.5\"}",
+      ),
+      "has duration quantile 0.5",
     )
   end
 
