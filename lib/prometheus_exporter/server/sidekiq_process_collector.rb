@@ -24,9 +24,10 @@ module PrometheusExporter::Server
       SIDEKIQ_PROCESS_GAUGES.each_key { |name| gauges[name]&.reset! }
 
       sidekiq_metrics.map do |metric|
-        labels = metric.fetch("labels", {})
+        process = metric["process"] || metric
+        labels = (metric["custom_labels"] || {}).merge(process["labels"] || {})
         SIDEKIQ_PROCESS_GAUGES.map do |name, help|
-          if (value = metric[name])
+          if (value = process[name])
             gauge =
               gauges[name] ||= PrometheusExporter::Metric::Gauge.new(
                 "sidekiq_process_#{name}",
@@ -41,7 +42,7 @@ module PrometheusExporter::Server
     end
 
     def collect(object)
-      @sidekiq_metrics << object["process"]
+      @sidekiq_metrics << object
     end
   end
 end
