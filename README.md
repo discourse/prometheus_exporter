@@ -30,7 +30,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
   * [Client default host](#client-default-host)
   * [Histogram mode](#histogram-mode)
   * [Histogram - custom buckets](#histogram---custom-buckets)
-* [Transport concerns](#transport-concerns)
+* [Transport and version compatibility](#transport-and-version-compatibility)
 * [JSON generation and parsing](#json-generation-and-parsing)
 * [Logging](#logging)
 * [Docker Usage](#docker-usage)
@@ -40,7 +40,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
 
 ## Requirements
 
-Minimum Ruby of version 3.0.0 is required, Ruby 2.7 is EOL as of March 31st 2023.
+Minimum Ruby version 3.2.0 is required.
 
 ## Migrating from v0.x
 
@@ -981,11 +981,27 @@ histogram = Histogram.new('test_bucktets', 'I have specified buckets', buckets: 
 histogram.buckets => [0.1, 0.2, 0.3]
 ```
 
-## Transport concerns
+## Transport and version compatibility
 
-Prometheus Exporter handles transport using a simple HTTP protocol. In multi process mode we avoid needing a large number of HTTP request by using chunked encoding to send metrics. This means that a single HTTP channel can deliver 100s or even 1000s of metrics over a single HTTP session to the `/send-metrics` endpoint. All calls to `send` and `send_json` on the `PrometheusExporter::Client` class are **non-blocking** and batched.
+`PrometheusExporter::Client#send` and `#send_json` are asynchronous: they enqueue a record and a background worker delivers it. In 3.0 the client sends one HTTP POST per metric to `/send-metrics`, reusing a persistent connection:
 
-The `/bench` directory has simple benchmark, which is able to send through 10k messages in 500ms.
+```http
+POST /send-metrics HTTP/1.1
+Content-Type: application/octet-stream
+Content-Length: 123
+
+<123 bytes: one JSON metric, or a custom opaque collector payload>
+```
+
+The endpoint and payload format are unchanged from 2.x — only the framing differs (a separate request per metric instead of one long-lived chunked stream). JSON serialization still supports both JSON and Oj, and `send` still accepts custom opaque payloads.
+
+Records larger than `max_record_size:` (default 64 KB) are dropped with a warning, as are records that would exceed the queue caps (`max_queue_size:`, default 10,000; `max_queue_bytes:`, default ~10 MB). Network timeouts are tunable via `open_timeout:`, `read_timeout:`, and `write_timeout:`. TLS requires `tls_ca_file:`, `tls_cert_file:`, and `tls_key_file:` together and verifies the server certificate hostname. Delivery is at most once: a record dropped after a network error or a non-success response is never replayed.
+
+### Upgrading from 2.x
+
+3.0 changes the wire framing, so upgrade the exporter server and its clients together. Mixed versions are not recommended: a 3.0 client works against a 2.x WEBrick server but is throttled to roughly 24 requests/second by a TCP delayed-ACK stall in WEBrick's response, and a 2.x client's batched metrics are rejected by a 3.0 server.
+
+See the [`/bench`](bench/) directory for the transport benchmark and a measured comparison of the old and new transports.
 
 ## JSON generation and parsing
 

@@ -7,7 +7,9 @@ SimpleCov.start { add_filter "test/" }
 
 require "minitest/mock"
 require "minitest/autorun"
+require "openssl"
 require "ostruct"
+require "puma"
 require "redis"
 
 module TestingMod
@@ -70,18 +72,6 @@ end
 RedisClient::Middlewares.prepend(TestingMod)
 RedisClient.register(RedisValidationMiddleware)
 
-unless defined?(::Puma)
-  module Puma
-    module Const
-      VERSION = "6.6.0"
-    end
-
-    def self.stats
-      "{}"
-    end
-  end
-end
-
 class TestHelper
   def self.wait_for(time, &blk)
     (time / 0.001).to_i.times do
@@ -126,8 +116,72 @@ module CollectorHelper
   end
 end
 
+# Generates a CA + server ("localhost") + client certificate/key chain on disk.
+# Shared by the TLS tests in client_wire_test.rb and web_server_puma_test.rb.
+module TlsTestChain
+  def write_tls_chain(directory)
+    ca_key = OpenSSL::PKey::RSA.new(2048)
+    ca_cert = certificate("Prometheus Exporter Test CA", ca_key, serial: 1, ca: true)
+    server_key = OpenSSL::PKey::RSA.new(2048)
+    server_cert =
+      certificate("localhost", server_key, serial: 2, issuer_cert: ca_cert, issuer_key: ca_key)
+    client_key = OpenSSL::PKey::RSA.new(2048)
+    client_cert =
+      certificate("client", client_key, serial: 3, issuer_cert: ca_cert, issuer_key: ca_key)
+
+    {
+      ca_cert: ["ca.crt", ca_cert.to_pem],
+      server_cert: ["server.crt", server_cert.to_pem],
+      server_key: ["server.key", server_key.to_pem],
+      client_cert: ["client.crt", client_cert.to_pem],
+      client_key: ["client.key", client_key.to_pem],
+    }.transform_values do |filename, contents|
+      path = File.join(directory, filename)
+      File.write(path, contents)
+      path
+    end
+  end
+
+  def certificate(common_name, key, serial:, ca: false, issuer_cert: nil, issuer_key: nil)
+    cert = OpenSSL::X509::Certificate.new
+    cert.version = 2
+    cert.serial = serial
+    cert.subject = OpenSSL::X509::Name.parse("/CN=#{common_name}")
+    cert.issuer = issuer_cert ? issuer_cert.subject : cert.subject
+    cert.public_key = key.public_key
+    cert.not_before = Time.now - 60
+    cert.not_after = Time.now + 3600
+
+    extensions = OpenSSL::X509::ExtensionFactory.new
+    extensions.subject_certificate = cert
+    extensions.issuer_certificate = issuer_cert || cert
+    cert.add_extension(
+      extensions.create_extension("basicConstraints", ca ? "CA:TRUE" : "CA:FALSE", true),
+    )
+    cert.add_extension(
+      extensions.create_extension(
+        "keyUsage",
+        ca ? "keyCertSign,cRLSign" : "digitalSignature,keyEncipherment",
+        true,
+      ),
+    )
+    if !ca && common_name == "localhost"
+      cert.add_extension(extensions.create_extension("subjectAltName", "DNS:localhost"))
+    end
+    cert.sign(issuer_key || key, OpenSSL::Digest.new("SHA256"))
+    cert
+  end
+end
+
+module PumaVersionHelper
+  def puma_reports_busy_threads?
+    Gem::Version.new(Puma::Const::VERSION) >= Gem::Version.new("6.6.0")
+  end
+end
+
 # Allow stubbing process monotonic clock from any class in the suite
 Minitest::Test.send(:include, ClockHelper)
+Minitest::Test.send(:include, PumaVersionHelper)
 
 # Load our gem
 require "prometheus_exporter"

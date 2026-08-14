@@ -64,8 +64,30 @@ class PrometheusExporterTest < Minitest::Test
 
     assert_includes(
       logs.string,
-      "Prometheus Exporter, failed to send message Connection refused - connect(2) for \"localhost\" port 321",
+      "Prometheus Exporter, failed to send message Failed to open TCP connection",
     )
+  end
+
+  def test_max_queue_bytes_bounds_pending_payload_memory_and_preserves_count_limit
+    logs = StringIO.new
+    client =
+      PrometheusExporter::Client.new(
+        logger: Logger.new(logs),
+        max_queue_size: 10,
+        max_queue_bytes: 5,
+      )
+
+    client.stub(:ensure_worker_thread!, nil) do
+      client.send("123")
+      client.send("456")
+    end
+
+    queue = client.instance_variable_get(:@queue)
+    assert_equal(1, queue.length)
+    assert_equal("456", queue.pop)
+    assert_includes(logs.string, "dropping message cause queue is full")
+  ensure
+    client&.stop
   end
 
   def test_overriding_logger
@@ -79,8 +101,10 @@ class PrometheusExporterTest < Minitest::Test
         max_queue_size: 1,
         process_queue_once_and_stop: true,
       )
-    client.send("put a message in the queue")
-    client.send("put a second message in the queue to trigger the logger")
+    client.stub(:ensure_worker_thread!, nil) do
+      client.send("put a message in the queue")
+      client.send("put a second message in the queue to trigger the logger")
+    end
 
     assert_includes(logs.string, "dropping message cause queue is full")
   end

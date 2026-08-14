@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [3.0.0] - 2026-07-23
+
+### Changed
+
+- **Breaking:** replaced the WEBrick runtime server with an embedded Puma server.
+- The client now sends one HTTP POST per metric over a reused connection, instead of streaming many metrics over one long-lived chunked request. The `/send-metrics` endpoint and JSON payload format are unchanged.
+- `collector_sessions_total` now counts one HTTP request per record.
+- Collector errors now return their intended HTTP status instead of `200 OK`.
+- Added `max_queue_bytes:` (default ~10 MB) alongside the existing 10,000-record queue cap, and `open_timeout:`/`read_timeout:`/`write_timeout:` for client network operations.
+
+### Removed
+
+- Removed the WEBrick dependency. Puma `>= 6.4.3` is now required.
+
 ## [2.3.1] - 2025-11-11
 
 - FIX: get controller full path instead of controller name - Alex Platteeuw

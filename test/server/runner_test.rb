@@ -57,6 +57,7 @@ class PrometheusRunnerTest < Minitest::Test
     assert_empty(runner.label)
     assert_nil(runner.auth)
     assert_equal(runner.realm, "Prometheus Exporter")
+    assert_equal(runner.max_record_size, 1024 * 1024)
   end
 
   def test_runner_custom_options
@@ -74,6 +75,7 @@ class PrometheusRunnerTest < Minitest::Test
         auth: "my_htpasswd_file",
         realm: "test realm",
         histogram: true,
+        max_record_size: 123_456,
       )
 
     assert_equal(runner.prefix, "new_")
@@ -86,6 +88,7 @@ class PrometheusRunnerTest < Minitest::Test
     assert_equal(runner.auth, "my_htpasswd_file")
     assert_equal(runner.realm, "test realm")
     assert_equal(runner.histogram, true)
+    assert_equal(runner.max_record_size, 123_456)
 
     reset_base_metric_label
   end
@@ -107,10 +110,24 @@ class PrometheusRunnerTest < Minitest::Test
     assert_equal(runner.verbose, false)
     assert_nil(runner.auth)
     assert_equal(runner.realm, "Prometheus Exporter")
+    assert_equal(runner.max_record_size, 1024 * 1024)
+    assert_equal(runner.instance_variable_get(:@server).max_record_size, 1024 * 1024)
     assert_equal(PrometheusExporter::Metric::Base.default_labels, { environment: "integration" })
     assert_instance_of(PrometheusExporter::Server::Collector, runner.collector)
 
     reset_base_metric_label
+  end
+
+  def test_runner_forwards_custom_max_record_size
+    runner =
+      PrometheusExporter::Server::Runner.new(
+        server_class: MockerWebServer,
+        max_record_size: 123_456,
+      )
+
+    runner.start
+
+    assert_equal(runner.instance_variable_get(:@server).max_record_size, 123_456)
   end
 
   def test_runner_custom_collector

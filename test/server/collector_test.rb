@@ -1106,10 +1106,12 @@ class PrometheusCollectorTest < Minitest::Test
       result.include?('puma_thread_pool_capacity{phase="0",service="service1"} 32'),
       "has pool capacity",
     )
-    assert(
-      result.include?('puma_busy_threads{phase="0",service="service1"} 4'),
-      "has total busy threads",
-    )
+    if puma_reports_busy_threads?
+      assert(
+        result.include?('puma_busy_threads{phase="0",service="service1"} 4'),
+        "has total busy threads",
+      )
+    end
     mock_puma.verify
   end
 
@@ -1143,10 +1145,12 @@ class PrometheusCollectorTest < Minitest::Test
       result.include?('puma_thread_pool_capacity{phase="0",service="service1",foo="bar"} 32'),
       "has pool capacity",
     )
-    assert(
-      result.include?('puma_busy_threads{phase="0",service="service1",foo="bar"} 4'),
-      "has total busy threads",
-    )
+    if puma_reports_busy_threads?
+      assert(
+        result.include?('puma_busy_threads{phase="0",service="service1",foo="bar"} 4'),
+        "has total busy threads",
+      )
+    end
     mock_puma.verify
   end
 

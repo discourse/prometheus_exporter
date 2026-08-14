@@ -60,7 +60,7 @@ class PrometheusPumaCollectorTest < Minitest::Test
     )
 
     metrics = collector.metrics
-    assert_equal 8, metrics.size
+    assert_equal(puma_reports_busy_threads? ? 8 : 7, metrics.size)
     assert_equal "puma_workers{phase=\"0\"} 3", metrics.first.metric_text
   end
 
@@ -121,7 +121,7 @@ class PrometheusPumaCollectorTest < Minitest::Test
     )
 
     metrics = collector.metrics
-    assert_equal 8, metrics.size
+    assert_equal(puma_reports_busy_threads? ? 8 : 7, metrics.size)
     assert_equal "puma_workers{phase=\"0\",hostname=\"test2.example.com\"} 4\n" \
                    "puma_workers{phase=\"0\",hostname=\"test1.example.com\"} 3",
                  metrics.first.metric_text

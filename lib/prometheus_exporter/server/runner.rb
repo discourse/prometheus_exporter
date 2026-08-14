@@ -20,6 +20,7 @@ module PrometheusExporter::Server
       @auth = nil
       @realm = nil
       @histogram = nil
+      @max_record_size = nil
 
       options.each { |k, v| send("#{k}=", v) if self.class.method_defined?("#{k}=") }
     end
@@ -59,6 +60,7 @@ module PrometheusExporter::Server
           verbose: verbose,
           auth: auth,
           realm: realm,
+          max_record_size: max_record_size,
           tls_cert_file: tls_cert_file,
           tls_key_file: tls_key_file,
         )
@@ -81,7 +83,8 @@ module PrometheusExporter::Server
                 :label,
                 :auth,
                 :realm,
-                :histogram
+                :histogram,
+                :max_record_size
 
     def auth
       @auth || nil
@@ -134,6 +137,10 @@ module PrometheusExporter::Server
 
     def histogram
       @histogram || false
+    end
+
+    def max_record_size
+      @max_record_size || PrometheusExporter::Server::WebServer::DEFAULT_MAX_RECORD_SIZE
     end
 
     private

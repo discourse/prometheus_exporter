@@ -88,6 +88,24 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
     assert_invalid_headers_response
   end
 
+  def test_oversized_metric_does_not_replace_application_error_in_ensure
+    logs = StringIO.new
+    real_client = PrometheusExporter::Client.new(max_record_size: 1, logger: Logger.new(logs))
+    middleware =
+      PrometheusExporter::Middleware.new(
+        ->(_env) { raise "application failed" },
+        client: real_client,
+        instrument: nil,
+      )
+
+    error = assert_raises(RuntimeError) { middleware.call({}) }
+    assert_equal("application failed", error.message)
+    assert_match(/dropping message.*maximum is 1 bytes/, logs.string)
+  ensure
+    PrometheusExporter::Middleware::MethodProfiler.stop
+    real_client&.stop
+  end
+
   def test_redis_5_call_patching
     RedisValidationMiddleware.reset!
     configure_middleware

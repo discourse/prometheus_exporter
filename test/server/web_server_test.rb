@@ -31,10 +31,9 @@ class PrometheusExporterTest < Minitest::Test
       passwd: "test_password",
     }
 
-    # Create an htpasswd file for basic auth
-    htpasswd = WEBrick::HTTPAuth::Htpasswd.new(@auth_config[:file])
-    htpasswd.set_passwd(@auth_config[:realm], @auth_config[:user], @auth_config[:passwd])
-    htpasswd.flush
+    # Create a crypt htpasswd file for basic auth.
+    password_hash = @auth_config[:passwd].crypt("$6$prometheus-exporter-test$")
+    File.write(@auth_config[:file], "#{@auth_config[:user]}:#{password_hash}\n")
   end
 
   def teardown
@@ -85,6 +84,17 @@ class PrometheusExporterTest < Minitest::Test
     assert(text =~ /7/)
     assert(text =~ /8/)
     assert(text =~ /9/)
+  ensure
+    [client1, client2, client3].compact.each do |client|
+      client.stop
+    rescue StandardError
+      nil
+    end
+    begin
+      server.stop
+    rescue StandardError
+      nil
+    end
   end
 
   def test_it_can_collect_over_ipv6
@@ -222,6 +232,8 @@ class PrometheusExporterTest < Minitest::Test
                                                 auth: @auth_config[:file],
                                                 realm: @auth_config[:realm]
     server.start
+
+    assert_equal("PONG", Net::HTTP.get("localhost", "/ping", port))
 
     client = PrometheusExporter::Client.new host: "localhost", port: port, thread_sleep: 0.001
     client.send_json "type" => "mem metric", "value" => 150

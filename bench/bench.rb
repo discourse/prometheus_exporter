@@ -4,43 +4,78 @@ require_relative "../lib/prometheus_exporter"
 require_relative "../lib/prometheus_exporter/client"
 require_relative "../lib/prometheus_exporter/server"
 
-# test how long it takes a custom collector to process 10k messages
-
 class Collector
-  def initialize(done)
-    @i = 0
-    @done = done
+  def initialize
+    @count = 0
+    @mutex = Mutex.new
+    @condition = ConditionVariable.new
   end
 
   def process(message)
-    _parsed = JSON.parse(message)
-    @i += 1
-    @done.call if @i % 10_000 == 0
-  end
-
-  def prometheus_metrics_text
-  end
-end
-
-@start = nil
-@client = nil
-@runs = 1000
-
-done =
-  lambda do
-    puts "Elapsed for 10k messages is #{Time.now - @start}"
-    if (@runs -= 1) > 0
-      @start = Time.now
-      10_000.times { @client.send_json(hello: "world") }
+    JSON.parse(message)
+    @mutex.synchronize do
+      @count += 1
+      @condition.broadcast
     end
   end
 
-collector = Collector.new(done)
-server = PrometheusExporter::Server::WebServer.new port: 12_349, collector: collector
-server.start
-@client = PrometheusExporter::Client.new port: 12_349, max_queue_size: 100_000
+  def prometheus_metrics_text
+    ""
+  end
 
-@start = Time.now
-10_000.times { @client.send_json(hello: "world") }
+  def wait_for(target, timeout: 30)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+    @mutex.synchronize do
+      while @count < target
+        remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        raise "timed out after receiving #{@count}/#{target} records" if remaining <= 0
 
-sleep
+        @condition.wait(@mutex, remaining)
+      end
+    end
+  end
+end
+
+records = Integer(ENV.fetch("RECORDS", "10000"), 10)
+runs = Integer(ENV.fetch("RUNS", "3"), 10)
+collector = Collector.new
+server = PrometheusExporter::Server::WebServer.new(port: 0, bind: "127.0.0.1", collector: collector)
+client = nil
+
+begin
+  server.start
+  client =
+    PrometheusExporter::Client.new(
+      host: "127.0.0.1",
+      port: server.port,
+      max_queue_size: records * 2,
+      max_queue_bytes: records * 1024,
+      thread_sleep: 0.001,
+    )
+  puts "Puma #{Puma::Const::PUMA_VERSION}; #{records} records/run; #{runs} runs"
+
+  runs.times do |run|
+    target = records * (run + 1)
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    records.times { client.send_json(hello: "world") }
+    enqueued = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+    # process_queue serializes behind any active worker and returns only after
+    # every dequeued request has received its final HTTP response.
+    client.process_queue
+    collector.wait_for(target)
+    acknowledged = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    elapsed = acknowledged - started
+
+    puts format(
+           "run %d: enqueue %.4fs; acknowledged %.4fs (%d records/s)",
+           run + 1,
+           enqueued - started,
+           elapsed,
+           records / elapsed,
+         )
+  end
+ensure
+  client&.stop(wait_timeout_seconds: 2)
+  server&.stop
+end

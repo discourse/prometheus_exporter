@@ -24,5 +24,6 @@ Gem::Specification.new do |spec|
 
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "webrick"
+  spec.add_dependency "logger"
+  spec.add_dependency "puma", ">= 6.4.3"
 end

@@ -2,6 +2,7 @@
 
 source "https://rubygems.org"
 
+gem "puma", ENV.fetch("PUMA_VERSION") if ENV["PUMA_VERSION"]
 gemspec
 
 # Dev libs

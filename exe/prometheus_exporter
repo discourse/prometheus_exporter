@@ -8,7 +8,7 @@ require 'logger'
 require_relative "./../lib/prometheus_exporter"
 require_relative "./../lib/prometheus_exporter/server"
 
-def run
+def run_prometheus_exporter(arguments = ARGV)
   options = {
     logger_path: STDERR
   }
@@ -34,6 +34,11 @@ def run
            Integer,
            "Timeout in seconds for metrics endpoint (default: #{PrometheusExporter::DEFAULT_TIMEOUT})") do |o|
       options[:timeout] = o.to_i
+    end
+    opt.on('--max-record-size INTEGER',
+           Integer,
+           "Maximum completed metric request size in bytes (default: #{PrometheusExporter::Server::WebServer::DEFAULT_MAX_RECORD_SIZE})") do |o|
+      options[:max_record_size] = o.to_i
     end
     opt.on('--prefix METRIC_PREFIX', "Prefix to apply to all metrics (default: #{PrometheusExporter::DEFAULT_PREFIX})") do |o|
       options[:prefix] = o.to_s
@@ -78,7 +83,7 @@ def run
     opt.on('--tls-cert-file PATH', String, "(optional) Enable server TLS using a certificate PATH") do |o|
       options[:tls_cert_file] = o
     end
-  end.parse!
+  end.parse!(arguments)
 
   logger = Logger.new(options[:logger_path])
   logger.level = Logger::INFO
@@ -133,4 +138,4 @@ def run
   sleep
 end
 
-run
+run_prometheus_exporter if $PROGRAM_NAME == __FILE__

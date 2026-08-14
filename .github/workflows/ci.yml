@@ -42,9 +42,52 @@ jobs:
       - name: Run tests
         run: bin/rake
 
+  puma-api:
+    runs-on: ubuntu-latest
+    name: Puma ${{ matrix.puma }} API
+    timeout-minutes: 10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        puma: ["6.4.3", "7.2.1", "8.0.2"]
+
+    env:
+      PUMA_VERSION: ${{ matrix.puma }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler: latest
+          bundler-cache: true
+          cache-version: puma-${{ matrix.puma }}
+
+      - name: Verify embedded server and wire behavior
+        run: bin/rake test
+
+  package-smoke:
+    runs-on: ubuntu-latest
+    name: Isolated built gem load
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0"
+          bundler: latest
+          bundler-cache: true
+
+      - name: Build, install, and load the gem in isolation
+        run: bin/rake package_smoke
+
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: build
+    needs: [build, puma-api, package-smoke]
     runs-on: ubuntu-latest
 
     outputs:
