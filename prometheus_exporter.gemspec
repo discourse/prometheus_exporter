@@ -17,12 +17,12 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = ">= 3.2.0"
 
-  spec.files = Dir['README.md', 'CHANGELOG', 'LICENSE.txt', 'lib/**/*.rb', 'exe/*']
+  spec.files = Dir["README.md", "CHANGELOG", "LICENSE.txt", "lib/**/*", "exe/*"]
 
   spec.bindir = "exe"
   spec.executables = ["prometheus_exporter"]
 
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "webrick"
+  spec.add_dependency "logger"
 end

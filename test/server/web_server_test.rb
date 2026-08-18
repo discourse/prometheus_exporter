@@ -31,10 +31,10 @@ class PrometheusExporterTest < Minitest::Test
       passwd: "test_password",
     }
 
-    # Create an htpasswd file for basic auth
-    htpasswd = WEBrick::HTTPAuth::Htpasswd.new(@auth_config[:file])
-    htpasswd.set_passwd(@auth_config[:realm], @auth_config[:user], @auth_config[:passwd])
-    htpasswd.flush
+    # Create an Apache-compatible crypt htpasswd file directly; server tests
+    # must not load the external webrick gem.
+    encrypted_password = @auth_config[:passwd].crypt("pe")
+    File.write(@auth_config[:file], "#{@auth_config[:user]}:#{encrypted_password}\n")
   end
 
   def teardown
