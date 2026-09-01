@@ -21,6 +21,8 @@ class PrometheusGoodJobCollectorTest < Minitest::Test
         "finished" => 100,
         "succeeded" => 2000,
         "discarded" => 9,
+        "oldest_queued_age_seconds" => 42,
+        "processes" => 2,
       },
     )
 
@@ -34,8 +36,35 @@ class PrometheusGoodJobCollectorTest < Minitest::Test
       "good_job_finished 100",
       "good_job_succeeded 2000",
       "good_job_discarded 9",
+      "good_job_oldest_queued_age_seconds 42",
+      "good_job_processes 2",
     ]
     assert_equal expected, metrics.map(&:metric_text)
+  end
+
+  def test_collecting_per_queue_metrics
+    collector.collect(
+      "type" => "good_job",
+      "queued" => 5,
+      "oldest_queued_age_seconds" => 30,
+      "custom_labels" => {
+        "queue" => "default",
+      },
+    )
+    collector.collect(
+      "type" => "good_job",
+      "queued" => 2,
+      "oldest_queued_age_seconds" => 7,
+      "custom_labels" => {
+        "queue" => "mailers",
+      },
+    )
+
+    lines = collector.metrics.flat_map { |metric| metric.metric_text.split("\n") }
+
+    assert_includes lines, 'good_job_queued{queue="default"} 5'
+    assert_includes lines, 'good_job_queued{queue="mailers"} 2'
+    assert_includes lines, 'good_job_oldest_queued_age_seconds{queue="default"} 30'
   end
 
   def test_collecting_metrics_with_custom_labels

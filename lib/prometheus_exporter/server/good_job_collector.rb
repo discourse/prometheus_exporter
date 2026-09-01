@@ -11,6 +11,8 @@ module PrometheusExporter::Server
       finished: "Total number of finished GoodJob jobs.",
       succeeded: "Total number of succeeded GoodJob jobs.",
       discarded: "Total number of discarded GoodJob jobs.",
+      oldest_queued_age_seconds: "Seconds the oldest queued GoodJob job has been waiting to run.",
+      processes: "Number of active GoodJob processes.",
     }
 
     def initialize
