@@ -900,8 +900,12 @@ prometheus_exporter -p 8080 \
                     --prefix 'foo_'
 ```
 
+The exporter now uses a purpose-built HTTP/1 server implemented with Ruby's standard-library sockets, so it does not require a separate web-server gem. It accepts the three documented endpoints, serves one request per connection, and processes each complete `/send-metrics` chunk as soon as it arrives.
+
+The server defaults to 100 simultaneous connections, 64 KiB of request headers, 1 MiB per metrics chunk, a 5-second TLS/header deadline, a fresh 30-second read deadline for each body chunk, and a 5-second response-write deadline. These can be adjusted with the `WebServer` options `max_connections`, `max_header_bytes`, `max_body_chunk_bytes`, `header_timeout`, `body_read_timeout`, `write_timeout`, and `stop_timeout`. The parser deliberately rejects ambiguous framing, duplicate or folded headers, request pipelining, chunk extensions and trailers, and unsupported transfer codings.
+
 You can use `-b` option to bind the `prometheus_exporter` web server to any IPv4 interface with `-b 0.0.0.0`,
-any IPv6 interface with `-b ::`, or `-b ANY` to any IPv4/IPv6 interfaces available on your host system.
+any IPv6 interface with `-b ::`, or `-b ANY` (equivalently, `-b ALL`) to any IPv4/IPv6 interfaces available on your host system.
 
 #### Enabling Basic Authentication
 

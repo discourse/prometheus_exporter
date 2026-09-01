@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+- DEV: Replace WEBrick with a focused Ruby standard-library HTTP/1 server, removing the WEBrick runtime dependency.
+
 ## [2.3.1] - 2025-11-11
 
 - FIX: get controller full path instead of controller name - Alex Platteeuw

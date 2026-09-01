@@ -1,134 +1,75 @@
 # frozen_string_literal: true
 
-require_relative "../test_helper"
-require "prometheus_exporter/server"
-require "prometheus_exporter/client"
+require_relative "web_server_test_helper"
+require "base64"
 require "net/http"
 
-class DemoCollector
-  def initialize
-    @gauge = PrometheusExporter::Metric::Gauge.new "memory", "amount of memory"
-  end
-
-  def process(str)
-    obj = JSON.parse(str)
-    @gauge.observe(obj["value"]) if obj["type"] == "mem metric"
-  end
-
+class SlowCollector < DemoCollector
   def prometheus_metrics_text
-    @gauge.to_prometheus_text
+    sleep 0.2
+    super
   end
 end
 
-class PrometheusExporterTest < Minitest::Test
-  def setup
-    PrometheusExporter::Metric::Base.default_prefix = ""
+class CollectorStatusError < StandardError
+  attr_reader :status_code
 
-    @auth_config = {
-      file: "test/server/my_htpasswd_file",
-      realm: "Prometheus Exporter",
-      user: "test_user",
-      passwd: "test_password",
-    }
+  def initialize(status_code, message)
+    @status_code = status_code
+    super(message)
+  end
+end
 
-    # Create an htpasswd file for basic auth
-    htpasswd = WEBrick::HTTPAuth::Htpasswd.new(@auth_config[:file])
-    htpasswd.set_passwd(@auth_config[:realm], @auth_config[:user], @auth_config[:passwd])
-    htpasswd.flush
+class ErrorCollector < DemoCollector
+  def initialize(status_code, message = "invalid metrics")
+    super()
+    @status_code = status_code
+    @message = message
   end
 
-  def teardown
-    # Clean up the .htpasswd file created during setup
-    htpasswd_file = @auth_config[:file]
-    File.delete(htpasswd_file) if htpasswd_file && File.exist?(htpasswd_file)
+  def process(_str)
+    raise CollectorStatusError.new(@status_code, @message)
   end
+end
 
-  def find_free_port
-    port = 12_437
-    while port < 13_000
-      begin
-        TCPSocket.new("localhost", port).close
-        port += 1
-      rescue Errno::ECONNREFUSED, Errno::ECONNRESET
-        break
+class PrometheusExporterWebServerTest < WebServerTestCase
+  def test_client_chunked_uploads_are_processed
+    assert PrometheusExporter.has_oj?
+    assert_equal 100, PrometheusExporter::Server::WebServer::DEFAULT_MAX_CONNECTIONS
+    assert_operator(
+      PrometheusExporter::Server::WebServer::DEFAULT_BODY_READ_TIMEOUT,
+      :>,
+      PrometheusExporter::Client::MAX_SOCKET_AGE,
+    )
+
+    collector = DemoCollector.new
+    server, port = start_server(collector: collector)
+    clients =
+      %i[oj json].map do |serializer|
+        PrometheusExporter::Client.new(
+          host: "127.0.0.1",
+          port: port,
+          thread_sleep: 0.001,
+          json_serializer: serializer,
+        )
       end
+    clients << PrometheusExporter::Client.new(host: "127.0.0.1", port: port, thread_sleep: 0.001)
+    @clients.concat(clients)
+
+    clients.each_with_index do |client, index|
+      client.send_json "type" => "mem metric", "value" => 150 + index
     end
-    port
+
+    assert TestHelper.wait_for(2) { collector.processed.size == 3 }
+    assert_equal 3, collector.processed.size
+    assert_match(/memory 15[0-2]/, collector.prometheus_metrics_text)
+    assert_instance_of PrometheusExporter::Server::WebServer, server
   end
 
-  def test_it_can_collect_with_and_without_oj
-    port = find_free_port
-
-    server = PrometheusExporter::Server::WebServer.new port: port
-    collector = server.collector
-    server.start
-
-    client1 = PrometheusExporter::Client.new port: port, thread_sleep: 0.001, json_serializer: :oj
-    client2 = PrometheusExporter::Client.new port: port, thread_sleep: 0.001, json_serializer: :json
-    client3 = PrometheusExporter::Client.new port: port, thread_sleep: 0.001
-
-    gauge1 = client1.register(:gauge, "my_gauge1", "some gauge")
-    gauge2 = client2.register(:gauge, "my_gauge2", "some gauge")
-    gauge3 = client3.register(:gauge, "my_gauge3", "some gauge")
-
-    gauge1.observe(7)
-    gauge2.observe(8)
-    gauge3.observe(9)
-
-    text = nil
-
-    TestHelper.wait_for(2) do
-      text = collector.prometheus_metrics_text
-      text =~ /7/ && text =~ /8/ && text =~ /9/
-    end
-
-    assert(text =~ /7/)
-    assert(text =~ /8/)
-    assert(text =~ /9/)
-  end
-
-  def test_it_can_collect_over_ipv6
-    port = find_free_port
-
-    # for some reason on WSL it is not binding to v6 for localhost.
-    server = PrometheusExporter::Server::WebServer.new port: port, bind: "::1"
-    collector = server.collector
-    server.start
-
-    client = PrometheusExporter::Client.new host: "::1", port: port, thread_sleep: 0.001
-    gauge = client.register(:gauge, "my_gauge", "some gauge")
-    gauge.observe(99)
-
-    TestHelper.wait_for(2) { server.collector.prometheus_metrics_text =~ /99/ }
-
-    expected = <<~TEXT
-      # HELP my_gauge some gauge
-      # TYPE my_gauge gauge
-      my_gauge 99
-    TEXT
-    assert_equal(expected, collector.prometheus_metrics_text)
-  ensure
-    begin
-      client.stop
-    rescue StandardError
-      nil
-    end
-    begin
-      server.stop
-    rescue StandardError
-      nil
-    end
-  end
-
-  def test_it_can_collect_metrics_from_standard
-    port = find_free_port
-
-    server = PrometheusExporter::Server::WebServer.new port: port
-    collector = server.collector
-    server.start
-
-    client = PrometheusExporter::Client.new host: "localhost", port: port, thread_sleep: 0.001
-
+  def test_standard_client_metrics_keep_their_aggregation_behavior
+    server, port = start_server
+    client = PrometheusExporter::Client.new(host: "127.0.0.1", port: port, thread_sleep: 0.001)
+    @clients << client
     gauge = client.register(:gauge, "my_gauge", "some gauge")
     counter = client.register(:counter, "my_counter", "some counter")
 
@@ -136,8 +77,6 @@ class PrometheusExporterTest < Minitest::Test
     counter.observe(1)
     counter.observe(3)
     gauge.observe(92, abcd: 1)
-
-    TestHelper.wait_for(2) { server.collector.prometheus_metrics_text =~ /92/ }
 
     expected = <<~TEXT
       # HELP my_gauge some gauge
@@ -148,177 +87,192 @@ class PrometheusExporterTest < Minitest::Test
       # TYPE my_counter counter
       my_counter 4
     TEXT
-    assert_equal(expected, collector.prometheus_metrics_text)
-  ensure
-    begin
-      client.stop
-    rescue StandardError
-      nil
-    end
-    begin
-      server.stop
-    rescue StandardError
-      nil
+    assert TestHelper.wait_for(2) { server.collector.prometheus_metrics_text == expected }
+    assert_equal expected, server.collector.prometheus_metrics_text
+  end
+
+  def test_ping_and_metrics_responses_have_fixed_lengths_and_close
+    collector = DemoCollector.new
+    collector.process(JSON.dump("type" => "mem metric", "value" => 42))
+    _server, port = start_server(collector: collector)
+
+    status, headers, body = raw_request(port, "GET /ping HTTP/1.1\r\nHost: localhost\r\n\r\n")
+    assert_equal 200, status
+    assert_equal "PONG", body
+    assert_fixed_response(headers, body)
+
+    status, headers, body =
+      raw_request(
+        port,
+        "GET /metrics HTTP/1.1\r\nHost: localhost\r\nAccept-Encoding: identity\r\n\r\n",
+      )
+    assert_equal 200, status
+    assert_includes body, "memory 42"
+    assert_fixed_response(headers, body)
+  end
+
+  def test_net_http_interoperability_and_exact_not_found_response
+    collector = DemoCollector.new
+    collector.process(JSON.dump("type" => "mem metric", "value" => 43))
+    _server, port = start_server(collector: collector)
+
+    Net::HTTP.start("127.0.0.1", port) do |http|
+      ping = http.get("/ping")
+      assert_equal "200", ping.code
+      assert_equal "PONG", ping.body
+
+      metrics = http.get("/metrics", "Accept-Encoding" => "identity")
+      assert_equal "200", metrics.code
+      assert_includes metrics.body, "memory 43"
+
+      missing = http.get("/missing")
+      assert_equal "404", missing.code
+      assert_equal(
+        "Not Found! The Prometheus Ruby Exporter only listens on /ping, /metrics and /send-metrics",
+        missing.body,
+      )
     end
   end
 
-  def test_it_can_collect_metrics_from_custom
+  def test_metrics_gzip_negotiation_and_vary_header
     collector = DemoCollector.new
-    port = find_free_port
+    collector.process(JSON.dump("type" => "mem metric", "value" => 99))
+    _server, port = start_server(collector: collector)
 
-    server = PrometheusExporter::Server::WebServer.new port: port, collector: collector
-    server.start
+    {
+      "br, gzip" => true,
+      "*" => true,
+      "gzip;q=0, *;q=1" => false,
+      "gzip;q=0.5, *;q=0" => true,
+      "GZip ; Q = 1.000" => true,
+      "gzip;q=0.000" => false,
+      "gzip;q=1.001" => false,
+      "gzip;q=.5" => false,
+      "gzip;q=0.0000" => false,
+      "br, *;q=0" => false,
+    }.each do |accept_encoding, compressed|
+      status, headers, body =
+        raw_request(
+          port,
+          "GET /metrics?source=test HTTP/1.1\r\nHost: localhost\r\n" \
+            "Accept-Encoding: #{accept_encoding}\r\n\r\n",
+        )
 
-    client = PrometheusExporter::Client.new host: "localhost", port: port, thread_sleep: 0.001
-    client.send_json "type" => "mem metric", "value" => 150
-    client.send_json "type" => "mem metric", "value" => 199
-
-    TestHelper.wait_for(2) { collector.prometheus_metrics_text =~ /199/ }
-
-    assert_match(/199/, collector.prometheus_metrics_text)
-
-    body = nil
-
-    Net::HTTP
-      .new("localhost", port)
-      .start do |http|
-        request = Net::HTTP::Get.new "/metrics"
-
-        http.request(request) do |response|
-          assert_equal(["gzip"], response.to_hash["content-encoding"])
-          body = response.body
-        end
+      assert_equal 200, status
+      assert_equal "Accept-Encoding", headers["vary"]
+      if compressed
+        assert_equal "gzip", headers["content-encoding"], accept_encoding
+        assert_includes Zlib::GzipReader.new(StringIO.new(body)).read, "memory 99"
+      else
+        refute headers.key?("content-encoding"), accept_encoding
+        assert_includes body, "memory 99"
       end
-    assert_match(/199/, body)
-
-    one_minute = Time.now + 60
-    Time.stub(:now, one_minute) do
-      client.send_json "type" => "mem metric", "value" => 200.1
-
-      TestHelper.wait_for(2) { collector.prometheus_metrics_text =~ /200.1/ }
-
-      assert_match(/200.1/, collector.prometheus_metrics_text)
-    end
-  ensure
-    begin
-      client.stop
-    rescue StandardError
-      nil
-    end
-    begin
-      server.stop
-    rescue StandardError
-      nil
+      assert_fixed_response(headers, body)
     end
   end
 
-  def test_it_can_collect_metrics_with_basic_auth
-    collector = DemoCollector.new
-    port = find_free_port
+  def test_metrics_collection_timeout_does_not_hang_the_endpoint
+    _server, port = start_server(collector: SlowCollector.new, timeout: 0.02)
 
-    server =
-      PrometheusExporter::Server::WebServer.new port: port,
-                                                collector: collector,
-                                                auth: @auth_config[:file],
-                                                realm: @auth_config[:realm]
-    server.start
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    status, _headers, body = raw_request(port, "GET /metrics HTTP/1.1\r\nHost: localhost\r\n\r\n")
+    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
 
-    client = PrometheusExporter::Client.new host: "localhost", port: port, thread_sleep: 0.001
-    client.send_json "type" => "mem metric", "value" => 150
-    client.send_json "type" => "mem metric", "value" => 199
-
-    TestHelper.wait_for(2) { collector.prometheus_metrics_text =~ /199/ }
-
-    assert_match(/199/, collector.prometheus_metrics_text)
-
-    Net::HTTP
-      .new("localhost", port)
-      .start do |http|
-        request = Net::HTTP::Get.new "/metrics"
-        request.basic_auth @auth_config[:user], @auth_config[:passwd]
-
-        http.request(request) do |response|
-          assert_equal("200", response.code)
-          assert_equal(["gzip"], response.to_hash["content-encoding"])
-          assert_match(/199/, response.body)
-        end
-      end
-  ensure
-    begin
-      client.stop
-    rescue StandardError
-      nil
-    end
-    begin
-      server.stop
-    rescue StandardError
-      nil
-    end
+    assert_equal 200, status
+    assert_operator elapsed, :<, 0.15
+    assert_includes body, "collector_working 0"
   end
 
-  def test_it_fails_with_invalid_auth
-    collector = DemoCollector.new
-    port = find_free_port
+  def test_basic_auth_uses_htpasswd_crypt_format
+    auth_file = tempfile
+    password_hash = "test_password".crypt("xy")
+    auth_file.write("test_user:#{password_hash}\n")
+    auth_file.flush
+    _server, port = start_server(auth: auth_file.path, realm: "Metrics Realm")
 
-    server =
-      PrometheusExporter::Server::WebServer.new port: port,
-                                                collector: collector,
-                                                auth: @auth_config[:file],
-                                                realm: @auth_config[:realm]
-    server.start
+    status, headers, body = raw_request(port, "GET /metrics HTTP/1.1\r\nHost: localhost\r\n\r\n")
+    assert_equal 401, status
+    assert_equal "Unauthorized", body
+    assert_equal 'Basic realm="Metrics Realm"', headers["www-authenticate"]
 
-    Net::HTTP
-      .new("localhost", port)
-      .start do |http|
-        request = Net::HTTP::Get.new "/metrics"
+    credentials = Base64.strict_encode64("test_user:test_password")
+    status, _headers, body =
+      raw_request(
+        port,
+        "GET /metrics HTTP/1.1\r\nHost: localhost\r\nAuthorization: Basic #{credentials}\r\n\r\n",
+      )
+    assert_equal 200, status
+    assert_includes body, "collector_working"
 
-        http.request(request) do |response|
-          assert_equal("401", response.code)
-          assert_match(/Unauthorized/, response.body)
-        end
-      end
-  ensure
-    begin
-      client.stop
-    rescue StandardError
-      nil
-    end
-    begin
-      server.stop
-    rescue StandardError
-      nil
-    end
+    bad_credentials = Base64.strict_encode64("test_user:wrong")
+    status, =
+      raw_request(
+        port,
+        "GET /metrics HTTP/1.1\r\nHost: localhost\r\nAuthorization: Basic #{bad_credentials}\r\n\r\n",
+      )
+    assert_equal 401, status
+
+    status, = raw_request(port, "GET /ping HTTP/1.1\r\nHost: localhost\r\n\r\n")
+    assert_equal 200, status
   end
 
-  def test_it_responds_to_ping
-    collector = DemoCollector.new
-    port = find_free_port
+  def test_auth_realm_cannot_inject_response_headers
+    auth_file = tempfile
+    auth_file.write("test_user:#{"password".crypt("xy")}\n")
+    auth_file.flush
+    realm = "safe\"\r\nX-Injected: yes\\tail"
+    _server, port = start_server(auth: auth_file.path, realm: realm)
 
-    server = PrometheusExporter::Server::WebServer.new port: port, collector: collector
-    server.start
+    status, headers, = raw_request(port, "GET /metrics HTTP/1.1\r\nHost: localhost\r\n\r\n")
 
-    client = PrometheusExporter::Client.new host: "localhost", port: port, thread_sleep: 0.001
+    assert_equal 401, status
+    assert_equal 'Basic realm="safe\\"X-Injected: yes\\\\tail"', headers["www-authenticate"]
+    refute headers.key?("x-injected")
+  end
 
-    Net::HTTP
-      .new("localhost", port)
-      .start do |http|
-        request = Net::HTTP::Get.new "/ping"
+  def test_collector_errors_return_an_error_and_are_counted
+    _server, port = start_server(collector: DemoCollector.new)
+    invalid_json = "not-json"
+    request =
+      "POST /send-metrics HTTP/1.1\r\nHost: localhost\r\n" \
+        "Transfer-Encoding: chunked\r\n\r\n" \
+        "#{invalid_json.bytesize.to_s(16)}\r\n#{invalid_json}\r\n0\r\n\r\n"
 
-        http.request(request) do |response|
-          assert_equal("200", response.code)
-          assert_match(/PONG/, response.body)
-        end
-      end
-  ensure
-    begin
-      client.stop
-    rescue StandardError
-      nil
-    end
-    begin
-      server.stop
-    rescue StandardError
-      nil
+    status, _headers, body = raw_request(port, request)
+    assert_equal 500, status
+    assert_includes body, "Bad Metrics"
+
+    _status, _headers, metrics =
+      raw_request(port, "GET /metrics HTTP/1.1\r\nHost: localhost\r\n\r\n")
+    assert_includes metrics, "collector_metrics_total 1"
+    assert_includes metrics, "collector_sessions_total 1"
+    assert_includes metrics, "collector_bad_metrics_total 1"
+  end
+
+  def test_collector_exception_status_is_validated_and_cannot_inject_response
+    cases = [
+      [422, 422, "Unprocessable Entity"],
+      [499, 499, "Error"],
+      [599, 599, "Error"],
+      [399, 500, "Internal Server Error"],
+      [600, 500, "Internal Server Error"],
+      [422.0, 500, "Internal Server Error"],
+      ["422\r\nX-Injected: yes", 500, "Internal Server Error"],
+    ]
+
+    cases.each do |status_code, expected, expected_reason|
+      collector = ErrorCollector.new(status_code, "bad\r\nX-Body: body-only")
+      _server, port = start_server(collector: collector)
+      request =
+        "POST /send-metrics HTTP/1.1\r\nHost: localhost\r\n" \
+          "Content-Length: 2\r\n\r\n{}"
+
+      status, headers, body, reason = raw_request(port, request)
+      assert_equal expected, status
+      assert_equal expected_reason, reason
+      refute headers.key?("x-injected")
+      refute headers.key?("x-body")
+      assert_includes body, "X-Body: body-only"
     end
   end
 end
