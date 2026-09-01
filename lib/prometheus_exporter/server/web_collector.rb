@@ -7,7 +7,9 @@ module PrometheusExporter::Server
       @http_requests_total = nil
       @http_request_duration_seconds = nil
       @http_request_redis_duration_seconds = nil
+      @http_request_redis_calls = nil
       @http_request_sql_duration_seconds = nil
+      @http_request_sql_calls = nil
       @http_request_queue_duration_seconds = nil
       @http_request_memcache_duration_seconds = nil
     end
@@ -47,11 +49,22 @@ module PrometheusExporter::Server
             "Time spent in HTTP reqs in Redis, in seconds.",
           )
 
+        @metrics["http_request_redis_calls"] = @http_request_redis_calls =
+          PrometheusExporter::Metric::Counter.new(
+            "http_request_redis_calls",
+            "Total number of Redis calls made inside an HTTP request.",
+        )
+
         @metrics["http_request_sql_duration_seconds"] = @http_request_sql_duration_seconds =
           PrometheusExporter::Metric::Base.default_aggregation.new(
             "http_request_sql_duration_seconds",
             "Time spent in HTTP reqs in SQL in seconds.",
           )
+
+        @metrics["http_request_sql_calls"] = @http_request_sql_calls = PrometheusExporter::Metric::Counter.new(
+          "http_request_sql_calls",
+          "The total number of SQL queries made inside an HTTP request."
+        )
 
         @metrics[
           "http_request_memcache_duration_seconds"
@@ -80,9 +93,11 @@ module PrometheusExporter::Server
         @http_request_duration_seconds.observe(timings["total_duration"], labels)
         if redis = timings["redis"]
           @http_request_redis_duration_seconds.observe(redis["duration"], labels)
+          @http_request_redis_calls.increment(labels, redis["calls"])
         end
         if sql = timings["sql"]
           @http_request_sql_duration_seconds.observe(sql["duration"], labels)
+          @http_request_sql_calls.increment(labels, sql["calls"])
         end
         if memcache = timings["memcache"]
           @http_request_memcache_duration_seconds.observe(memcache["duration"], labels)
