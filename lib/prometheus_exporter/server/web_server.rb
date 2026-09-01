@@ -87,7 +87,7 @@ module PrometheusExporter::Server
       @server = WEBrick::HTTPServer.new(webrick_options)
 
       @server.mount_proc "/" do |req, res|
-        res["Content-Type"] = "text/plain; charset=utf-8"
+        res["Content-Type"] = "text/plain; version=0.0.4; charset=utf-8"
         if req.path == "/metrics"
           authenticate(req, res) if @auth
 
