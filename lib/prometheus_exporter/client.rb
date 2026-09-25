@@ -86,6 +86,7 @@ module PrometheusExporter
       @port = port
       @worker_thread = nil
       @mutex = Mutex.new
+      @socket_mutex = Mutex.new
       @thread_sleep = thread_sleep
       @connect_timeout = connect_timeout
 
@@ -122,17 +123,18 @@ module PrometheusExporter
     end
 
     def send_json(obj)
-      payload =
-        if @custom_labels
-          if obj[:custom_labels]
-            obj.merge(custom_labels: @custom_labels.merge(obj[:custom_labels]))
-          else
-            obj.merge(custom_labels: @custom_labels)
-          end
-        else
-          obj
-        end
-      send(@json_serializer.dump(payload))
+      send(serialize(obj))
+    end
+
+    def send_json_sync(obj)
+      send_sync(serialize(obj))
+    end
+
+    def send_sync(str)
+      @socket_mutex.synchronize do
+        ensure_socket!
+        write_message(str)
+      end
     end
 
     def send(str)
@@ -146,19 +148,11 @@ module PrometheusExporter
     end
 
     def process_queue
-      while @queue.length > 0
-        ensure_socket!
-
-        begin
-          message = @queue.pop
-          @socket.write(message.bytesize.to_s(16).upcase)
-          @socket.write("\r\n")
-          @socket.write(message)
-          @socket.write("\r\n")
-        rescue => e
-          logger.warn "Prometheus Exporter is dropping a message: #{e}"
-          close_socket!
-          raise
+      @socket_mutex.synchronize do
+        close_socket_if_old!
+        while @queue.length > 0
+          ensure_socket!
+          write_message(@queue.pop)
         end
       end
     end
@@ -169,14 +163,38 @@ module PrometheusExporter
         @worker_thread&.kill
         sleep 0.001 while @worker_thread&.alive?
         @worker_thread = nil
-        close_socket!
+        @socket_mutex.synchronize { close_socket! }
       end
     end
 
     private
 
+    def serialize(obj)
+      payload =
+        if @custom_labels
+          if obj[:custom_labels]
+            obj.merge(custom_labels: @custom_labels.merge(obj[:custom_labels]))
+          else
+            obj.merge(custom_labels: @custom_labels)
+          end
+        else
+          obj
+        end
+      @json_serializer.dump(payload)
+    end
+
+    def write_message(message)
+      @socket.write(message.bytesize.to_s(16).upcase)
+      @socket.write("\r\n")
+      @socket.write(message)
+      @socket.write("\r\n")
+    rescue => e
+      logger.warn "Prometheus Exporter is dropping a message: #{e}"
+      close_socket!
+      raise
+    end
+
     def worker_loop
-      close_socket_if_old!
       process_queue
     rescue => e
       logger.error "Prometheus Exporter, failed to send message #{e}"
@@ -296,6 +314,10 @@ module PrometheusExporter
     end
 
     def send(json)
+      @collector.process(json)
+    end
+
+    def send_sync(json)
       @collector.process(json)
     end
   end

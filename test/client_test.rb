@@ -84,4 +84,84 @@ class PrometheusExporterTest < Minitest::Test
 
     assert_includes(logs.string, "dropping message cause queue is full")
   end
+
+  def test_send_json_sync_writes_on_the_calling_thread_with_custom_labels
+    socket = StringIO.new
+    caller_thread = Thread.current
+    write = socket.method(:write)
+    client = PrometheusExporter::Client.new(custom_labels: { region: "west", app: "default" })
+    metric = { type: "counter", custom_labels: { app: "discourse" } }
+
+    socket.stub(
+      :write,
+      ->(data) do
+        assert_equal(caller_thread, Thread.current)
+        write.call(data)
+      end,
+    ) { TCPSocket.stub(:new, socket) { client.send_json_sync(metric) } }
+
+    payload = JSON.generate(type: "counter", custom_labels: { region: "west", app: "discourse" })
+    assert_includes(socket.string, "#{payload.bytesize.to_s(16).upcase}\r\n#{payload}\r\n")
+    assert_equal({ app: "discourse" }, metric[:custom_labels])
+  ensure
+    client&.stop
+  end
+
+  def test_send_sync_propagates_connection_errors
+    client = PrometheusExporter::Client.new
+
+    TCPSocket.stub(:new, ->(*) { raise Errno::ECONNREFUSED }) do
+      assert_raises(Errno::ECONNREFUSED) { client.send_sync("metric") }
+    end
+  ensure
+    client&.stop
+  end
+
+  def test_sync_send_does_not_interleave_with_a_background_write
+    socket = StringIO.new
+    write = socket.method(:write)
+    writing = Queue.new
+    resume = Queue.new
+    client = PrometheusExporter::Client.new
+    synchronous = nil
+
+    socket.stub(
+      :write,
+      ->(data) do
+        if data == "async"
+          writing << true
+          resume.pop
+        end
+        write.call(data)
+      end,
+    ) do
+      TCPSocket.stub(:new, socket) do
+        client.send("async")
+        assert(TestHelper.wait_for(2) { !writing.empty? })
+        synchronous = Thread.new { client.send_sync("sync") }
+        assert(TestHelper.wait_for(2) { synchronous.status == "sleep" })
+        refute_includes(socket.string, "sync\r\n")
+        resume << true
+        assert(synchronous.join(2))
+      end
+    end
+
+    assert_includes(socket.string, "5\r\nasync\r\n4\r\nsync\r\n")
+  ensure
+    resume << true
+    synchronous&.kill
+    synchronous&.join
+    client&.stop
+  end
+
+  def test_local_client_supports_synchronous_sending
+    received = []
+    collector = Object.new
+    client = PrometheusExporter::LocalClient.new(collector: collector)
+    collector.define_singleton_method(:process) { |json| received << JSON.parse(json) }
+
+    client.send_json_sync(type: "counter", value: 1)
+
+    assert_equal([{ "type" => "counter", "value" => 1 }], received)
+  end
 end
