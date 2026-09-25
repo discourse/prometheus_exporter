@@ -148,12 +148,15 @@ module PrometheusExporter
     end
 
     def process_queue
-      @socket_mutex.synchronize do
-        close_socket_if_old!
-        while @queue.length > 0
+      loop do
+        @socket_mutex.synchronize do
+          close_socket_if_old!
+          return if @queue.empty?
+
           ensure_socket!
           write_message(@queue.pop)
         end
+        Thread.pass
       end
     end
 

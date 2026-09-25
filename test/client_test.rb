@@ -154,6 +154,41 @@ class PrometheusExporterTest < Minitest::Test
     client&.stop
   end
 
+  def test_sync_send_does_not_wait_for_the_async_queue_to_empty
+    socket = StringIO.new
+    write = socket.method(:write)
+    client = PrometheusExporter::Client.new
+    writing = Queue.new
+    replenish = true
+    synchronous = nil
+
+    socket.stub(
+      :write,
+      ->(data) do
+        if data == "async"
+          writing << true if writing.empty?
+          client.send("async") if replenish
+          Thread.pass
+        end
+        write.call(data)
+      end,
+    ) do
+      TCPSocket.stub(:new, socket) do
+        client.send("async")
+        assert(TestHelper.wait_for(2) { !writing.empty? })
+
+        synchronous = Thread.new { client.send_sync("sync") }
+
+        assert(synchronous.join(2), "synchronous send waited for the async queue to empty")
+      end
+    end
+  ensure
+    replenish = false
+    synchronous&.kill
+    synchronous&.join
+    client&.stop
+  end
+
   def test_local_client_supports_synchronous_sending
     received = []
     collector = Object.new
