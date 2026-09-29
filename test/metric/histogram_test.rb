@@ -88,6 +88,118 @@ module PrometheusExporter::Metric
       assert_equal(histogram.to_prometheus_text, expected)
     end
 
+    it "can correctly gather a histogram with escaped labels" do
+      histogram = Histogram.new("a_histogram", "my amazing histogram", buckets: [1])
+
+      histogram.observe(0.1, name: "bob\"")
+
+      expected = <<~'TEXT'
+        # HELP a_histogram my amazing histogram
+        # TYPE a_histogram histogram
+        a_histogram_bucket{name="bob\"",le="1"} 1
+        a_histogram_bucket{name="bob\"",le="+Inf"} 1
+        a_histogram_count{name="bob\""} 1
+        a_histogram_sum{name="bob\""} 0.1
+      TEXT
+
+      assert_equal(histogram.to_prometheus_text, expected)
+    end
+
+    it "can correctly gather a histogram with a label value ending in a brace" do
+      histogram = Histogram.new("a_histogram", "my amazing histogram", buckets: [1])
+
+      histogram.observe(0.1, path: "/a}")
+
+      expected = <<~TEXT
+        # HELP a_histogram my amazing histogram
+        # TYPE a_histogram histogram
+        a_histogram_bucket{path="/a}",le="1"} 1
+        a_histogram_bucket{path="/a}",le="+Inf"} 1
+        a_histogram_count{path="/a}"} 1
+        a_histogram_sum{path="/a}"} 0.1
+      TEXT
+
+      assert_equal(histogram.to_prometheus_text, expected)
+    end
+
+    it "can correctly gather a histogram with default labels" do
+      Base.default_labels = { host: "web-1" }
+      histogram = Histogram.new("a_histogram", "my amazing histogram", buckets: [1])
+
+      histogram.observe(0.1)
+      histogram.observe(2, name: "bob")
+
+      expected = <<~TEXT
+        # HELP a_histogram my amazing histogram
+        # TYPE a_histogram histogram
+        a_histogram_bucket{host="web-1",le="1"} 1
+        a_histogram_bucket{host="web-1",le="+Inf"} 1
+        a_histogram_count{host="web-1"} 1
+        a_histogram_sum{host="web-1"} 0.1
+        a_histogram_bucket{host="web-1",name="bob",le="1"} 0
+        a_histogram_bucket{host="web-1",name="bob",le="+Inf"} 1
+        a_histogram_count{host="web-1",name="bob"} 1
+        a_histogram_sum{host="web-1",name="bob"} 2.0
+      TEXT
+
+      assert_equal(histogram.to_prometheus_text, expected)
+    ensure
+      Base.default_labels = nil
+    end
+
+    it "replaces a supplied le label on bucket samples" do
+      histogram = Histogram.new("a_histogram", "my amazing histogram", buckets: [1])
+      histogram.observe(0.5, "le" => "caller")
+
+      expected = <<~TEXT
+        # HELP a_histogram my amazing histogram
+        # TYPE a_histogram histogram
+        a_histogram_bucket{le="1"} 1
+        a_histogram_bucket{le="+Inf"} 1
+        a_histogram_count{le="caller"} 1
+        a_histogram_sum{le="caller"} 0.5
+      TEXT
+
+      assert_equal(expected, histogram.to_prometheus_text)
+    end
+
+    it "replaces a default le label on bucket samples" do
+      Base.default_labels = { "le" => "default" }
+      histogram = Histogram.new("a_histogram", "my amazing histogram", buckets: [1])
+      histogram.observe(0.5)
+
+      expected = <<~TEXT
+        # HELP a_histogram my amazing histogram
+        # TYPE a_histogram histogram
+        a_histogram_bucket{le="1"} 1
+        a_histogram_bucket{le="+Inf"} 1
+        a_histogram_count{le="default"} 1
+        a_histogram_sum{le="default"} 0.5
+      TEXT
+
+      assert_equal(expected, histogram.to_prometheus_text)
+    ensure
+      Base.default_labels = nil
+    end
+
+    it "renders buckets added before the first observation" do
+      histogram = Histogram.new("a_histogram", "my amazing histogram", buckets: [1])
+      histogram.buckets << 2
+      histogram.observe(1.5)
+
+      expected = <<~TEXT
+        # HELP a_histogram my amazing histogram
+        # TYPE a_histogram histogram
+        a_histogram_bucket{le="1"} 0
+        a_histogram_bucket{le="2"} 1
+        a_histogram_bucket{le="+Inf"} 1
+        a_histogram_count 1
+        a_histogram_sum 1.5
+      TEXT
+
+      assert_equal(expected, histogram.to_prometheus_text)
+    end
+
     it "can correctly gather a histogram using custom buckets" do
       histogram = Histogram.new("a_histogram", "my amazing histogram", buckets: [2, 1, 3])
 

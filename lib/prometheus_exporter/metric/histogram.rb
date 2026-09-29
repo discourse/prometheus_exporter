@@ -51,18 +51,34 @@ module PrometheusExporter::Metric
     def metric_text
       text = +""
       first = true
+      full_name = prefix(@name)
+      bucket_suffixes = (@buckets + ["+Inf"]).map { |bucket| "le=\"#{bucket}\"}" }
       @observations.each do |labels, buckets|
         text << "\n" unless first
         first = false
         count = @counts[labels]
         sum = @sums[labels]
-        @buckets.each do |bucket|
-          value = @observations[labels][bucket]
-          text << "#{prefix(@name)}_bucket#{labels_text(with_bucket(labels, bucket.to_s))} #{value}\n"
+        label_text = labels_text(labels)
+        label_prefix = label_text ? "#{label_text.chop}," : "{"
+        replace_le = labels.key?("le") || Base.default_labels.key?("le")
+        @buckets.each_with_index do |bucket, i|
+          text << full_name << "_bucket"
+          if replace_le
+            text << labels_text(labels.merge("le" => bucket.to_s))
+          else
+            text << label_prefix << bucket_suffixes[i]
+          end
+          text << " #{buckets[bucket]}\n"
         end
-        text << "#{prefix(@name)}_bucket#{labels_text(with_bucket(labels, "+Inf"))} #{count}\n"
-        text << "#{prefix(@name)}_count#{labels_text(labels)} #{count}\n"
-        text << "#{prefix(@name)}_sum#{labels_text(labels)} #{sum}"
+        text << full_name << "_bucket"
+        if replace_le
+          text << labels_text(labels.merge("le" => "+Inf"))
+        else
+          text << label_prefix << bucket_suffixes.last
+        end
+        text << " #{count}\n"
+        text << full_name << "_count#{label_text} #{count}\n"
+        text << full_name << "_sum#{label_text} #{sum}"
       end
       text
     end
@@ -94,10 +110,6 @@ module PrometheusExporter::Metric
         break if value > b
         buckets[b] += 1
       end
-    end
-
-    def with_bucket(labels, bucket)
-      labels.merge("le" => bucket)
     end
   end
 end

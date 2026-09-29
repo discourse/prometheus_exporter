@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Reduce histogram text allocations while preserving bucket labels and bucket updates - Luiz Eduardo Kowalski.
+
 ### Removed
 
 - Support for Rails 7.2 and earlier and Ruby 3.2 and earlier, which have reached end of life.
