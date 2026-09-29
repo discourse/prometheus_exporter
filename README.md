@@ -40,7 +40,7 @@ To learn more see [Instrumenting Rails with Prometheus](https://samsaffron.com/a
 
 ## Requirements
 
-Minimum Ruby of version 3.0.0 is required, Ruby 2.7 is EOL as of March 31st 2023.
+Ruby 3.3 or newer is required.
 
 ## Migrating from v0.x
 
@@ -373,8 +373,8 @@ end
 | Counter | `major_gc_ops_total`      | Major GC operations by process               |
 | Counter | `minor_gc_ops_total`      | Minor GC operations by process               |
 | Counter | `allocated_objects_total` | Total number of allocated objects by process |
-| Gauge   | `marking_time`            | Marking time spent (Ruby 3.3 minimum)        |
-| Gauge   | `sweeping_time`           | Sweeping time spent (Ruby 3.3 minimum)       |
+| Gauge   | `marking_time`            | Marking time spent                           |
+| Gauge   | `sweeping_time`           | Sweeping time spent                          |
 
 _Metrics marked with * are only collected when `MiniRacer` is defined._
 

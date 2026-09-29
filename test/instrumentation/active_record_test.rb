@@ -10,13 +10,9 @@ class PrometheusInstrumentationActiveRecordTest < Minitest::Test
 
     # With this trick this variable with be accessible with ::ObjectSpace
     @pool =
-      if active_record_version >= Gem::Version.create("6.1.0.rc1")
-        active_record61_pool
-      elsif active_record_version >= Gem::Version.create("6.0.0")
-        active_record60_pool
-      else
-        raise "unsupported active_record version"
-      end
+      ::ActiveRecord::ConnectionAdapters::ConnectionPool.new(
+        OpenStruct.new(db_config: OpenStruct.new(checkout_timeout: 0, idle_timeout: 0, pool: 5)),
+      )
   end
 
   def metric_labels
@@ -44,21 +40,5 @@ class PrometheusInstrumentationActiveRecordTest < Minitest::Test
 
   def test_type
     assert_equal collector.collect.first[:type], "active_record"
-  end
-
-  private
-
-  def active_record_version
-    Gem.loaded_specs["activerecord"].version
-  end
-
-  def active_record60_pool
-    ::ActiveRecord::ConnectionAdapters::ConnectionPool.new(OpenStruct.new(config: {}))
-  end
-
-  def active_record61_pool
-    ::ActiveRecord::ConnectionAdapters::ConnectionPool.new(
-      OpenStruct.new(db_config: OpenStruct.new(checkout_timeout: 0, idle_timeout: 0, pool: 5)),
-    )
   end
 end
