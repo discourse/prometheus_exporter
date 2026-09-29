@@ -56,6 +56,22 @@ class PrometheusExporterTest < Minitest::Test
     port
   end
 
+  def test_it_can_collect_synchronous_metrics
+    collector = DemoCollector.new
+    port = find_free_port
+    server = PrometheusExporter::Server::WebServer.new(port: port, collector: collector)
+    runner = server.start
+    client = PrometheusExporter::Client.new(port: port)
+
+    client.send_json({ "type" => "mem metric", "value" => 199 }, sync: true)
+
+    assert(TestHelper.wait_for(2) { collector.prometheus_metrics_text.include?("memory 199") })
+  ensure
+    client&.stop
+    server&.stop
+    runner&.join
+  end
+
   def test_it_can_collect_with_and_without_oj
     port = find_free_port
 
