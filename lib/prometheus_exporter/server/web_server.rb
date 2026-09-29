@@ -1,14 +1,16 @@
 # frozen_string_literal: true
 
-require "webrick"
+require "logger"
+require "openssl"
 require "timeout"
-require "zlib"
-require "stringio"
+require "async/http/server"
+require "async/http/endpoint"
+require "protocol/http/response"
+require "protocol/http/body/buffered"
+require "protocol/http/content_encoding"
 
 module PrometheusExporter::Server
   class WebServer
-    attr_reader :collector
-
     PAGESIZE =
       begin
         `getconf PAGESIZE`.to_i
@@ -17,6 +19,12 @@ module PrometheusExporter::Server
       end
     private_constant :PAGESIZE
 
+    NOT_FOUND =
+      "Not Found! The Prometheus Ruby Exporter only listens on /ping, /metrics and /send-metrics"
+    private_constant :NOT_FOUND
+
+    attr_reader :collector, :port
+
     def initialize(opts)
       @port = opts[:port] || PrometheusExporter::DEFAULT_PORT
       @bind = opts[:bind] || PrometheusExporter::DEFAULT_BIND_ADDRESS
@@ -24,6 +32,8 @@ module PrometheusExporter::Server
       @verbose = opts[:verbose] || false
       @auth = opts[:auth]
       @realm = opts[:realm] || PrometheusExporter::DEFAULT_REALM
+      @tls_cert_file = opts[:tls_cert_file]
+      @tls_key_file = opts[:tls_key_file]
       @pid = Process.pid
 
       @metrics_total =
@@ -48,108 +58,69 @@ module PrometheusExporter::Server
       @sessions_total.observe(0)
       @bad_metrics_total.observe(0)
 
-      @access_log, @logger = nil
-      log_target = opts[:log_target]
-
-      if @verbose
-        @access_log = [
-          [$stderr, WEBrick::AccessLog::COMMON_LOG_FORMAT],
-          [$stderr, WEBrick::AccessLog::REFERER_LOG_FORMAT],
-        ]
-        @logger = WEBrick::Log.new(log_target || $stderr)
-      else
-        @access_log = []
-        @logger = WEBrick::Log.new(log_target || "/dev/null")
-      end
-
+      log_target = opts[:log_target] || (@verbose ? $stderr : File::NULL)
+      @logger = Logger.new(log_target)
+      @logger.level = Logger::INFO
       @logger.info "Using Basic Authentication via #{@auth}" if @verbose && @auth
 
-      if %w[ALL ANY].include?(@bind)
-        @logger.info "Listening on both 0.0.0.0/:: network interfaces"
-        @bind = nil
-      end
-
       @collector = opts[:collector] || Collector.new(logger: @logger)
-
-      webrick_options = { Port: @port, BindAddress: @bind, Logger: @logger, AccessLog: @access_log }
-
-      if opts[:tls_cert_file] && opts[:tls_key_file]
-        require "webrick/https"
-        require "openssl"
-
-        webrick_options[:SSLEnable] = true
-        webrick_options[:SSLCertificate] = OpenSSL::X509::Certificate.new(
-          File.read(opts[:tls_cert_file]),
-        )
-        webrick_options[:SSLPrivateKey] = OpenSSL::PKey::RSA.new(File.read(opts[:tls_key_file]))
-      end
-
-      @server = WEBrick::HTTPServer.new(webrick_options)
-
-      @server.mount_proc "/" do |req, res|
-        res["Content-Type"] = "text/plain; charset=utf-8"
-        if req.path == "/metrics"
-          authenticate(req, res) if @auth
-
-          res.status = 200
-          if req.header["accept-encoding"].to_s.include?("gzip")
-            sio = StringIO.new
-            collected_metrics = metrics
-            begin
-              writer = Zlib::GzipWriter.new(sio)
-              writer.write(collected_metrics)
-            ensure
-              writer.close
-            end
-            res.body = sio.string
-            res.header["content-encoding"] = "gzip"
-          else
-            res.body = metrics
-          end
-        elsif req.path == "/send-metrics"
-          handle_metrics(req, res)
-        elsif req.path == "/ping"
-          res.body = "PONG"
-        else
-          res.status = 404
-          res.body =
-            "Not Found! The Prometheus Ruby Exporter only listens on /ping, /metrics and /send-metrics"
-        end
-      end
     end
 
-    def handle_metrics(req, res)
-      @sessions_total.observe
-      req.body do |block|
-        begin
-          @metrics_total.observe
-          @collector.process(block)
-        rescue => e
-          @logger.error "\n\n#{e.inspect}\n#{e.backtrace}\n\n" if @verbose
-          @bad_metrics_total.observe
-          res.body = "Bad Metrics #{e}"
-          res.status = e.respond_to?(:status_code) ? e.status_code : 500
-          break
-        end
-      end
+    def call(request)
+      log_request(request)
 
-      res.body = "OK"
-      res.status = 200
+      case request.path.split("?", 2).first
+      when "/metrics"
+        metrics_response(request)
+      when "/send-metrics"
+        handle_metrics(request)
+      when "/ping"
+        text_response(200, "PONG")
+      else
+        text_response(404, NOT_FOUND)
+      end
     end
 
     def start
-      @runner ||=
-        Thread.start do
+      return @thread if @thread&.alive?
+
+      url, options = endpoint_args
+      endpoint = Async::HTTP::Endpoint.parse(url, **options)
+      app = Protocol::HTTP::ContentEncoding.new(self)
+      server = Async::HTTP::Server.new(app, endpoint)
+
+      bound = Queue.new
+      @thread =
+        Thread.new do
           begin
-            @server.start
+            Async do |task|
+              @scheduler = Fiber.scheduler
+              endpoint.accept(&server.method(:accept))
+              bound << :bound
+              task.children.each(&:wait)
+            end
           rescue => e
-            @logger.error "Failed to start prometheus collector web on port #{@port}: #{e}"
+            bound << e
           end
         end
+
+      result = bound.pop
+      if result.is_a?(Exception)
+        @logger.error "Failed to start prometheus collector web on port #{@port}: #{result}"
+        @thread = nil
+        @scheduler = nil
+        raise result
+      end
+
+      @thread
     end
 
     def stop
-      @server.shutdown
+      @scheduler&.interrupt
+      @thread&.join
+    ensure
+      @thread = nil
+      @scheduler = nil
     end
 
     def metrics
@@ -161,22 +132,22 @@ module PrometheusExporter::Server
         @logger.error "Generating Prometheus metrics text timed out"
       end
 
-      metrics = []
+      self_metrics = []
 
-      metrics << add_gauge(
+      self_metrics << add_gauge(
         "collector_working",
         "Is the master process collector able to collect metrics",
         metric_text && metric_text.length > 0 ? 1 : 0,
       )
 
-      metrics << add_gauge("collector_rss", "total memory used by collector process", get_rss)
+      self_metrics << add_gauge("collector_rss", "total memory used by collector process", get_rss)
 
-      metrics << @metrics_total
-      metrics << @sessions_total
-      metrics << @bad_metrics_total
+      self_metrics << @metrics_total
+      self_metrics << @sessions_total
+      self_metrics << @bad_metrics_total
 
       <<~TEXT
-      #{metrics.map(&:to_prometheus_text).join("\n\n")}
+      #{self_metrics.map(&:to_prometheus_text).join("\n\n")}
       #{metric_text}
       TEXT
     end
@@ -195,12 +166,94 @@ module PrometheusExporter::Server
       gauge
     end
 
-    def authenticate(req, res)
-      htpasswd = WEBrick::HTTPAuth::Htpasswd.new(@auth)
-      basic_auth =
-        WEBrick::HTTPAuth::BasicAuth.new({ Realm: @realm, UserDB: htpasswd, Logger: @logger })
+    private
 
-      basic_auth.authenticate(req, res)
+    def handle_metrics(request)
+      @sessions_total.observe
+
+      request.body&.each do |chunk|
+        begin
+          @metrics_total.observe
+          @collector.process(chunk)
+        rescue => e
+          @logger.error "\n\n#{e.inspect}\n#{e.backtrace}\n\n" if @verbose
+          @bad_metrics_total.observe
+        end
+      end
+
+      text_response(200, "OK")
+    end
+
+    def metrics_response(request)
+      return unauthorized_response unless authenticated?(request)
+
+      text_response(200, metrics)
+    end
+
+    def text_response(status, body)
+      Protocol::HTTP::Response[status, { "content-type" => "text/plain; charset=utf-8" }, [body]]
+    end
+
+    def authenticated?(request)
+      return true unless @auth
+
+      scheme, encoded = request.headers["authorization"]&.credentials
+      return false unless scheme&.casecmp?("Basic") && encoded
+
+      user, password = encoded.unpack1("m0").to_s.split(":", 2)
+      return false unless user && password
+
+      File.foreach(@auth) do |line|
+        stored_user, password_hash = line.chomp.split(":", 2)
+        next unless stored_user == user && password_hash
+
+        return OpenSSL.secure_compare(password.crypt(password_hash), password_hash)
+      end
+      false
+    rescue ArgumentError, Errno::ENOENT
+      false
+    end
+
+    def unauthorized_response
+      realm = @realm.to_s.gsub(/["\\]/) { |character| "\\#{character}" }
+      Protocol::HTTP::Response[
+        401,
+        {
+          "content-type" => "text/plain; charset=utf-8",
+          "www-authenticate" => %(Basic realm="#{realm}"),
+        },
+        ["Unauthorized"]
+      ]
+    end
+
+    def endpoint_args
+      host = @bind
+
+      if %w[ALL ANY].include?(host)
+        @logger.info "Listening on both 0.0.0.0/:: network interfaces"
+        host = "::"
+      end
+
+      host = "[#{host}]" if host.include?(":")
+
+      if @tls_cert_file && @tls_key_file
+        ["https://#{host}:#{@port}", { ssl_context: build_ssl_context }]
+      else
+        ["http://#{host}:#{@port}", {}]
+      end
+    end
+
+    def build_ssl_context
+      context = OpenSSL::SSL::SSLContext.new
+      context.cert = OpenSSL::X509::Certificate.new(File.read(@tls_cert_file))
+      context.key = OpenSSL::PKey.read(File.read(@tls_key_file))
+      context
+    end
+
+    def log_request(request)
+      return unless @verbose
+
+      @logger.info "#{request.method} #{request.path}"
     end
   end
 end
