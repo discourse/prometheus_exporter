@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../prometheus_exporter"
 require "socket"
 require "logger"
 
