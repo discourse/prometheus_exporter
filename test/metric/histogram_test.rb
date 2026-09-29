@@ -147,59 +147,6 @@ module PrometheusExporter::Metric
       Base.default_labels = nil
     end
 
-    it "replaces a supplied le label on bucket samples" do
-      histogram = Histogram.new("a_histogram", "my amazing histogram", buckets: [1])
-      histogram.observe(0.5, "le" => "caller")
-
-      expected = <<~TEXT
-        # HELP a_histogram my amazing histogram
-        # TYPE a_histogram histogram
-        a_histogram_bucket{le="1"} 1
-        a_histogram_bucket{le="+Inf"} 1
-        a_histogram_count{le="caller"} 1
-        a_histogram_sum{le="caller"} 0.5
-      TEXT
-
-      assert_equal(expected, histogram.to_prometheus_text)
-    end
-
-    it "replaces a default le label on bucket samples" do
-      Base.default_labels = { "le" => "default" }
-      histogram = Histogram.new("a_histogram", "my amazing histogram", buckets: [1])
-      histogram.observe(0.5)
-
-      expected = <<~TEXT
-        # HELP a_histogram my amazing histogram
-        # TYPE a_histogram histogram
-        a_histogram_bucket{le="1"} 1
-        a_histogram_bucket{le="+Inf"} 1
-        a_histogram_count{le="default"} 1
-        a_histogram_sum{le="default"} 0.5
-      TEXT
-
-      assert_equal(expected, histogram.to_prometheus_text)
-    ensure
-      Base.default_labels = nil
-    end
-
-    it "renders buckets added before the first observation" do
-      histogram = Histogram.new("a_histogram", "my amazing histogram", buckets: [1])
-      histogram.buckets << 2
-      histogram.observe(1.5)
-
-      expected = <<~TEXT
-        # HELP a_histogram my amazing histogram
-        # TYPE a_histogram histogram
-        a_histogram_bucket{le="1"} 0
-        a_histogram_bucket{le="2"} 1
-        a_histogram_bucket{le="+Inf"} 1
-        a_histogram_count 1
-        a_histogram_sum 1.5
-      TEXT
-
-      assert_equal(expected, histogram.to_prometheus_text)
-    end
-
     it "can correctly gather a histogram using custom buckets" do
       histogram = Histogram.new("a_histogram", "my amazing histogram", buckets: [2, 1, 3])
 

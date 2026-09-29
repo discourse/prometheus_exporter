@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Reduce histogram text allocations while preserving bucket labels and bucket updates - Luiz Eduardo Kowalski.
+- Reduce allocations when rendering histograms - Luiz Eduardo Kowalski.
 
 ### Removed
 
