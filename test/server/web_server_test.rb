@@ -65,7 +65,7 @@ class PrometheusExporterTest < Minitest::Test
       require "prometheus_exporter"
       require "prometheus_exporter/client"
       client = PrometheusExporter::Client.new(port: #{port})
-      client.send_json_sync("type" => "mem metric", "value" => 199)
+      client.send_json({ "type" => "mem metric", "value" => 199 }, sync: true)
       Process.exit!(0)
     RUBY
 

@@ -85,7 +85,42 @@ class PrometheusExporterTest < Minitest::Test
     assert_includes(logs.string, "dropping message cause queue is full")
   end
 
-  def test_send_json_sync_writes_on_the_calling_thread_with_custom_labels
+  def test_send_json_supports_existing_send_overrides
+    received = []
+    client = PrometheusExporter::Client.new
+    client.define_singleton_method(:send) { |json| received << JSON.parse(json) }
+
+    client.send_json(type: "counter", value: 1)
+
+    assert_equal([{ "type" => "counter", "value" => 1 }], received)
+  end
+
+  def test_send_json_queues_keyword_metrics_by_default
+    socket = StringIO.new
+    caller_thread = Thread.current
+    write = socket.method(:write)
+    client = PrometheusExporter::Client.new
+    payload = JSON.generate(type: "counter", value: 1)
+
+    socket.stub(
+      :write,
+      ->(data) do
+        refute_equal(caller_thread, Thread.current)
+        write.call(data)
+      end,
+    ) do
+      TCPSocket.stub(:new, socket) do
+        client.send_json(type: "counter", value: 1)
+        assert(TestHelper.wait_for(2) { socket.string.include?("#{payload}\r\n") })
+      end
+    end
+
+    assert_includes(socket.string, "#{payload.bytesize.to_s(16).upcase}\r\n#{payload}\r\n")
+  ensure
+    client&.stop
+  end
+
+  def test_send_json_with_sync_writes_on_the_calling_thread_with_custom_labels
     socket = StringIO.new
     caller_thread = Thread.current
     write = socket.method(:write)
@@ -98,7 +133,7 @@ class PrometheusExporterTest < Minitest::Test
         assert_equal(caller_thread, Thread.current)
         write.call(data)
       end,
-    ) { TCPSocket.stub(:new, socket) { client.send_json_sync(metric) } }
+    ) { TCPSocket.stub(:new, socket) { client.send_json(metric, sync: true) } }
 
     payload = JSON.generate(type: "counter", custom_labels: { region: "west", app: "discourse" })
     assert_includes(socket.string, "#{payload.bytesize.to_s(16).upcase}\r\n#{payload}\r\n")
@@ -107,11 +142,11 @@ class PrometheusExporterTest < Minitest::Test
     client&.stop
   end
 
-  def test_send_sync_propagates_connection_errors
+  def test_send_with_sync_propagates_connection_errors
     client = PrometheusExporter::Client.new
 
     TCPSocket.stub(:new, ->(*) { raise Errno::ECONNREFUSED }) do
-      assert_raises(Errno::ECONNREFUSED) { client.send_sync("metric") }
+      assert_raises(Errno::ECONNREFUSED) { client.send("metric", sync: true) }
     end
   ensure
     client&.stop
@@ -138,7 +173,7 @@ class PrometheusExporterTest < Minitest::Test
       TCPSocket.stub(:new, socket) do
         client.send("async")
         assert(TestHelper.wait_for(2) { !writing.empty? })
-        synchronous = Thread.new { client.send_sync("sync") }
+        synchronous = Thread.new { client.send("sync", sync: true) }
         assert(TestHelper.wait_for(2) { synchronous.status == "sleep" })
         refute_includes(socket.string, "sync\r\n")
         resume << true
@@ -177,7 +212,7 @@ class PrometheusExporterTest < Minitest::Test
         client.send("async")
         assert(TestHelper.wait_for(2) { !writing.empty? })
 
-        synchronous = Thread.new { client.send_sync("sync") }
+        synchronous = Thread.new { client.send("sync", sync: true) }
 
         assert(synchronous.join(2), "synchronous send waited for the async queue to empty")
       end
@@ -195,7 +230,7 @@ class PrometheusExporterTest < Minitest::Test
     client = PrometheusExporter::LocalClient.new(collector: collector)
     collector.define_singleton_method(:process) { |json| received << JSON.parse(json) }
 
-    client.send_json_sync(type: "counter", value: 1)
+    client.send_json(type: "counter", value: 1, sync: true)
 
     assert_equal([{ "type" => "counter", "value" => 1 }], received)
   end

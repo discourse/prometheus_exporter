@@ -122,22 +122,31 @@ module PrometheusExporter
       end
     end
 
-    def send_json(obj)
-      send(serialize(obj))
+    def send_json(obj = nil, sync: false, **metric)
+      obj = metric unless metric.empty?
+      payload =
+        if @custom_labels
+          if obj[:custom_labels]
+            obj.merge(custom_labels: @custom_labels.merge(obj[:custom_labels]))
+          else
+            obj.merge(custom_labels: @custom_labels)
+          end
+        else
+          obj
+        end
+      json = @json_serializer.dump(payload)
+      sync ? send(json, sync: true) : send(json)
     end
 
-    def send_json_sync(obj)
-      send_sync(serialize(obj))
-    end
-
-    def send_sync(str)
-      @socket_mutex.synchronize do
-        ensure_socket!
-        write_message(str)
+    def send(str, sync: false)
+      if sync
+        @socket_mutex.synchronize do
+          ensure_socket!
+          write_message(str)
+        end
+        return
       end
-    end
 
-    def send(str)
       @queue << str
       if @queue.length > @max_queue_size
         logger.warn "Prometheus Exporter client is dropping message cause queue is full"
@@ -171,20 +180,6 @@ module PrometheusExporter
     end
 
     private
-
-    def serialize(obj)
-      payload =
-        if @custom_labels
-          if obj[:custom_labels]
-            obj.merge(custom_labels: @custom_labels.merge(obj[:custom_labels]))
-          else
-            obj.merge(custom_labels: @custom_labels)
-          end
-        else
-          obj
-        end
-      @json_serializer.dump(payload)
-    end
 
     def write_message(message)
       @socket.write(message.bytesize.to_s(16).upcase)
@@ -316,11 +311,7 @@ module PrometheusExporter
       super(json_serializer: json_serializer, custom_labels: custom_labels)
     end
 
-    def send(json)
-      @collector.process(json)
-    end
-
-    def send_sync(json)
+    def send(json, sync: false)
       @collector.process(json)
     end
   end
