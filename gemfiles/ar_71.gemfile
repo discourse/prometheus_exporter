@@ -21,5 +21,6 @@ gem "guard", require: false
 gem "guard-minitest", require: false
 gem "rubocop", require: false
 gem "rubocop-discourse", require: false
+gem "json", "< 3"
 
 gemspec path: "../"
