@@ -69,22 +69,11 @@ module PrometheusExporter::Instrumentation
     private
 
     def labels(pool)
-      if ::ActiveRecord.version < Gem::Version.new("6.1.0.rc1")
-        @metric_labels.merge(pool_name: pool.spec.name).merge(
-          pool
-            .spec
-            .config
-            .select { |k, v| @config_labels.include? k }
-            .map { |k, v| [k.to_s.dup.prepend("dbconfig_"), v] }
-            .to_h,
-        )
-      else
-        @metric_labels.merge(pool_name: pool.db_config.name).merge(
-          @config_labels.each_with_object({}) do |l, acc|
-            acc["dbconfig_#{l}"] = pool.db_config.public_send(l)
-          end,
-        )
-      end
+      @metric_labels.merge(pool_name: pool.db_config.name).merge(
+        @config_labels.each_with_object({}) do |l, acc|
+          acc["dbconfig_#{l}"] = pool.db_config.public_send(l)
+        end,
+      )
     end
   end
 end

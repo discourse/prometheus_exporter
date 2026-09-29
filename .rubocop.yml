@@ -2,7 +2,7 @@ inherit_gem:
   rubocop-discourse: default.yml
 
 AllCops:
-  TargetRubyVersion: "3.2"
+  TargetRubyVersion: "3.3"
   Exclude:
     - 'bin/*'
     - 'gemfiles/**/*'
