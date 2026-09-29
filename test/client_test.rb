@@ -125,7 +125,7 @@ class PrometheusExporterTest < Minitest::Test
     caller_thread = Thread.current
     write = socket.method(:write)
     client = PrometheusExporter::Client.new(custom_labels: { region: "west", app: "default" })
-    metric = { type: "counter", custom_labels: { app: "discourse" } }
+    metric = { type: "counter", custom_labels: { app: "api" } }
 
     socket.stub(
       :write,
@@ -135,9 +135,9 @@ class PrometheusExporterTest < Minitest::Test
       end,
     ) { TCPSocket.stub(:new, socket) { client.send_json(metric, sync: true) } }
 
-    payload = JSON.generate(type: "counter", custom_labels: { region: "west", app: "discourse" })
+    payload = JSON.generate(type: "counter", custom_labels: { region: "west", app: "api" })
     assert_includes(socket.string, "#{payload.bytesize.to_s(16).upcase}\r\n#{payload}\r\n")
-    assert_equal({ app: "discourse" }, metric[:custom_labels])
+    assert_equal({ app: "api" }, metric[:custom_labels])
   ensure
     client&.stop
   end

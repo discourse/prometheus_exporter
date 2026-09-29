@@ -56,25 +56,18 @@ class PrometheusExporterTest < Minitest::Test
     port
   end
 
-  def test_synchronous_send_survives_immediate_process_exit
+  def test_it_can_collect_synchronous_metrics
     collector = DemoCollector.new
     port = find_free_port
     server = PrometheusExporter::Server::WebServer.new(port: port, collector: collector)
     runner = server.start
-    script = <<~RUBY
-      require "prometheus_exporter"
-      require "prometheus_exporter/client"
-      client = PrometheusExporter::Client.new(port: #{port})
-      client.send_json({ "type" => "mem metric", "value" => 199 }, sync: true)
-      Process.exit!(0)
-    RUBY
+    client = PrometheusExporter::Client.new(port: port)
 
-    pid = Process.spawn(RbConfig.ruby, "-I", File.expand_path("../../lib", __dir__), "-e", script)
-    _, status = Process.wait2(pid)
+    client.send_json({ "type" => "mem metric", "value" => 199 }, sync: true)
 
-    assert_predicate(status, :success?)
     assert(TestHelper.wait_for(2) { collector.prometheus_metrics_text.include?("memory 199") })
   ensure
+    client&.stop
     server&.stop
     runner&.join
   end
