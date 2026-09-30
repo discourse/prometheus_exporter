@@ -15,13 +15,15 @@ module PrometheusExporter::Instrumentation
               lifecycle.around(:invoke_job) do |job, *args, &block|
                 max_attempts = Delayed::Worker.max_attempts
                 enqueued_count = Delayed::Job.where(queue: job.queue).count
-                pending_count =
-                  Delayed::Job.where(attempts: 0, locked_at: nil, queue: job.queue).count
+                pending_count = Delayed::Job.where(attempts: 0, locked_at: nil, queue: job.queue).count
+                ready_count = Delayed::Job.where(queue: job.queue, run_at: ..Time.current, locked_at: nil, failed_at: nil).count
+
                 instrumenter.call(
                   job,
                   max_attempts,
                   enqueued_count,
                   pending_count,
+                  ready_count,
                   include_module_name,
                   *args,
                   &block
@@ -38,7 +40,7 @@ module PrometheusExporter::Instrumentation
       @client = client || PrometheusExporter::Client.default
     end
 
-    def call(job, max_attempts, enqueued_count, pending_count, include_module_name, *args, &block)
+    def call(job, max_attempts, enqueued_count, pending_count, ready_count, include_module_name, *args, &block)
       success = false
       job_name = job.handler.to_s.match(JOB_CLASS_REGEXP).to_a[include_module_name ? 1 : 2].to_s
       job_name ||= job.try(:name)
@@ -62,6 +64,7 @@ module PrometheusExporter::Instrumentation
         max_attempts: max_attempts,
         enqueued: enqueued_count,
         pending: pending_count,
+        ready: ready_count
       )
     end
   end

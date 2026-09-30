@@ -23,21 +23,9 @@ module PrometheusExporter::Server
     end
 
     def metrics
-      return [] if good_job_metrics.length == 0
+      return [] if good_job_metrics.length.zero?
 
-      good_job_metrics.map do |metric|
-        labels = metric.fetch("custom_labels", {})
-
-        GOOD_JOB_GAUGES.map do |name, help|
-          value = metric[name.to_s]
-
-          if value
-            gauge = gauges[name] ||= PrometheusExporter::Metric::Gauge.new("good_job_#{name}", help)
-            gauge.observe(value, labels)
-          end
-        end
-      end
-
+      good_job_metrics.each(&method(:process_metric))
       gauges.values
     end
 
@@ -48,5 +36,24 @@ module PrometheusExporter::Server
     private
 
     attr_reader :good_job_metrics, :gauges
+
+    def process_metric(metric)
+      labels = metric.fetch("custom_labels", {})
+
+      GOOD_JOB_GAUGES.each do |name, help|
+        next unless (value = metric[name.to_s])
+
+        gauge = gauges[name] ||= PrometheusExporter::Metric::Gauge.new("good_job_#{name}", help)
+        observe_metric(gauge, metric, labels, value)
+      end
+    end
+
+    def observe_metric(gauge, metric, labels, value)
+      if metric["by_queue"]
+        value.each { |queue_name, count| gauge.observe(count, labels.merge(queue_name: queue_name)) }
+      else
+        gauge.observe(value, labels)
+      end
+    end
   end
 end
