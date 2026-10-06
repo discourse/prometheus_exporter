@@ -876,6 +876,7 @@ Usage: prometheus_exporter [options]
     -a, --type-collector FILE        (optional) Custom type collectors to run in main collector
     -v, --verbose
     -g, --histogram                  Use histogram instead of summary for aggregations
+        --histogram-buckets BUCKETS  (optional) Comma-separated default histogram buckets, e.g. 0.1,0.5,1,5,10,30
         --auth FILE                  (optional) enable basic authentication using a htpasswd FILE
         --realm REALM                (optional) Use REALM for basic authentication (default: "Prometheus Exporter")
         --unicorn-listen-address ADDRESS
@@ -970,6 +971,12 @@ By default these buckets will be used:
 if this is not enough you can specify `default_buckets` like this:
 ```
 Histogram.default_buckets = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 2.5, 3, 4, 5.0, 10.0, 12, 14, 15, 20, 25].freeze
+```
+
+The built-in collectors run in the exporter process, so to change their buckets in histogram mode, pass them to `prometheus_exporter`:
+
+```
+$ prometheus_exporter --histogram --histogram-buckets 0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10,30,60
 ```
 
 Specfied buckets on the instance  takes precedence over default:

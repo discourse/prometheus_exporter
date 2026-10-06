@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `--histogram-buckets` option to set the default histogram buckets used by the built-in collectors - Nicholas Volker.
+
 ### Changed
 
 - Reduce allocations when rendering histograms - Luiz Eduardo Kowalski.

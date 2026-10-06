@@ -20,6 +20,7 @@ module PrometheusExporter::Server
       @auth = nil
       @realm = nil
       @histogram = nil
+      @histogram_buckets = nil
 
       options.each { |k, v| send("#{k}=", v) if self.class.method_defined?("#{k}=") }
     end
@@ -31,6 +32,8 @@ module PrometheusExporter::Server
       if histogram
         PrometheusExporter::Metric::Base.default_aggregation = PrometheusExporter::Metric::Histogram
       end
+
+      PrometheusExporter::Metric::Histogram.default_buckets = histogram_buckets if histogram_buckets
 
       register_type_collectors
 
@@ -81,7 +84,10 @@ module PrometheusExporter::Server
                 :label,
                 :auth,
                 :realm,
-                :histogram
+                :histogram,
+                :histogram_buckets
+
+    attr_reader :histogram_buckets
 
     def auth
       @auth || nil

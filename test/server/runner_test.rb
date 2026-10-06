@@ -43,6 +43,7 @@ class PrometheusRunnerTest < Minitest::Test
 
   def teardown
     PrometheusExporter::Metric::Base.default_aggregation = nil
+    PrometheusExporter::Metric::Histogram.default_buckets = nil
   end
 
   def test_runner_defaults
@@ -158,6 +159,28 @@ class PrometheusRunnerTest < Minitest::Test
     assert_equal(
       PrometheusExporter::Metric::Base.default_aggregation,
       PrometheusExporter::Metric::Histogram,
+    )
+  end
+
+  def test_runner_histogram_buckets
+    runner =
+      PrometheusExporter::Server::Runner.new(
+        server_class: MockerWebServer,
+        histogram: true,
+        histogram_buckets: [0.1, 1, 10, 60],
+      )
+    runner.start
+
+    assert_equal(PrometheusExporter::Metric::Histogram.default_buckets, [0.1, 1, 10, 60])
+  end
+
+  def test_runner_default_histogram_buckets
+    runner = PrometheusExporter::Server::Runner.new(server_class: MockerWebServer, histogram: true)
+    runner.start
+
+    assert_equal(
+      PrometheusExporter::Metric::Histogram.default_buckets,
+      PrometheusExporter::Metric::Histogram::DEFAULT_BUCKETS,
     )
   end
 
