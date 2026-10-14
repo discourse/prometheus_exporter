@@ -81,7 +81,7 @@ module PrometheusExporter::Server
         webrick_options[:SSLCertificate] = OpenSSL::X509::Certificate.new(
           File.read(opts[:tls_cert_file]),
         )
-        webrick_options[:SSLPrivateKey] = OpenSSL::PKey::RSA.new(File.read(opts[:tls_key_file]))
+        webrick_options[:SSLPrivateKey] = OpenSSL::PKey.read(File.read(opts[:tls_key_file]))
       end
 
       @server = WEBrick::HTTPServer.new(webrick_options)
