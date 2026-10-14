@@ -1,0 +1,57 @@
+WEBrick vendored source notice
+==============================
+
+The focused HTTP implementation in this directory contains source-derived logic
+from WEBrick master commit:
+
+    25b0e9206bf5991c6274893d53c428d23b3f2292
+    "Only allow specific trailers" (2026-07-18)
+
+Upstream source: https://github.com/ruby/webrick
+
+Only the request parsing, HTTP response framing, connection/listener lifecycle,
+TLS wrapping, and Apache crypt htpasswd Basic authentication behavior needed by
+prometheus_exporter were retained. The code was pruned and re-namespaced under
+PrometheusExporter::Server::HTTP; it does not define the WEBrick constant.
+
+Upstream license (BSD-2-Clause)
+-------------------------------
+
+Copyright (C) 1993-2013 Yukihiro Matsumoto. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+Source-file attribution retained from the derived upstream files
+------------------------------------------------------------------
+
+HTTPRequest, GenericServer, HTTPServer, HTTPResponse, and Utils-derived logic:
+
+    Author: IPR -- Internet Programming with Ruby -- writers
+    Copyright (c) 2000, 2001 TAKAHASHI Masayoshi, GOTOU Yuuzou
+    Copyright (c) 2002 Internet Programming with Ruby writers.
+    All rights reserved.
+
+HTTPAuth::BasicAuth and HTTPAuth::Htpasswd-derived logic:
+
+    Author: IPR -- Internet Programming with Ruby -- writers
+    Copyright (c) 2003 Internet Programming with Ruby writers.
+    All rights reserved.
