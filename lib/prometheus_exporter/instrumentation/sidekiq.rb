@@ -3,7 +3,10 @@
 require "yaml"
 
 module PrometheusExporter::Instrumentation
-  JOB_WRAPPER_CLASS_NAME = "ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper"
+  JOB_WRAPPER_CLASS_NAMES = %w[
+    ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper
+    Sidekiq::ActiveJob::Wrapper
+  ]
   DELAYED_CLASS_NAMES = %w[
     Sidekiq::Extensions::DelayedClass
     Sidekiq::Extensions::DelayedModel
@@ -72,7 +75,7 @@ module PrometheusExporter::Instrumentation
     private
 
     def self.get_name(class_name, msg)
-      if class_name == JOB_WRAPPER_CLASS_NAME
+      if JOB_WRAPPER_CLASS_NAMES.include?(class_name)
         get_job_wrapper_name(msg)
       elsif DELAYED_CLASS_NAMES.include?(class_name)
         get_delayed_name(msg, class_name)
