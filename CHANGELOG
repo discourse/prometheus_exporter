@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve ActiveJob class names in Sidekiq 8 job metrics and death handlers.
+
 ### Changed
 
 - Reduce allocations when rendering histograms - Luiz Eduardo Kowalski.
