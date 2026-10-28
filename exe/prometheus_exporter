@@ -53,6 +53,11 @@ def run
     opt.on('-g', '--histogram', "Use histogram instead of summary for aggregations") do |o|
       options[:histogram] = true
     end
+    opt.on('--histogram-buckets BUCKETS', Array, "(optional) Comma-separated default histogram buckets, e.g. 0.1,0.5,1,5,10,30") do |o|
+      options[:histogram_buckets] = o.map { |bucket| Float(bucket) }
+    rescue ArgumentError
+      raise OptionParser::InvalidArgument, o.join(",")
+    end
     opt.on('--auth FILE', String, "(optional) enable basic authentication using a htpasswd FILE") do |o|
       options[:auth] = o
     end
