@@ -39,6 +39,11 @@ class PrometheusExporter::Middleware
         MethodProfiler.patch(Mysql2::Result, [:each], :sql, instrument: config[:instrument])
       end
 
+      if defined?(::Trilogy)
+        MethodProfiler.patch(::Trilogy, [:query, :next_result], :sql, instrument: config[:instrument])
+        MethodProfiler.patch(::Trilogy::Result, [:count, :each, :each_hash], :sql, instrument: config[:instrument])
+      end
+
       if defined?(Dalli::Client)
         MethodProfiler.patch(
           Dalli::Client,
