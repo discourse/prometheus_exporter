@@ -86,6 +86,7 @@ module PrometheusExporter
       @port = port
       @worker_thread = nil
       @mutex = Mutex.new
+      @socket_mutex = Mutex.new
       @thread_sleep = thread_sleep
       @connect_timeout = connect_timeout
 
@@ -121,7 +122,8 @@ module PrometheusExporter
       end
     end
 
-    def send_json(obj)
+    def send_json(obj = nil, sync: false, **metric)
+      obj = metric unless metric.empty?
       payload =
         if @custom_labels
           if obj[:custom_labels]
@@ -132,10 +134,19 @@ module PrometheusExporter
         else
           obj
         end
-      send(@json_serializer.dump(payload))
+      json = @json_serializer.dump(payload)
+      sync ? send(json, sync: true) : send(json)
     end
 
-    def send(str)
+    def send(str, sync: false)
+      if sync
+        @socket_mutex.synchronize do
+          ensure_socket!
+          write_message(str)
+        end
+        return
+      end
+
       @queue << str
       if @queue.length > @max_queue_size
         logger.warn "Prometheus Exporter client is dropping message cause queue is full"
@@ -146,20 +157,15 @@ module PrometheusExporter
     end
 
     def process_queue
-      while @queue.length > 0
-        ensure_socket!
+      loop do
+        @socket_mutex.synchronize do
+          close_socket_if_old!
+          return if @queue.empty?
 
-        begin
-          message = @queue.pop
-          @socket.write(message.bytesize.to_s(16).upcase)
-          @socket.write("\r\n")
-          @socket.write(message)
-          @socket.write("\r\n")
-        rescue => e
-          logger.warn "Prometheus Exporter is dropping a message: #{e}"
-          close_socket!
-          raise
+          ensure_socket!
+          write_message(@queue.pop)
         end
+        Thread.pass
       end
     end
 
@@ -169,14 +175,24 @@ module PrometheusExporter
         @worker_thread&.kill
         sleep 0.001 while @worker_thread&.alive?
         @worker_thread = nil
-        close_socket!
+        @socket_mutex.synchronize { close_socket! }
       end
     end
 
     private
 
+    def write_message(message)
+      @socket.write(message.bytesize.to_s(16).upcase)
+      @socket.write("\r\n")
+      @socket.write(message)
+      @socket.write("\r\n")
+    rescue => e
+      logger.warn "Prometheus Exporter is dropping a message: #{e}"
+      close_socket!
+      raise
+    end
+
     def worker_loop
-      close_socket_if_old!
       process_queue
     rescue => e
       logger.error "Prometheus Exporter, failed to send message #{e}"
@@ -295,7 +311,7 @@ module PrometheusExporter
       super(json_serializer: json_serializer, custom_labels: custom_labels)
     end
 
-    def send(json)
+    def send(json, sync: false)
       @collector.process(json)
     end
   end
