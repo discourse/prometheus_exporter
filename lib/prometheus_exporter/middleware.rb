@@ -126,8 +126,12 @@ class PrometheusExporter::Middleware
 
     # get the content of the x-amzn-trace-id header
     # see also: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-request-tracing.html
+    # the Root field has the format "1-{8 hex digit epoch seconds}-{24 hex digit id}"
     value = env["HTTP_X_AMZN_TRACE_ID"]
-    value&.split("Root=")&.last&.split("-")&.fetch(1)&.to_i(16)
+    return if value.nil?
+
+    timestamp = value.split("Root=").last.to_s.split("-")[1]
+    timestamp.to_i(16) if timestamp&.match?(/\A\h{8}\z/)
   end
 
   private

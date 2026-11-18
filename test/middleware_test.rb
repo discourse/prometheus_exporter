@@ -82,9 +82,51 @@ class PrometheusExporterMiddlewareTest < Minitest::Test
     assert_valid_headers_response
   end
 
+  def test_converting_amzn_trace_id_with_additional_fields
+    configure_middleware
+    now = "1234567890"
+    root = "Root=1-#{now.to_i.to_s(16)}-abcdef012345678912345678"
+    header "X-Amzn-Trace-Id", "Self=1-67891234-12456789abcdef012345678;#{root};Sampled=1"
+    assert_valid_headers_response
+  end
+
   def test_amzn_trace_id_in_wrong_format
     configure_middleware
     header "X-Amzn-Trace-Id", ""
+    assert_invalid_headers_response
+  end
+
+  def test_amzn_trace_id_missing
+    assert_invalid_headers_response
+  end
+
+  def test_amzn_trace_id_without_root
+    configure_middleware
+    header "X-Amzn-Trace-Id", "Sampled=1"
+    assert_invalid_headers_response
+  end
+
+  def test_amzn_trace_id_root_without_separators
+    configure_middleware
+    header "X-Amzn-Trace-Id", "Root=abc"
+    assert_invalid_headers_response
+  end
+
+  def test_amzn_trace_id_root_missing_timestamp
+    configure_middleware
+    header "X-Amzn-Trace-Id", "Root=1-"
+    assert_invalid_headers_response
+  end
+
+  def test_amzn_trace_id_root_with_non_hex_timestamp
+    configure_middleware
+    header "X-Amzn-Trace-Id", "Root=1-zzzzzzzz-abcdef012345678912345678"
+    assert_invalid_headers_response
+  end
+
+  def test_amzn_trace_id_garbage
+    configure_middleware
+    header "X-Amzn-Trace-Id", "Root=;;--;Root="
     assert_invalid_headers_response
   end
 
