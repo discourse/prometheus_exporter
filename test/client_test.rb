@@ -68,6 +68,35 @@ class PrometheusExporterTest < Minitest::Test
     )
   end
 
+  def test_close_socket_discards_the_socket_when_the_peer_is_gone
+    client = PrometheusExporter::Client.new(process_queue_once_and_stop: true)
+
+    # What a restarted exporter looks like from the client: the shutdown write raises
+    # something other than Errno::EPIPE. Errno::ECONNRESET is what Linux reports on a
+    # connection reset, and OpenSSL::SSL::SSLError is what a TLS socket raises once its
+    # transport is gone.
+    dead_socket = Object.new
+    def dead_socket.closed?
+      false
+    end
+
+    def dead_socket.write(_str)
+      raise Errno::ECONNRESET
+    end
+
+    client.instance_variable_set(:@socket, dead_socket)
+    client.instance_variable_set(:@socket_started, Time.now.to_f)
+
+    # __send__, because Client#send is the metric-publishing method, not Object#send.
+    client.__send__(:close_socket!)
+
+    assert_nil(
+      client.instance_variable_get(:@socket),
+      "a socket left in place is never reopened, so every later flush fails the same way",
+    )
+    assert_nil(client.instance_variable_get(:@socket_started))
+  end
+
   def test_overriding_logger
     logs = StringIO.new
     logger = Logger.new(logs)
