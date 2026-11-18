@@ -4,6 +4,8 @@ require_relative "../test_helper"
 require "prometheus_exporter/server"
 require "prometheus_exporter/client"
 require "net/http"
+require "zlib"
+require "stringio"
 
 class DemoCollector
   def initialize
@@ -31,10 +33,9 @@ class PrometheusExporterTest < Minitest::Test
       passwd: "test_password",
     }
 
-    # Create an htpasswd file for basic auth
-    htpasswd = WEBrick::HTTPAuth::Htpasswd.new(@auth_config[:file])
-    htpasswd.set_passwd(@auth_config[:realm], @auth_config[:user], @auth_config[:passwd])
-    htpasswd.flush
+    # Create an htpasswd file for basic auth (crypt format)
+    entry = "#{@auth_config[:user]}:#{@auth_config[:passwd].crypt("aa")}\n"
+    File.write(@auth_config[:file], entry)
   end
 
   def teardown
@@ -183,10 +184,11 @@ class PrometheusExporterTest < Minitest::Test
       .new("localhost", port)
       .start do |http|
         request = Net::HTTP::Get.new "/metrics"
+        request["Accept-Encoding"] = "gzip"
 
         http.request(request) do |response|
           assert_equal(["gzip"], response.to_hash["content-encoding"])
-          body = response.body
+          body = Zlib::GzipReader.new(StringIO.new(response.body)).read
         end
       end
     assert_match(/199/, body)
@@ -235,12 +237,14 @@ class PrometheusExporterTest < Minitest::Test
       .new("localhost", port)
       .start do |http|
         request = Net::HTTP::Get.new "/metrics"
+        request["Accept-Encoding"] = "gzip"
         request.basic_auth @auth_config[:user], @auth_config[:passwd]
 
         http.request(request) do |response|
           assert_equal("200", response.code)
           assert_equal(["gzip"], response.to_hash["content-encoding"])
-          assert_match(/199/, response.body)
+          body = Zlib::GzipReader.new(StringIO.new(response.body)).read
+          assert_match(/199/, body)
         end
       end
   ensure
