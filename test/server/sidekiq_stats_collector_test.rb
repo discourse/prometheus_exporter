@@ -39,6 +39,38 @@ class PrometheusSidekiqStatsCollectorTest < Minitest::Test
     assert_equal expected, metrics.map(&:metric_text)
   end
 
+  def test_collecting_metrics_with_client_default_labels
+    collector.collect(
+      "stats" => {
+        "dead_size" => 1,
+        "enqueued" => 2,
+        "failed" => 3,
+        "processed" => 4,
+        "processes_size" => 5,
+        "retry_size" => 6,
+        "scheduled_size" => 7,
+        "workers_size" => 8,
+      },
+      "custom_labels" => {
+        "service_component" => "sidekiq",
+        "hostname" => "worker-1",
+      },
+    )
+
+    metrics = collector.metrics
+    expected = [
+      'sidekiq_stats_dead_size{service_component="sidekiq",hostname="worker-1"} 1',
+      'sidekiq_stats_enqueued{service_component="sidekiq",hostname="worker-1"} 2',
+      'sidekiq_stats_failed{service_component="sidekiq",hostname="worker-1"} 3',
+      'sidekiq_stats_processed{service_component="sidekiq",hostname="worker-1"} 4',
+      'sidekiq_stats_processes_size{service_component="sidekiq",hostname="worker-1"} 5',
+      'sidekiq_stats_retry_size{service_component="sidekiq",hostname="worker-1"} 6',
+      'sidekiq_stats_scheduled_size{service_component="sidekiq",hostname="worker-1"} 7',
+      'sidekiq_stats_workers_size{service_component="sidekiq",hostname="worker-1"} 8',
+    ]
+    assert_equal expected, metrics.map(&:metric_text)
+  end
+
   def test_only_fresh_metrics_are_collected
     stub_monotonic_clock(1.0) do
       collector.collect(

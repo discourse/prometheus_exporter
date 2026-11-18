@@ -41,7 +41,10 @@ module PrometheusExporter::Server
     end
 
     def collect(object)
-      @sidekiq_metrics << object["process"]
+      process = object["process"]
+      process["labels"] ||= {}
+      process["labels"].merge!(object["custom_labels"]) if object["custom_labels"]
+      @sidekiq_metrics << process
     end
   end
 end

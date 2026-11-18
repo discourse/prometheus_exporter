@@ -35,6 +35,30 @@ class PrometheusSidekiqProcessCollectorTest < Minitest::Test
     assert_equal expected, metrics.map(&:metric_text)
   end
 
+  def test_collecting_metrics_with_client_default_labels
+    collector.collect(
+      "process" => {
+        "busy" => 1,
+        "concurrency" => 2,
+        "labels" => {
+          "queues" => "default,reliable",
+          "quiet" => "false",
+        },
+      },
+      "custom_labels" => {
+        "service_component" => "sidekiq",
+        "hostname" => "worker-1",
+      },
+    )
+
+    metrics = collector.metrics
+    expected = [
+      'sidekiq_process_busy{queues="default,reliable",quiet="false",service_component="sidekiq",hostname="worker-1"} 1',
+      'sidekiq_process_concurrency{queues="default,reliable",quiet="false",service_component="sidekiq",hostname="worker-1"} 2',
+    ]
+    assert_equal expected, metrics.map(&:metric_text)
+  end
+
   def test_only_fresh_metrics_are_collected
     stub_monotonic_clock(1.0) do
       collector.collect(
