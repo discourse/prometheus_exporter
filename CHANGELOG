@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support for Rails 7.2 and earlier and Ruby 3.2 and earlier, which have reached end of life.
 
+### Fixed
+
+- `IndexError` in the web middleware when the `X-Amzn-Trace-Id` header is malformed. Invalid trace headers are now ignored when measuring queue time.
+
 ## [2.3.1] - 2025-11-11
 
 - FIX: get controller full path instead of controller name - Alex Platteeuw
