@@ -751,13 +751,13 @@ class PrometheusCollectorTest < Minitest::Test
     result = collector.prometheus_metrics_text
     assert(
       result.include?(
-        %Q[sidekiq_process_busy{labels="lab_1,lab_2",queues="queue_1,queue_2",quiet="false",tag="default",hostname="#{PrometheusExporter.hostname}",identity="hostname:0"} 1],
+        %Q[sidekiq_process_busy{service="service1",labels="lab_1,lab_2",queues="queue_1,queue_2",quiet="false",tag="default",hostname="#{PrometheusExporter.hostname}",identity="hostname:0"} 1],
       ),
       "has number of busy",
     )
     assert(
       result.include?(
-        %Q[sidekiq_process_concurrency{labels="lab_1,lab_2",queues="queue_1,queue_2",quiet="false",tag="default",hostname="#{PrometheusExporter.hostname}",identity="hostname:0"} 2],
+        %Q[sidekiq_process_concurrency{service="service1",labels="lab_1,lab_2",queues="queue_1,queue_2",quiet="false",tag="default",hostname="#{PrometheusExporter.hostname}",identity="hostname:0"} 2],
       ),
       "has number of concurrency",
     )
@@ -790,14 +790,14 @@ class PrometheusCollectorTest < Minitest::Test
     end
 
     result = collector.prometheus_metrics_text
-    assert_includes(result, "sidekiq_stats_dead_size 1")
-    assert_includes(result, "sidekiq_stats_enqueued 2")
-    assert_includes(result, "sidekiq_stats_failed 3")
-    assert_includes(result, "sidekiq_stats_processed 4")
-    assert_includes(result, "sidekiq_stats_processes_size 5")
-    assert_includes(result, "sidekiq_stats_retry_size 6")
-    assert_includes(result, "sidekiq_stats_scheduled_size 7")
-    assert_includes(result, "sidekiq_stats_workers_size 8")
+    assert_includes(result, "sidekiq_stats_dead_size{service=\"service1\"} 1")
+    assert_includes(result, "sidekiq_stats_enqueued{service=\"service1\"} 2")
+    assert_includes(result, "sidekiq_stats_failed{service=\"service1\"} 3")
+    assert_includes(result, "sidekiq_stats_processed{service=\"service1\"} 4")
+    assert_includes(result, "sidekiq_stats_processes_size{service=\"service1\"} 5")
+    assert_includes(result, "sidekiq_stats_retry_size{service=\"service1\"} 6")
+    assert_includes(result, "sidekiq_stats_scheduled_size{service=\"service1\"} 7")
+    assert_includes(result, "sidekiq_stats_workers_size{service=\"service1\"} 8")
     mock_sidekiq_stats.verify
     mock_sidekiq_stats_new.verify
   end
