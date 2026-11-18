@@ -59,15 +59,22 @@ module PrometheusExporter
       connect_timeout: nil,
       json_serializer: nil,
       custom_labels: nil,
-      logger: Logger.new(STDERR),
-      log_level: Logger::WARN,
+      logger: nil,
+      log_level: nil,
       process_queue_once_and_stop: false,
       tls_ca_file: nil,
       tls_cert_file: nil,
       tls_key_file: nil
     )
-      @logger = logger
-      @logger.level = log_level
+      if logger.nil?
+        @logger = Logger.new(
+          STDERR,
+          level: log_level.nil? ? Logger::WARN : log_level
+        )
+      elsif !log_level.nil?
+        @logger.level = log_level
+      end
+
       @metrics = []
 
       @queue = Queue.new
